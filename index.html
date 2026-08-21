@@ -590,17 +590,47 @@
           </div>
         </div>
 
-        <div>
-          <h3 class="text-sm font-bold mb-2">Milestone ↔ jadwal Master Plan</h3>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <template x-for="ph in phasesView" :key="'ms'+ph.id">
-              <div class="rounded-xl border border-paper-line bg-paper-card p-3">
-                <p class="text-[10px] uppercase tracking-wide text-ink-mute">Milestone</p>
-                <p class="text-sm font-bold mt-0.5" x-text="ph.name"></p>
-                <p class="text-[11px] text-ink-soft mt-1 tabular-nums" x-text="'M'+ph.startWeek+'–'+ph.finishWeek"></p>
-                <p class="text-[11px] text-ink-mute" x-text="'Rp '+ph.costJt+' jt'"></p>
-              </div>
-            </template>
+                <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold">Milestone & Jendela Waktu</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Default dari Gantt kontrak. Konfirmasi / sesuaikan dulu sebelum commit.</p>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.milestonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.milestonesLocked ? 'Terkunci' : 'Belum dikunci'"></span>
+          </div>
+          <div class="p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <template x-for="ph in phasesView" :key="'ms'+ph.id">
+                <div class="rounded-xl border border-paper-line bg-paper-card p-3.5">
+                  <div class="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <p class="text-[10px] uppercase tracking-wide text-ink-mute">Milestone</p>
+                      <p class="text-sm font-bold" x-text="ph.name"></p>
+                    </div>
+                    <p class="text-[11px] text-ink-mute tabular-nums" x-text="'Rp '+ph.costJt+' jt'"></p>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs" x-show="!state.contractor.milestonesLocked">
+                    <label class="text-ink-mute shrink-0">M</label>
+                    <input type="number" class="field !py-1.5 !px-2 text-center w-16" min="1"
+                      :value="ph.startWeek"
+                      @change="updatePhaseWindow(ph.id, 'startWeek', $event.target.value)"
+                      :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked">
+                    <span class="text-ink-mute">–</span>
+                    <input type="number" class="field !py-1.5 !px-2 text-center w-16" min="1"
+                      :value="ph.finishWeek"
+                      @change="updatePhaseWindow(ph.id, 'finishWeek', $event.target.value)"
+                      :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked">
+                  </div>
+                  <p class="text-[11px] text-ink-soft mt-1 tabular-nums" x-show="state.contractor.milestonesLocked" x-text="'M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                  <p class="text-[10px] text-ink-mute mt-1" x-show="!state.contractor.milestonesLocked" x-text="'Default Gantt: M'+ph.derivedStart+'–'+ph.derivedFinish"></p>
+                </div>
+              </template>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2" x-show="!state.contractor.pullLocked">
+              <button type="button" class="btn-primary text-sm" x-show="!state.contractor.milestonesLocked" @click="lockMilestones()" :disabled="!state.contractor.zonesLocked">Kunci jendela milestone</button>
+              <button type="button" class="btn-danger text-sm" x-show="state.contractor.milestonesLocked" @click="unlockMilestones()">Unlock jendela</button>
+              <p class="text-[11px] text-ink-mute self-center" x-show="!state.contractor.zonesLocked">Tetapkan zonasi dulu.</p>
+            </div>
           </div>
         </div>
 
@@ -618,13 +648,14 @@
                 </div>
                 <button type="button" class="px-3 py-1.5 rounded-full text-[11px] font-semibold"
                   :class="t.committed ? 'bg-forest-soft text-forest' : 'bg-paper border border-paper-line text-ink-soft'"
-                  :disabled="state.contractor.pullLocked || !state.contractor.zonesLocked"
+                  :disabled="state.contractor.pullLocked || !state.contractor.zonesLocked || !state.contractor.milestonesLocked"
                   @click="toggleCommit(t.id)"
                   x-text="t.committed ? 'Committed' : 'Commit'"></button>
               </li>
             </template>
           </ul>
           <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="!state.contractor.zonesLocked">Tetapkan zonasi dulu, baru tim bisa commit.</p>
+       <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="state.contractor.zonesLocked && !state.contractor.milestonesLocked">Kunci jendela waktu milestone dulu, baru tim bisa commit.</p>
         </div>
 
         <div>
@@ -1022,6 +1053,7 @@ function emptyContractor() {
     pullLocked:false, selectedWork:null, constraints:[], reviewed:{},
     draftType:'material', draftNote:'',
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
+    milestonesLocked:false, phaseWindows:{},
   };
 }
 
@@ -1194,17 +1226,25 @@ Alpine.data('app', () => ({
     const c = this.state.negotiation.contract;
     return (c && c.workPlan && c.workPlan.length) ? c.workPlan : (this.state.owner.workPlan || []);
   },
-  get phasesView() {
+ get phasesView() {
     const plan = this.contractPlan;
     const byId = Object.fromEntries(plan.map(w => [w.id, w]));
     const cons = (this.state.contractor && this.state.contractor.constraints) || [];
+    const wins = (this.state.contractor && this.state.contractor.phaseWindows) || {};
     return PHASES.map(ph => {
       const works = ph.works.map(id => byId[id]).filter(Boolean);
+      const derivedStart = works.length ? Math.min(...works.map(w => w.startWeek)) : 1;
+      const derivedFinish = works.length ? Math.max(...works.map(w => w.finishWeek)) : 1;
+      const ov = wins[ph.id] || {};
+      const startWeek = Number(ov.startWeek) || derivedStart;
+      const finishWeek = Number(ov.finishWeek) || derivedFinish;
       return {
         ...ph,
         works,
-        startWeek: works.length ? Math.min(...works.map(w => w.startWeek)) : 1,
-        finishWeek: works.length ? Math.max(...works.map(w => w.finishWeek)) : 1,
+        startWeek,
+        finishWeek,
+        derivedStart,
+        derivedFinish,
         costJt: Math.round(works.reduce((s, w) => s + (Number(w.costJt) || 0), 0) * 10) / 10,
         cCount: cons.filter(c => ph.works.includes(c.workId)).length,
       };
@@ -1407,6 +1447,10 @@ Alpine.data('app', () => ({
       alert('Tetapkan zonasi denah dulu.');
       return;
     }
+    if (!this.state.contractor.milestonesLocked) {
+      alert('Kunci jendela waktu milestone dulu.');
+      return;
+    }
     if (this.committedCount < TEAMS.length) {
       alert('Semua tim harus commit dulu (collaborative pull planning).');
       return;
@@ -1433,11 +1477,48 @@ Alpine.data('app', () => ({
     this.save();
   },
   toggleCommit(id) {
-    if (this.state.contractor.pullLocked || !this.state.contractor.zonesLocked) return;
+    if (this.state.contractor.pullLocked || !this.state.contractor.zonesLocked || !this.state.contractor.milestonesLocked) return;
     const c = this.state.contractor.commitments || {};
     c[id] = !c[id];
     this.state.contractor.commitments = c;
     this.save();
+  },
+  updatePhaseWindow(phId, field, val) {
+    if (this.state.contractor.milestonesLocked || this.state.contractor.pullLocked) return;
+    const wins = { ...(this.state.contractor.phaseWindows || {}) };
+    const cur = { ...(wins[phId] || {}) };
+    const n = Math.max(1, Number(val) || 1);
+    cur[field] = n;
+    if (field === 'startWeek' && cur.finishWeek != null && n > cur.finishWeek) cur.finishWeek = n;
+    if (field === 'finishWeek' && cur.startWeek != null && n < cur.startWeek) cur.startWeek = n;
+    wins[phId] = cur;
+    this.state.contractor.phaseWindows = wins;
+    this.save();
+  },
+  lockMilestones() {
+    if (!this.state.contractor.zonesLocked) {
+      alert('Tetapkan zonasi denah dulu.');
+      return;
+    }
+    const wins = { ...(this.state.contractor.phaseWindows || {}) };
+    for (const ph of this.phasesView) {
+      if (!wins[ph.id]) wins[ph.id] = { startWeek: ph.derivedStart, finishWeek: ph.derivedFinish };
+      else {
+        if (!wins[ph.id].startWeek) wins[ph.id].startWeek = ph.derivedStart;
+        if (!wins[ph.id].finishWeek) wins[ph.id].finishWeek = ph.derivedFinish;
+      }
+    }
+    this.state.contractor.phaseWindows = wins;
+    this.state.contractor.milestonesLocked = true;
+    this.save();
+  },
+  unlockMilestones() {
+    if (this.state.contractor.pullLocked) return;
+    if (confirm('Unlock jendela milestone? Komitmen tim akan di-reset.')) {
+      this.state.contractor.milestonesLocked = false;
+      this.state.contractor.commitments = {};
+      this.save();
+    }
   },
   unlockPullPlan() {
     if (confirm('Unlock Pull Plan? Produksi belum boleh jalan sampai dikunci lagi.')) {
