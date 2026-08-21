@@ -380,32 +380,7 @@
             </div>
             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.negotiation.deal ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.negotiation.deal ? 'Baseline progress' : 'Belum kontrak'"></span>
           </div>
-          <svg class="w-full mt-1" viewBox="0 0 640 268" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Kurva S Rp versus waktu">
-            <defs>
-              <linearGradient id="scFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#C45C26" stop-opacity="0.28"/>
-                <stop offset="100%" stop-color="#C45C26" stop-opacity="0.02"/>
-              </linearGradient>
-            </defs>
-            <text x="12" y="14" font-size="10" fill="#8B5E3C" font-weight="600">Rp (juta)</text>
-            <template x-for="g in negoChart.yGrid" :key="'ny'+g.label">
-              <g>
-                <line :x1="negoChart.padL" :x2="640-negoChart.padR" :y1="g.y" :y2="g.y" stroke="#E8E0D5" stroke-width="1"/>
-                <text :x="negoChart.padL-6" :y="g.y+3" text-anchor="end" font-size="10" fill="#A8A29E" x-text="g.label"></text>
-              </g>
-            </template>
-            <path :d="negoChart.area" fill="url(#scFill)"></path>
-            <path :d="negoChart.line" fill="none" stroke="#C45C26" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            <template x-for="d in negoChart.dots" :key="'nd'+d.week">
-              <circle :cx="d.x" :cy="d.y" r="3.2" fill="#9A4519" stroke="#FFFcf8" stroke-width="1.2">
-                <title x-text="'Mgg '+d.week+' · Rp '+d.cumJt+' jt · '+d.planned+'%'"></title>
-              </circle>
-            </template>
-            <template x-for="t in negoChart.xTicks" :key="'nx'+t.week">
-              <text :x="t.x" :y="242" text-anchor="middle" font-size="10" fill="#A8A29E" x-text="t.week"></text>
-            </template>
-            <text :x="(negoChart.padL + 640 - negoChart.padR)/2" y="260" text-anchor="middle" font-size="10" fill="#8B5E3C" font-weight="600">Minggu konstruksi</text>
-          </svg>
+          <div class="w-full mt-1" x-html="negoChartSvg"></div>
           <p class="text-[11px] text-ink-mute mt-1 leading-relaxed">
             Akumulasi biaya mengikuti urutan pekerjaan. Setelah deal, ini baseline yang harus dikejar kontraktor.
           </p>
@@ -468,27 +443,7 @@
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4" x-show="state.negotiation.deal">
           <h3 class="text-sm font-bold mb-1">Kurva S kontrak — target progress</h3>
           <p class="text-[11px] text-ink-mute mb-2">Ini yang harus dikejar. Actual vs rencana menyusul di Manajemen Produksi.</p>
-          <svg class="w-full" viewBox="0 0 640 268" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <linearGradient id="scFillPm" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#2F6B4F" stop-opacity="0.22"/>
-                <stop offset="100%" stop-color="#2F6B4F" stop-opacity="0.02"/>
-              </linearGradient>
-            </defs>
-            <text x="12" y="14" font-size="10" fill="#8B5E3C" font-weight="600">Rp (juta)</text>
-            <template x-for="g in negoChart.yGrid" :key="'py'+g.label">
-              <g>
-                <line :x1="negoChart.padL" :x2="640-negoChart.padR" :y1="g.y" :y2="g.y" stroke="#E8E0D5" stroke-width="1"/>
-                <text :x="negoChart.padL-6" :y="g.y+3" text-anchor="end" font-size="10" fill="#A8A29E" x-text="g.label"></text>
-              </g>
-            </template>
-            <path :d="negoChart.area" fill="url(#scFillPm)"></path>
-            <path :d="negoChart.line" fill="none" stroke="#2F6B4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            <template x-for="t in negoChart.xTicks" :key="'px'+t.week">
-              <text :x="t.x" :y="242" text-anchor="middle" font-size="10" fill="#A8A29E" x-text="t.week"></text>
-            </template>
-            <text :x="(negoChart.padL + 640 - negoChart.padR)/2" y="260" text-anchor="middle" font-size="10" fill="#8B5E3C" font-weight="600">Minggu konstruksi</text>
-          </svg>
+          <div class="w-full" x-html="negoChartSvgPm"></div>
         </div>
         <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-10 text-center">
           <p class="font-semibold text-ink-soft">Sticky Note Board</p>
@@ -608,31 +563,70 @@ function smoothPath(pts) {
   return d;
 }
 
-function makeChart(curve, maxJt) {
-  const padL = 52, padR = 14, padT = 22, padB = 40;
-  const W = 640, H = 268;
+function makeChart(curve, maxJt, opts = {}) {
+  const color = opts.color || '#C45C26';
+  const fillId = opts.fillId || 'scFillN';
+  const padL = 58, padR = 18, padT = 28, padB = 48;
+  const W = 640, H = 292;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const n = Math.max(1, (curve || []).length);
   const ymax = Math.max(1, maxJt || 1);
-  const pts = [{ week: 0, planned: 0, cumJt: 0, x: padL, y: padT + innerH }].concat(
-    (curve || []).map((p, i) => ({
+  const xOf = (week) => padL + (week / n) * innerW;
+  const yOf = (jt) => padT + (1 - jt / ymax) * innerH;
+  const pts = [{ week: 0, planned: 0, cumJt: 0, x: xOf(0), y: yOf(0) }].concat(
+    (curve || []).map((p) => ({
       ...p,
-      x: padL + ((i + 1) / n) * innerW,
-      y: padT + (1 - (Number(p.cumJt) || 0) / ymax) * innerH,
+      x: xOf(p.week),
+      y: yOf(Number(p.cumJt) || 0),
     }))
   );
   const last = pts[pts.length - 1];
   const line = smoothPath(pts);
-  const area = line + ` L ${last.x} ${padT + innerH} L ${padL} ${padT + innerH} Z`;
-  const yGrid = [0, 0.25, 0.5, 0.75, 1].map(f => ({
-    label: Math.round(ymax * f),
-    y: padT + (1 - f) * innerH,
-  }));
-  const step = n <= 12 ? 2 : 4;
-  const xTicks = [];
-  for (let w = 1; w <= n; w++) if (w === 1 || w === n || w % step === 0) xTicks.push({ week: w, x: padL + (w / n) * innerW });
-  return { padL, padR, padT, padB, W, H, line, area, dots: pts.slice(1), yGrid, xTicks, ymax };
+  const area = line + ` L ${last.x} ${yOf(0)} L ${padL} ${yOf(0)} Z`;
+  const yFracs = [0, 0.25, 0.5, 0.75, 1];
+  const step = n <= 12 ? 2 : 2;
+  const xWeeks = [];
+  for (let w = 0; w <= n; w++) if (w === 0 || w === n || w % step === 0) xWeeks.push(w);
+
+  let grid = '';
+  for (const f of yFracs) {
+    const y = yOf(ymax * f);
+    const label = Math.round(ymax * f);
+    grid += `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="#E8E0D5" stroke-width="1"/>`;
+    grid += `<line x1="${padL - 4}" x2="${padL}" y1="${y}" y2="${y}" stroke="#8B5E3C" stroke-width="1.4"/>`;
+    grid += `<text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#44403C" font-family="ui-sans-serif,system-ui,sans-serif">${label}</text>`;
+  }
+  let xt = '';
+  for (const w of xWeeks) {
+    const x = xOf(w);
+    xt += `<line x1="${x}" x2="${x}" y1="${yOf(0)}" y2="${yOf(0) + 5}" stroke="#8B5E3C" stroke-width="1.4"/>`;
+    xt += `<text x="${x}" y="${yOf(0) + 18}" text-anchor="middle" font-size="11" fill="#44403C" font-family="ui-sans-serif,system-ui,sans-serif">${w}</text>`;
+  }
+  let dots = '';
+  for (const d of pts) {
+    if (d.week === 0) continue;
+    dots += `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="3.1" fill="#9A4519" stroke="#FFFcf8" stroke-width="1.2"><title>Mgg ${d.week} · Rp ${d.cumJt} jt · ${d.planned}%</title></circle>`;
+  }
+
+  const markup = `<svg class="w-full" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Kurva S Rp versus minggu">
+    <defs>
+      <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+      </linearGradient>
+    </defs>
+    <text x="10" y="16" font-size="11" fill="#8B5E3C" font-weight="700" font-family="ui-sans-serif,system-ui,sans-serif">Rp (juta)</text>
+    ${grid}
+    <path d="${area}" fill="url(#${fillId})"></path>
+    <path d="${line}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${yOf(0)}" stroke="#8B5E3C" stroke-width="1.6"/>
+    <line x1="${padL}" y1="${yOf(0)}" x2="${W - padR}" y2="${yOf(0)}" stroke="#8B5E3C" stroke-width="1.6"/>
+    ${xt}
+    ${dots}
+    <text x="${(padL + W - padR) / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#8B5E3C" font-weight="700" font-family="ui-sans-serif,system-ui,sans-serif">Minggu konstruksi</text>
+  </svg>`;
+  return { markup, padL, padR, line, area, ymax };
 }
 
 function emptyNego() {
@@ -762,7 +756,12 @@ Alpine.data('app', () => ({
     return { curve, maxJt: price, plan: curve };
   },
   get negoPlan() { return this.negoBundle.plan || []; },
-  get negoChart() { return makeChart(this.negoBundle.curve, this.negoBundle.maxJt); },
+  get negoChartSvg() {
+    return makeChart(this.negoBundle.curve, this.negoBundle.maxJt, { color: '#C45C26', fillId: 'scFillNego' }).markup;
+  },
+  get negoChartSvgPm() {
+    return makeChart(this.negoBundle.curve, this.negoBundle.maxJt, { color: '#2F6B4F', fillId: 'scFillPm' }).markup;
+  },
   get priorityHint() {
     const p = this.state.owner.priority;
     if (p === 'cost') return { title:'COST', box:'border-terra/25 bg-terra-soft/40', body:'Harga jadi acuan. Ideal: penawaran ≈ OE ÷ 1,1 agar VO +10% masih ≤ budget Owner. Terlalu murah juga dicurigai.' };
