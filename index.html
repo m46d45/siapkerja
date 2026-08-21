@@ -1255,6 +1255,13 @@ Alpine.data('app', () => ({
       };
     });
   },
+    get pullPhasesView() {
+    // Kiri = akhir (dekat serah terima), kanan = lebih awal. Dalam kolom: atas = lebih akhir.
+    return this.phasesView.slice().reverse().map(ph => ({
+      ...ph,
+      works: (ph.works || []).slice().sort((a, b) => (b.finishWeek - a.finishWeek) || (b.startWeek - a.startWeek)),
+    }));
+  },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
     return this.contractPlan.filter(w => r[w.id]).length;
