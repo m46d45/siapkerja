@@ -39,8 +39,9 @@
     select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%2378716C' d='M1.4.6L6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem}
     .board-scroll{display:flex;gap:.75rem;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
     .phase-col{flex:0 0 172px;scroll-snap-align:start}
-    .sticky-note{display:block;width:100%;text-align:left;background:#FFF8E1;border:0;border-left:4px solid var(--c,#C45C26);border-radius:3px;box-shadow:0 1px 1px rgba(28,25,23,.06),0 5px 12px rgba(28,25,23,.07);padding:.65rem .7rem;min-height:84px;cursor:pointer}
-    .sticky-note.is-on{box-shadow:0 0 0 2px #C45C26, 0 5px 12px rgba(28,25,23,.08)}
+    .sticky-note{display:block;width:100%;text-align:left;background:color-mix(in srgb, var(--c,#C45C26) 22%, #FFFcf8);border:1px solid color-mix(in srgb, var(--c,#C45C26) 35%, transparent);border-left:5px solid var(--c,#C45C26);border-radius:6px;box-shadow:0 1px 1px rgba(28,25,23,.06),0 4px 10px rgba(28,25,23,.06);padding:.65rem .7rem;min-height:84px;cursor:pointer}
+    .sticky-note.is-on{box-shadow:0 0 0 2px var(--c,#C45C26), 0 5px 12px rgba(28,25,23,.08)}
+    .sticky-note.is-committed{background:color-mix(in srgb, var(--c,#C45C26) 38%, #FFFcf8);border-color:color-mix(in srgb, var(--c,#C45C26) 55%, transparent)}
     .sticky-note:disabled{cursor:default}
     .gantt-label{width:132px;flex-shrink:0;padding-right:8px}
     .gantt-bar{position:absolute;top:4px;height:14px;border-radius:3px;min-width:6px}
@@ -658,22 +659,33 @@
        <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="state.contractor.zonesLocked && !state.contractor.milestonesLocked">Kunci jendela waktu milestone dulu, baru tim bisa commit.</p>
         </div>
 
-        <div>
+                <div>
           <div class="flex items-end justify-between gap-2 mb-2">
             <div>
               <h3 class="text-sm font-bold">Papan Pull Plan</h3>
-              <p class="text-[11px] text-ink-mute">Tarik dari kanan (serah terima). Setiap sticky punya minggu dari Master Plan.</p>
+              <p class="text-[11px] text-ink-mute">Tarik dari kiri (serah terima) ke kanan (awal). Sticky berwarna penuh sesuai tim.</p>
             </div>
             <span class="text-[11px] text-ink-mute" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
           </div>
           <div class="board-scroll">
-            <template x-for="ph in phasesView" :key="'col'+ph.id">
+            <div class="phase-col">
+              <p class="text-[10px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Milestone</p>
+              <div class="rounded-xl border-2 border-dashed border-forest/40 bg-forest-soft/50 p-3 min-h-[84px]">
+                <p class="text-sm font-bold text-forest">Serah terima</p>
+                <p class="text-[11px] text-forest mt-1" x-text="'Minggu '+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
+                <p class="text-[10px] text-forest/80 mt-2">← tarik mundur</p>
+              </div>
+            </div>
+            <template x-for="ph in pullPhasesView" :key="'col'+ph.id">
               <div class="phase-col">
                 <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
                 <div class="space-y-2">
                   <template x-for="w in ph.works" :key="w.id">
                     <button type="button" class="sticky-note" :style="'--c:'+w.color"
-                      :class="state.contractor.selectedWork===w.id?'is-on':''"
+                      :class="{
+                        'is-on': state.contractor.selectedWork===w.id,
+                        'is-committed': !!(state.contractor.commitments||{})[w.team]
+                      }"
                       @click="selectWork(w.id)">
                       <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
                       <p class="text-[10px] text-ink-soft mt-1" x-text="w.team+' · M'+w.startWeek+'–'+w.finishWeek"></p>
@@ -684,13 +696,6 @@
                 </div>
               </div>
             </template>
-            <div class="phase-col">
-              <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2">Milestone</p>
-              <div class="rounded-xl border-2 border-dashed border-forest/30 bg-forest-soft/40 p-3 min-h-[84px]">
-                <p class="text-sm font-bold text-forest">Serah terima</p>
-                <p class="text-[11px] text-forest mt-1" x-text="'Minggu '+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1226,29 +1231,12 @@ Alpine.data('app', () => ({
     const c = this.state.negotiation.contract;
     return (c && c.workPlan && c.workPlan.length) ? c.workPlan : (this.state.owner.workPlan || []);
   },
- get phasesView() {
-    const plan = this.contractPlan;
-    const byId = Object.fromEntries(plan.map(w => [w.id, w]));
-    const cons = (this.state.contractor && this.state.contractor.constraints) || [];
-    const wins = (this.state.contractor && this.state.contractor.phaseWindows) || {};
-    return PHASES.map(ph => {
-      const works = ph.works.map(id => byId[id]).filter(Boolean);
-      const derivedStart = works.length ? Math.min(...works.map(w => w.startWeek)) : 1;
-      const derivedFinish = works.length ? Math.max(...works.map(w => w.finishWeek)) : 1;
-      const ov = wins[ph.id] || {};
-      const startWeek = Number(ov.startWeek) || derivedStart;
-      const finishWeek = Number(ov.finishWeek) || derivedFinish;
-      return {
-        ...ph,
-        works,
-        startWeek,
-        finishWeek,
-        derivedStart,
-        derivedFinish,
-        costJt: Math.round(works.reduce((s, w) => s + (Number(w.costJt) || 0), 0) * 10) / 10,
-        cCount: cons.filter(c => ph.works.includes(c.workId)).length,
-      };
-    });
+   get pullPhasesView() {
+    // Pull planning: kiri = akhir (dekat serah terima), kanan = lebih awal. Dalam kolom: atas = lebih akhir.
+    return this.phasesView.slice().reverse().map(ph => ({
+      ...ph,
+      works: (ph.works || []).slice().sort((a, b) => (b.finishWeek - a.finishWeek) || (b.startWeek - a.startWeek)),
+    }));
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
