@@ -1231,12 +1231,29 @@ Alpine.data('app', () => ({
     const c = this.state.negotiation.contract;
     return (c && c.workPlan && c.workPlan.length) ? c.workPlan : (this.state.owner.workPlan || []);
   },
-   get pullPhasesView() {
-    // Pull planning: kiri = akhir (dekat serah terima), kanan = lebih awal. Dalam kolom: atas = lebih akhir.
-    return this.phasesView.slice().reverse().map(ph => ({
-      ...ph,
-      works: (ph.works || []).slice().sort((a, b) => (b.finishWeek - a.finishWeek) || (b.startWeek - a.startWeek)),
-    }));
+     get phasesView() {
+    const plan = this.contractPlan;
+    const byId = Object.fromEntries(plan.map(w => [w.id, w]));
+    const cons = (this.state.contractor && this.state.contractor.constraints) || [];
+    const wins = (this.state.contractor && this.state.contractor.phaseWindows) || {};
+    return PHASES.map(ph => {
+      const works = ph.works.map(id => byId[id]).filter(Boolean);
+      const derivedStart = works.length ? Math.min(...works.map(w => w.startWeek)) : 1;
+      const derivedFinish = works.length ? Math.max(...works.map(w => w.finishWeek)) : 1;
+      const ov = wins[ph.id] || {};
+      const startWeek = Number(ov.startWeek) || derivedStart;
+      const finishWeek = Number(ov.finishWeek) || derivedFinish;
+      return {
+        ...ph,
+        works,
+        startWeek,
+        finishWeek,
+        derivedStart,
+        derivedFinish,
+        costJt: Math.round(works.reduce((s, w) => s + (Number(w.costJt) || 0), 0) * 10) / 10,
+        cCount: cons.filter(c => ph.works.includes(c.workId)).length,
+      };
+    });
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
