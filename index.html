@@ -34,7 +34,7 @@
     .btn-primary:hover{background:#9A4519}
     .btn-ghost{border:1.5px solid #E8E0D5;background:#FFFcf8;color:#57534E;font-weight:500;border-radius:12px;padding:.7rem 1.1rem}
     .btn-danger{border:1.5px solid #FECACA;color:#B91C1C;background:#FEF2F2;border-radius:12px;padding:.65rem 1rem;font-size:.875rem}
-    .step-dot{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .step-dot{width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
     select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%2378716C' d='M1.4.6L6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem}
   </style>
 </head>
@@ -56,26 +56,34 @@
     </div>
   </div>
   <div class="max-w-3xl mx-auto px-4 pb-3">
-    <div class="flex items-center gap-1 sm:gap-2">
-      <button @click="setStage('owner')" class="flex items-center gap-2 min-w-0 flex-1">
+    <div class="flex items-center gap-0.5 sm:gap-1">
+      <button @click="setStage('owner')" class="flex items-center gap-1.5 min-w-0 flex-1">
         <span class="step-dot" :class="currentStage==='owner'?'bg-terra text-white':(state.owner.locked?'bg-forest text-white':'bg-paper-line text-ink-mute')">
           <span x-show="!state.owner.locked||currentStage==='owner'">1</span>
           <span x-show="state.owner.locked&&currentStage!=='owner'">✓</span>
         </span>
-        <span class="text-xs font-semibold truncate" :class="currentStage==='owner'?'text-terra':(state.owner.locked?'text-forest':'text-ink-mute')">Owner</span>
+        <span class="text-[11px] font-semibold truncate hidden xs:inline sm:inline" :class="currentStage==='owner'?'text-terra':(state.owner.locked?'text-forest':'text-ink-mute')">Owner</span>
       </button>
-      <div class="h-px flex-1 max-w-[40px]" :class="state.owner.locked?'bg-forest/40':'bg-paper-line'"></div>
-      <button @click="canAccessDesigner()&&setStage('designer')" :disabled="!canAccessDesigner()" class="flex items-center gap-2 min-w-0 flex-1 disabled:opacity-40">
+      <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.owner.locked?'bg-forest/40':'bg-paper-line'"></div>
+      <button @click="canAccessDesigner()&&setStage('designer')" :disabled="!canAccessDesigner()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
         <span class="step-dot" :class="currentStage==='designer'?'bg-terra text-white':(state.designer.locked?'bg-forest text-white':'bg-paper-line text-ink-mute')">
           <span x-show="!state.designer.locked||currentStage==='designer'">2</span>
           <span x-show="state.designer.locked&&currentStage!=='designer'">✓</span>
         </span>
-        <span class="text-xs font-semibold truncate" :class="currentStage==='designer'?'text-terra':(state.designer.locked?'text-forest':'text-ink-mute')">Designer</span>
+        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='designer'?'text-terra':(state.designer.locked?'text-forest':'text-ink-mute')">Designer</span>
       </button>
-      <div class="h-px flex-1 max-w-[40px]" :class="state.designer.locked?'bg-forest/40':'bg-paper-line'"></div>
-      <button @click="canAccessContractor()&&setStage('contractor-pm')" :disabled="!canAccessContractor()" class="flex items-center gap-2 min-w-0 flex-1 disabled:opacity-40">
-        <span class="step-dot" :class="currentStage.startsWith('contractor')?'bg-terra text-white':'bg-paper-line text-ink-mute'">3</span>
-        <span class="text-xs font-semibold truncate" :class="currentStage.startsWith('contractor')?'text-terra':'text-ink-mute'">Kontraktor</span>
+      <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.designer.locked?'bg-forest/40':'bg-paper-line'"></div>
+      <button @click="canAccessNego()&&setStage('negotiation')" :disabled="!canAccessNego()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
+        <span class="step-dot" :class="currentStage==='negotiation'?'bg-terra text-white':(state.negotiation.deal?'bg-forest text-white':'bg-paper-line text-ink-mute')">
+          <span x-show="!state.negotiation.deal||currentStage==='negotiation'">3</span>
+          <span x-show="state.negotiation.deal&&currentStage!=='negotiation'">✓</span>
+        </span>
+        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='negotiation'?'text-terra':(state.negotiation.deal?'text-forest':'text-ink-mute')">Nego</span>
+      </button>
+      <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.negotiation.deal?'bg-forest/40':'bg-paper-line'"></div>
+      <button @click="canAccessContractor()&&setStage('contractor-pm')" :disabled="!canAccessContractor()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
+        <span class="step-dot" :class="currentStage.startsWith('contractor')?'bg-terra text-white':'bg-paper-line text-ink-mute'">4</span>
+        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage.startsWith('contractor')?'text-terra':'text-ink-mute'">Kontraktor</span>
       </button>
     </div>
   </div>
@@ -97,7 +105,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 1 · Supporting</p>
           <h2 class="text-xl font-bold text-ink">Set Project Constraints</h2>
-          <p class="text-sm text-ink-soft mt-1">Tentukan durasi, kualitas, biaya, dan prioritas Type 36.</p>
+          <p class="text-sm text-ink-soft mt-1">Tentukan durasi, kualitas, biaya, dan prioritas Type 36. Prioritas ini jadi acuan nego nanti.</p>
         </div>
         <span x-show="state.owner.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
@@ -136,19 +144,19 @@
             <p class="text-[11px] text-ink-mute mt-1.5">Default mengikuti Quality.</p>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm font-medium mb-1.5">Prioritas Utama</label>
+            <label class="block text-sm font-medium mb-1.5">Prioritas Utama — acuan nego</label>
             <select class="field" x-model="state.owner.priority" :disabled="state.owner.locked">
-              <option value="time">Time — cepat selesai</option>
-              <option value="cost">Cost — hemat biaya</option>
-              <option value="quality">Quality — terbaik</option>
+              <option value="time">Time — jangan molor</option>
+              <option value="cost">Cost — tekan harga, sisakan ruang VO</option>
+              <option value="quality">Quality — jangan turunkan spek</option>
             </select>
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="rounded-xl bg-terra-soft/50 border border-terra/15 p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-terra mb-1">Estimasi biaya</p>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-terra mb-1">Estimasi biaya Owner</p>
             <p class="text-lg font-bold text-terra-dark" x-text="budgetEstimateLabel"></p>
-            <p class="text-[11px] text-clay mt-1">Illustratif Type 36</p>
+            <p class="text-[11px] text-clay mt-1">Illustratif Type 36 · jadi plafon OE</p>
             <p x-show="budgetMismatch" class="mt-2 text-[11px] font-medium text-red-700 bg-red-50 rounded-lg px-2 py-1.5">⚠ Quality Premium + Budget Hemat</p>
           </div>
           <div class="rounded-xl bg-forest-soft/60 border border-forest/15 p-4">
@@ -176,8 +184,8 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 2 · Design</p>
-          <h2 class="text-xl font-bold text-ink">Design Freeze & Deliverables</h2>
-          <p class="text-sm text-ink-soft mt-1">Kurva S hanya untuk konstruksi — akumulasi biaya mengikuti urutan pekerjaan.</p>
+          <h2 class="text-xl font-bold text-ink">Design Freeze & Owner's Estimate</h2>
+          <p class="text-sm text-ink-soft mt-1">Kurva S konstruksi + OE. Penawaran kontraktor menyusul di tab Negosiasi.</p>
         </div>
         <span x-show="state.designer.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
@@ -188,7 +196,8 @@
             <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Design <strong x-text="state.owner.designDuration+' mgg'"></strong></span>
             <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Bangun <strong x-text="state.owner.constructionDuration+' mgg'"></strong></span>
             <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Budget <strong x-text="budgetLevelLabel"></strong></span>
-            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Est. <strong x-text="budgetMidLabel"></strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-terra-soft text-terra-dark border border-terra/20">OE <strong x-text="budgetMidLabel"></strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Fokus <strong class="uppercase" x-text="state.owner.priority"></strong></span>
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -206,14 +215,13 @@
           </div>
         </div>
 
-        <!-- Construction S-curve (line) -->
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
           <div class="flex items-start justify-between gap-3 mb-1">
             <div>
               <h3 class="text-sm font-bold">Kurva S Rencana Konstruksi</h3>
               <p class="text-[11px] text-ink-mute mt-0.5">Akumulasi biaya vs waktu. Bukan desain.</p>
             </div>
-            <span class="text-[11px] text-ink-mute whitespace-nowrap" x-text="state.owner.constructionDuration+' minggu · 100% biaya bangun'"></span>
+            <span class="text-[11px] text-ink-mute whitespace-nowrap" x-text="state.owner.constructionDuration+' minggu · 100% OE'"></span>
           </div>
           <svg class="w-full mt-2" viewBox="0 0 640 248" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Kurva S konstruksi">
             <defs>
@@ -239,19 +247,14 @@
               <text :x="t.x" :y="240" text-anchor="middle" font-size="10" fill="#A8A29E" x-text="t.week"></text>
             </template>
           </svg>
-          <div class="flex flex-wrap gap-4 text-[11px] text-ink-soft mt-1">
-            <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-terra rounded"></span> Biaya kumulatif</span>
-            <span>Sumbu X = minggu konstruksi · Y = % biaya</span>
-          </div>
           <p class="text-[11px] text-ink-mute mt-2 leading-relaxed">
-            Bentuk S muncul dari urutan kerja: site/pondasi (awal, bobot sedang) → struktur–dinding–atap (puncak biaya) → finishing (meruncing).
+            Bentuk S dari urutan kerja: site/pondasi → struktur–dinding–atap (puncak) → finishing (meruncing).
           </p>
         </div>
 
-        <!-- Cost distribution table -->
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
-            <h3 class="text-sm font-bold">Distribusi biaya per pekerjaan</h3>
+            <h3 class="text-sm font-bold">Owner's Estimate per pekerjaan</h3>
             <span class="text-[11px] text-ink-mute">Illustratif Type 36</span>
           </div>
           <div class="overflow-x-auto">
@@ -262,7 +265,7 @@
                   <th class="text-left font-semibold px-2 py-2">Tim</th>
                   <th class="text-left font-semibold px-2 py-2">Minggu</th>
                   <th class="text-right font-semibold px-2 py-2">Bobot</th>
-                  <th class="text-right font-semibold px-3 py-2">Biaya</th>
+                  <th class="text-right font-semibold px-3 py-2">OE</th>
                 </tr>
               </thead>
               <tbody>
@@ -283,7 +286,7 @@
               </tbody>
               <tfoot>
                 <tr class="border-t border-paper-line bg-paper/80">
-                  <td class="px-3 py-2 font-semibold" colspan="3">Total konstruksi</td>
+                  <td class="px-3 py-2 font-semibold" colspan="3">Total OE (plafon Owner)</td>
                   <td class="px-2 py-2 text-right font-semibold">100%</td>
                   <td class="px-3 py-2 text-right font-semibold" x-text="budgetMidLabel"></td>
                 </tr>
@@ -294,8 +297,120 @@
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('owner')" class="btn-ghost">← Kembali</button>
-        <button x-show="!state.designer.locked" @click="handoffToContractor()" class="btn-primary flex-1 sm:flex-none">Handoff ke Kontraktor →</button>
-        <button x-show="state.designer.locked" @click="setStage('contractor-pm')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Kontraktor →</button>
+        <button x-show="!state.designer.locked" @click="handoffToNego()" class="btn-primary flex-1 sm:flex-none">Rilis OE & buka Negosiasi →</button>
+        <button x-show="state.designer.locked" @click="setStage('negotiation')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Negosiasi →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEGOTIATION -->
+  <section x-show="currentStage==='negotiation'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3 · Tender</p>
+          <h2 class="text-xl font-bold text-ink">Negosiasi Kontrak</h2>
+          <p class="text-sm text-ink-soft mt-1">Penawaran di bawah OE supaya pekerjaan tambah ±10% masih masuk budget Owner.</p>
+        </div>
+        <span x-show="state.negotiation.deal" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Deal</span>
+      </div>
+      <div class="p-5 space-y-5">
+
+        <div class="rounded-xl border p-3.5" :class="priorityHint.box">
+          <p class="text-[11px] font-semibold uppercase tracking-wide mb-1" x-text="'Fokus Owner: '+priorityHint.title"></p>
+          <p class="text-xs leading-relaxed" x-text="priorityHint.body"></p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div class="rounded-xl border border-paper-line bg-paper/50 p-3">
+            <p class="text-[10px] uppercase tracking-wide text-ink-mute">Owner's Estimate</p>
+            <p class="text-base font-bold text-ink mt-0.5" x-text="budgetMidLabel"></p>
+          </div>
+          <div class="rounded-xl border border-paper-line bg-paper/50 p-3">
+            <p class="text-[10px] uppercase tracking-wide text-ink-mute">Target aman</p>
+            <p class="text-base font-bold text-terra-dark mt-0.5" x-text="'Rp '+safeBidJt+' jt'"></p>
+            <p class="text-[10px] text-ink-mute">OE ÷ 1,1</p>
+          </div>
+          <div class="rounded-xl border border-paper-line bg-paper/50 p-3">
+            <p class="text-[10px] uppercase tracking-wide text-ink-mute">Penawaran</p>
+            <p class="text-base font-bold mt-0.5" :class="bidDeltaPct<0?'text-forest':'text-ink'" x-text="'Rp '+(state.negotiation.bidPriceJt||0)+' jt'"></p>
+            <p class="text-[10px]" :class="bidDeltaPct<0?'text-forest':'text-ink-mute'" x-text="bidDeltaLabel"></p>
+          </div>
+          <div class="rounded-xl border p-3" :class="voFits?'border-forest/20 bg-forest-soft/50':'border-red-200 bg-red-50'">
+            <p class="text-[10px] uppercase tracking-wide" :class="voFits?'text-forest':'text-red-700'">Jika VO +10%</p>
+            <p class="text-base font-bold mt-0.5" :class="voFits?'text-forest':'text-red-800'" x-text="'Rp '+voPlus10+' jt'"></p>
+            <p class="text-[10px]" :class="voFits?'text-forest':'text-red-700'" x-text="voFits?'Masih ≤ OE':'Melebihi OE'"></p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-sm font-medium">Harga penawaran (jt)</label>
+              <button type="button" class="text-[11px] font-semibold text-terra" :disabled="state.negotiation.deal" @click="applySafeBid()">Pakai target aman</button>
+            </div>
+            <input type="range" class="w-full accent-[#C45C26]" step="1"
+              :min="Math.round(oeJt*0.75)" :max="oeJt"
+              x-model.number="state.negotiation.bidPriceJt" :disabled="state.negotiation.deal">
+            <div class="flex justify-between text-[10px] text-ink-mute mt-1">
+              <span x-text="'Min Rp '+Math.round(oeJt*0.75)+' jt'"></span>
+              <span>OE</span>
+            </div>
+            <input type="number" class="field mt-2" step="0.5" :min="Math.round(oeJt*0.75)" :max="oeJt"
+              x-model.number="state.negotiation.bidPriceJt" :disabled="state.negotiation.deal">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Durasi ditawarkan</label>
+              <select class="field" x-model.number="state.negotiation.bidDuration" :disabled="state.negotiation.deal">
+                <option :value="state.owner.constructionDuration-2" x-show="state.owner.constructionDuration>12" x-text="(state.owner.constructionDuration-2)+' minggu (lebih cepat)'"></option>
+                <option :value="state.owner.constructionDuration" x-text="state.owner.constructionDuration+' minggu (sesuai Owner)'"></option>
+                <option :value="state.owner.constructionDuration+2" x-text="(state.owner.constructionDuration+2)+' minggu (lebih lama)'"></option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">Quality ditawarkan</label>
+              <select class="field" x-model="state.negotiation.bidQuality" :disabled="state.negotiation.deal">
+                <option value="standard">Standard</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div x-show="state.negotiation.lastResult" class="rounded-xl border p-4"
+          :class="state.negotiation.lastResult.status==='accept'?'bg-forest-soft/70 border-forest/20':(state.negotiation.lastResult.status==='reject'?'bg-red-50 border-red-200':'bg-amber-50 border-amber-200')">
+          <p class="text-[11px] font-semibold uppercase tracking-wide mb-1"
+            :class="state.negotiation.lastResult.status==='accept'?'text-forest':(state.negotiation.lastResult.status==='reject'?'text-red-800':'text-amber-800')"
+            x-text="state.negotiation.lastResult.title"></p>
+          <p class="text-sm" x-text="state.negotiation.lastResult.body"></p>
+          <ul class="mt-2 space-y-1 text-xs" x-show="(state.negotiation.lastResult.issues||[]).length">
+            <template x-for="iss in state.negotiation.lastResult.issues" :key="iss.text">
+              <li x-text="'• '+iss.text"></li>
+            </template>
+          </ul>
+          <p class="mt-2 text-xs font-medium" x-show="state.negotiation.lastResult.ask" x-text="state.negotiation.lastResult.ask && state.negotiation.lastResult.ask.label"></p>
+          <button x-show="state.negotiation.lastResult.ask && !state.negotiation.deal"
+            @click="applyOwnerAsk()" class="mt-3 btn-ghost text-sm">Terapkan usulan Owner</button>
+        </div>
+
+        <div x-show="state.negotiation.deal && state.negotiation.contract" class="rounded-xl border border-forest/25 bg-forest-soft/40 p-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-forest mb-2">Kontrak dikunci</p>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div>Nilai kontrak <strong class="block" x-text="'Rp '+state.negotiation.contract.price+' jt'"></strong></div>
+            <div>Cadangan VO <strong class="block" x-text="'Rp '+state.negotiation.contract.contingency+' jt ('+state.negotiation.contract.contingencyPct+'%)'"></strong></div>
+            <div>Durasi <strong class="block" x-text="state.negotiation.contract.duration+' minggu'"></strong></div>
+            <div>Quality <strong class="block capitalize" x-text="state.negotiation.contract.quality"></strong></div>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-ink-mute" x-show="!state.negotiation.deal" x-text="'Putaran '+(state.negotiation.round||0)+' / '+state.negotiation.maxRounds"></p>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
+        <button @click="setStage('designer')" class="btn-ghost">← Kembali</button>
+        <button x-show="!state.negotiation.deal" @click="submitBid()" class="btn-primary flex-1 sm:flex-none">Ajukan ke Owner</button>
+        <button x-show="state.negotiation.deal" @click="setStage('contractor-pm')" class="btn-primary flex-1 sm:flex-none">Masuk ke Kontraktor →</button>
+        <button x-show="!state.negotiation.deal && state.negotiation.round>0" @click="resetNego()" class="btn-danger">Reset penawaran</button>
       </div>
     </div>
   </section>
@@ -304,14 +419,15 @@
   <section x-show="currentStage==='contractor-pm'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3a · Proyek</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 4a · Proyek</p>
         <h2 class="text-xl font-bold text-ink">Manajemen Proyek</h2>
       </div>
       <div class="p-5 space-y-3">
-        <div class="rounded-xl bg-amber-50/80 border border-amber-200/60 p-3.5 text-xs text-amber-900/80">
-          Freeze Mgg <strong x-text="state.designer.designFreezeWeek||state.owner.designDuration"></strong>
-          · Bangun <strong x-text="state.owner.constructionDuration+' mgg'"></strong>
-          · Budget <strong x-text="budgetLevelLabel"></strong>
+        <div class="rounded-xl bg-forest-soft/50 border border-forest/15 p-3.5 text-xs text-forest" x-show="state.negotiation.contract">
+          Kontrak <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.price)+' jt'"></strong>
+          · VO cadangan <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.contingency)+' jt'"></strong>
+          · <span x-text="(state.negotiation.contract&&state.negotiation.contract.duration)+' mgg'"></span>
+          · <span class="capitalize" x-text="state.negotiation.contract&&state.negotiation.contract.quality"></span>
         </div>
         <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-10 text-center">
           <p class="font-semibold text-ink-soft">Sticky Note Board</p>
@@ -319,7 +435,7 @@
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex gap-2">
-        <button @click="setStage('designer')" class="btn-ghost">← Kembali</button>
+        <button @click="setStage('negotiation')" class="btn-ghost">← Negosiasi</button>
         <button @click="setStage('contractor-production')" class="btn-primary">Manajemen Produksi →</button>
       </div>
     </div>
@@ -329,7 +445,7 @@
   <section x-show="currentStage==='contractor-production'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3b · Produksi LPS</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 4b · Produksi LPS</p>
         <h2 class="text-xl font-bold text-ink">Manajemen Produksi</h2>
       </div>
       <div class="p-5">
@@ -349,7 +465,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.1.0';
+const VER = '1.2.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -372,6 +488,7 @@ function budgetMid(level, quality) {
   const m = quality === 'premium' ? 1.2 : 1;
   return Math.round(((b.min + b.max) / 2) * m);
 }
+function safeBid(oe) { return Math.round((oe / 1.1) * 10) / 10; }
 
 function buildPlan(totalWeeks, midJt) {
   const byId = Object.fromEntries(WORKS.map(w => [w.id, { ...w }]));
@@ -389,9 +506,7 @@ function buildPlan(totalWeeks, midJt) {
     const s0 = start[w.id] * scale;
     const e0 = (start[w.id] + w.dur) * scale;
     return {
-      ...w,
-      start0: s0,
-      end0: e0,
+      ...w, start0: s0, end0: e0,
       startWeek: Math.floor(s0) + 1,
       finishWeek: Math.min(totalWeeks, Math.max(Math.floor(s0) + 1, Math.ceil(e0 - 1e-6))),
       costJt: Math.round(midJt * w.weight * 10) / 10,
@@ -408,20 +523,10 @@ function buildPlan(totalWeeks, midJt) {
   const sum = weekly.reduce((s, x) => s + x, 0) || 1;
   let cum = 0;
   const curve = weekly.map((v, i) => {
-    const wv = v / sum;
-    cum += wv;
-    return {
-      week: i + 1,
-      weeklyPct: Math.round(wv * 1000) / 10,
-      planned: Math.round(cum * 1000) / 10,
-      weeklyJt: Math.round(midJt * wv * 10) / 10,
-      cumJt: Math.round(midJt * cum * 10) / 10,
-    };
+    const wv = v / sum; cum += wv;
+    return { week: i + 1, weeklyPct: Math.round(wv * 1000) / 10, planned: Math.round(cum * 1000) / 10, weeklyJt: Math.round(midJt * wv * 10) / 10, cumJt: Math.round(midJt * cum * 10) / 10 };
   });
-  if (curve.length) {
-    curve[curve.length - 1].planned = 100;
-    curve[curve.length - 1].cumJt = midJt;
-  }
+  if (curve.length) { curve[curve.length - 1].planned = 100; curve[curve.length - 1].cumJt = midJt; }
   return { plan, curve };
 }
 
@@ -442,37 +547,88 @@ function smoothPath(pts) {
   return d;
 }
 
+function emptyNego() {
+  return { bidPriceJt: null, bidDuration: null, bidQuality: 'standard', round: 0, maxRounds: 3, deal: false, lastResult: null, history: [], contract: null };
+}
+
+function evaluateOwner(owner, nego, oe) {
+  const price = Number(nego.bidPriceJt);
+  const dur = Number(nego.bidDuration);
+  const q = nego.bidQuality;
+  const target = safeBid(oe);
+  const voIf10 = Math.round(price * 1.1 * 10) / 10;
+  const voFits = voIf10 <= oe + 0.05;
+  const ratio = price / oe;
+  const dDur = dur - owner.constructionDuration;
+  const issues = [];
+  const praises = [];
+  const prio = owner.priority;
+
+  if (!(price > 0)) issues.push({ type:'cost', text:'Harga penawaran belum diisi.' });
+  if (price > oe) issues.push({ type:'cost', text:'Penawaran melebihi Owner\'s Estimate.' });
+  else if (!voFits) issues.push({ type:'cost', text:`VO +10% = Rp ${voIf10} jt, melebihi OE Rp ${oe} jt.` });
+  else if (ratio < 0.82) issues.push({ type:'cost', text:'Terlalu murah — Owner curiga spek dipangkas atau klaim VO agresif.' });
+  else if (Math.abs(price - target) <= oe * 0.03) praises.push('Harga menyisakan ~10% untuk pekerjaan tambah.');
+  else if (price < target) praises.push('Harga di bawah OE/1,1 — ruang VO lebih longgar.');
+
+  if (dDur > 0) issues.push({ type:'time', text:`Durasi molor ${dDur} minggu dari constraint Owner.` });
+  else if (dDur < 0) praises.push(`Lebih cepat ${-dDur} minggu.`);
+  else praises.push('Durasi sesuai constraint Owner.');
+
+  if (owner.qualityLevel === 'premium' && q !== 'premium') issues.push({ type:'quality', text:'Owner menetapkan Premium — spek tidak boleh diturunkan.' });
+  else if (q === 'premium' && owner.qualityLevel === 'standard') praises.push('Quality di atas constraint.');
+  else praises.push('Quality sesuai Owner.');
+
+  if (price > oe) {
+    return { status:'reject', title:'Ditolak — di atas OE', body:'Owner tidak tanda tangan di atas OE. Tidak ada ruang pekerjaan tambah.', issues, praises, ask:{ field:'price', value:target, label:`Turunkan ke Rp ${target} jt (target aman).` } };
+  }
+  if (prio === 'time' && dDur > 0) {
+    return { status:'counter', title:'Owner minta nego durasi', body:'Fokus Owner: TIME. Molor tidak diterima.', issues, praises, ask:{ field:'duration', value:owner.constructionDuration, label:`Kembalikan durasi ke ${owner.constructionDuration} minggu.` } };
+  }
+  if (prio === 'quality' && owner.qualityLevel === 'premium' && q !== 'premium') {
+    return { status:'counter', title:'Owner minta pertahankan spek', body:'Fokus Owner: QUALITY. Jangan turunkan Premium demi harga.', issues, praises, ask:{ field:'quality', value:'premium', label:'Kembalikan Quality ke Premium.' } };
+  }
+  if (prio === 'cost' && !voFits && price <= oe) {
+    return { status:'counter', title:'Owner minta turun harga', body:'Fokus Owner: COST. Harga terlalu dekat OE — pekerjaan tambah 10% akan overflow.', issues, praises, ask:{ field:'price', value:target, label:`Turunkan ke Rp ${target} jt (OE ÷ 1,1).` } };
+  }
+  if ((prio === 'cost' || prio === 'quality') && ratio < 0.82) {
+    return { status:'counter', title:'Owner curiga harga dumping', body:'Terlalu murah. Owner khawatir kualitas dan klaim VO.', issues, praises, ask:{ field:'price', value:target, label:`Naikkan ke kisaran Rp ${target} jt.` } };
+  }
+  if (prio === 'quality' && !voFits) {
+    return { status:'counter', title:'Catatan budget', body:'Quality OK, tapi tanpa cadangan VO 10% Owner tetap ragu.', issues, praises, ask:{ field:'price', value:target, label:`Sesuaikan ke Rp ${target} jt.` } };
+  }
+
+  const durationOk = dDur <= 0 || (prio !== 'time' && dDur <= 1);
+  const qualityOk = !(owner.qualityLevel === 'premium' && q !== 'premium');
+  if (price <= oe && durationOk && qualityOk && (voFits || prio !== 'cost')) {
+    return { status:'accept', title:'Deal', body:'Owner menerima. Nilai kontrak dikunci; sisa OE jadi cadangan pekerjaan tambah.', issues, praises, ask:null };
+  }
+  if (issues.length) {
+    return { status:'counter', title:'Owner minta penyesuaian', body:`Fokus Owner: ${prio.toUpperCase()}. Ada poin yang belum pas.`, issues, praises, ask:null };
+  }
+  return { status:'accept', title:'Deal', body:'Owner menerima penawaran.', issues, praises, ask:null };
+}
+
 function initState() {
   return {
     version: VER,
     currentStage: 'owner',
-    owner: {
-      designDuration: 6,
-      constructionDuration: 16,
-      qualityLevel: 'standard',
-      budgetLevel: 'standard',
-      priority: 'time',
-      plannedSCurve: [],
-      workPlan: [],
-      locked: false,
-    },
-    designer: { designFreezeWeek: null, levelOfDetail: 'detailed', locked: false },
+    owner: { designDuration:6, constructionDuration:16, qualityLevel:'standard', budgetLevel:'standard', priority:'time', plannedSCurve:[], workPlan:[], locked:false },
+    designer: { designFreezeWeek:null, levelOfDetail:'detailed', locked:false },
+    negotiation: emptyNego(),
   };
 }
-
 function loadState() {
   try {
     const r = localStorage.getItem(SK);
     if (!r) return initState();
     const p = JSON.parse(r);
     if (p.version !== VER) return initState();
+    if (!p.negotiation) p.negotiation = emptyNego();
     return p;
   } catch { return initState(); }
 }
-
-function saveState(s) {
-  try { localStorage.setItem(SK, JSON.stringify(s)); } catch {}
-}
+function saveState(s) { try { localStorage.setItem(SK, JSON.stringify(s)); } catch {} }
 
 Alpine.data('app', () => ({
   state: null,
@@ -481,23 +637,37 @@ Alpine.data('app', () => ({
   init() {
     this.state = loadState();
     if (!this.state.owner.budgetLevel) this.state.owner.budgetLevel = 'standard';
+    if (!this.state.negotiation) this.state.negotiation = emptyNego();
     this.currentStage = this.state.currentStage || 'owner';
     this.recalcPlan();
   },
 
-  get budgetLevelLabel() {
-    return ({ hemat:'Hemat', standard:'Standar', premium:'Premium' })[this.state.owner.budgetLevel] || this.state.owner.budgetLevel;
-  },
+  get oeJt() { return budgetMid(this.state.owner.budgetLevel, this.state.owner.qualityLevel); },
+  get budgetLevelLabel() { return ({ hemat:'Hemat', standard:'Standar', premium:'Premium' })[this.state.owner.budgetLevel] || this.state.owner.budgetLevel; },
   get budgetEstimateLabel() {
     const b = BB[this.state.owner.budgetLevel] || BB.standard;
     const m = this.state.owner.qualityLevel === 'premium' ? 1.2 : 1;
     return `Rp ${Math.round(b.min*m)}–${Math.round(b.max*m)} jt`;
   },
-  get budgetMidLabel() {
-    return `Rp ${budgetMid(this.state.owner.budgetLevel, this.state.owner.qualityLevel)} jt`;
+  get budgetMidLabel() { return `Rp ${this.oeJt} jt`; },
+  get budgetMismatch() { return this.state.owner.qualityLevel === 'premium' && this.state.owner.budgetLevel === 'hemat'; },
+  get safeBidJt() { return safeBid(this.oeJt); },
+  get voPlus10() { return Math.round((Number(this.state.negotiation.bidPriceJt)||0) * 1.1 * 10) / 10; },
+  get voFits() { return this.voPlus10 <= this.oeJt + 0.05; },
+  get bidDeltaPct() {
+    const p = Number(this.state.negotiation.bidPriceJt)||0;
+    return this.oeJt ? Math.round((p - this.oeJt) / this.oeJt * 1000) / 10 : 0;
   },
-  get budgetMismatch() {
-    return this.state.owner.qualityLevel === 'premium' && this.state.owner.budgetLevel === 'hemat';
+  get bidDeltaLabel() {
+    const d = this.bidDeltaPct;
+    if (!d) return 'Setara OE';
+    return (d < 0 ? '' : '+') + d + '% vs OE';
+  },
+  get priorityHint() {
+    const p = this.state.owner.priority;
+    if (p === 'cost') return { title:'COST', box:'border-terra/25 bg-terra-soft/40', body:'Harga jadi acuan. Ideal: penawaran ≈ OE ÷ 1,1 agar VO +10% masih ≤ budget Owner. Terlalu murah juga dicurigai.' };
+    if (p === 'quality') return { title:'QUALITY', box:'border-forest/20 bg-forest-soft/50', body:'Spek jadi acuan. Jangan turunkan quality. Harga boleh lebih tinggi asal ≤ OE dan masih ada cadangan VO.' };
+    return { title:'TIME', box:'border-amber-200 bg-amber-50', body:'Durasi jadi acuan. Molor = ditolak. Harga boleh dekat OE, tapi tetap lebih aman jika ada ruang VO 10%.' };
   },
   get scurveChart() {
     const padL = 36, padR = 14, padT = 10, padB = 28;
@@ -506,54 +676,43 @@ Alpine.data('app', () => ({
     const innerH = H - padT - padB;
     const curve = this.state.owner.plannedSCurve || [];
     const n = Math.max(1, curve.length);
-    const pts = [{ week: 0, planned: 0, cumJt: 0, x: padL, y: padT + innerH }].concat(
-      curve.map((p, i) => ({
-        ...p,
-        x: padL + ((i + 1) / n) * innerW,
-        y: padT + (1 - p.planned / 100) * innerH,
-      }))
+    const pts = [{ week:0, planned:0, cumJt:0, x:padL, y:padT+innerH }].concat(
+      curve.map((p, i) => ({ ...p, x: padL + ((i + 1) / n) * innerW, y: padT + (1 - p.planned / 100) * innerH }))
     );
     const last = pts[pts.length - 1];
     const line = smoothPath(pts);
     const area = line + ` L ${last.x} ${padT+innerH} L ${padL} ${padT+innerH} Z`;
-    const yGrid = [0, 25, 50, 75, 100].map(pct => ({
-      pct, y: padT + (1 - pct / 100) * innerH,
-    }));
+    const yGrid = [0,25,50,75,100].map(pct => ({ pct, y: padT + (1 - pct / 100) * innerH }));
     const step = n <= 12 ? 2 : 4;
     const xTicks = [];
-    for (let w = 1; w <= n; w++) {
-      if (w === 1 || w === n || w % step === 0) {
-        xTicks.push({ week: w, x: padL + (w / n) * innerW });
-      }
-    }
+    for (let w = 1; w <= n; w++) if (w === 1 || w === n || w % step === 0) xTicks.push({ week:w, x: padL + (w / n) * innerW });
     return { padL, padR, line, area, dots: pts.slice(1), yGrid, xTicks };
   },
 
   canAccessDesigner() { return this.state.owner.locked === true; },
-  canAccessContractor() { return this.state.owner.locked && this.state.designer.locked; },
+  canAccessNego() { return this.state.owner.locked && this.state.designer.locked; },
+  canAccessContractor() { return this.canAccessNego() && this.state.negotiation.deal === true; },
 
   setStage(s) {
     if (s === 'designer' && !this.canAccessDesigner()) return;
+    if (s === 'negotiation' && !this.canAccessNego()) return;
     if (s.startsWith('contractor') && !this.canAccessContractor()) return;
     this.currentStage = s;
     this.state.currentStage = s;
     this.save();
   },
-
   onQualityChange() {
     if (this.state.owner.qualityLevel === 'premium') this.state.owner.budgetLevel = 'premium';
     else if (this.state.owner.budgetLevel === 'premium') this.state.owner.budgetLevel = 'standard';
     this.recalcPlan();
   },
-
   recalcPlan() {
     const weeks = this.state.owner.constructionDuration || 16;
-    const mid = budgetMid(this.state.owner.budgetLevel, this.state.owner.qualityLevel);
+    const mid = this.oeJt;
     const { plan, curve } = buildPlan(weeks, mid);
     this.state.owner.workPlan = plan;
     this.state.owner.plannedSCurve = curve;
   },
-
   lockOwnerAndNext() {
     this.recalcPlan();
     this.state.owner.locked = true;
@@ -561,16 +720,15 @@ Alpine.data('app', () => ({
     this.save();
     this.setStage('designer');
   },
-
   unlockOwner() {
-    if (confirm('Unlock Owner akan mereset Designer juga. Lanjutkan?')) {
+    if (confirm('Unlock Owner mereset Designer dan Negosiasi. Lanjutkan?')) {
       this.state.owner.locked = false;
       this.state.designer.locked = false;
+      this.state.negotiation = emptyNego();
       this.save();
     }
   },
-
-  handoffToContractor() {
+  handoffToNego() {
     const max = this.state.owner.designDuration;
     if (!this.state.designer.designFreezeWeek || this.state.designer.designFreezeWeek > max) {
       alert(`Design Freeze harus antara 1 dan ${max}.`);
@@ -578,31 +736,80 @@ Alpine.data('app', () => ({
     }
     this.recalcPlan();
     this.state.designer.locked = true;
+    this.initNegotiation();
     this.save();
-    this.setStage('contractor-pm');
+    this.setStage('negotiation');
   },
-
+  initNegotiation() {
+    const n = emptyNego();
+    n.bidPriceJt = this.safeBidJt;
+    n.bidDuration = this.state.owner.constructionDuration;
+    n.bidQuality = this.state.owner.qualityLevel;
+    this.state.negotiation = n;
+  },
+  applySafeBid() {
+    if (this.state.negotiation.deal) return;
+    this.state.negotiation.bidPriceJt = this.safeBidJt;
+    this.state.negotiation.bidDuration = this.state.owner.constructionDuration;
+    this.state.negotiation.bidQuality = this.state.owner.qualityLevel;
+  },
+  applyOwnerAsk() {
+    const ask = this.state.negotiation.lastResult && this.state.negotiation.lastResult.ask;
+    if (!ask) return;
+    if (ask.field === 'price') this.state.negotiation.bidPriceJt = ask.value;
+    if (ask.field === 'duration') this.state.negotiation.bidDuration = ask.value;
+    if (ask.field === 'quality') this.state.negotiation.bidQuality = ask.value;
+  },
+  resetNego() {
+    this.initNegotiation();
+    this.save();
+  },
+  submitBid() {
+    const n = this.state.negotiation;
+    if (n.deal) return;
+    if (n.round >= n.maxRounds) {
+      n.lastResult = { status:'reject', title:'Putaran habis', body:'Tiga kali nego tanpa deal. Reset penawaran atau unlock Owner.', issues:[], praises:[], ask:null };
+      this.save();
+      return;
+    }
+    n.round += 1;
+    const result = evaluateOwner(this.state.owner, n, this.oeJt);
+    if (n.round >= n.maxRounds && result.status !== 'accept') {
+      result.status = 'reject';
+      result.title = 'Tidak deal';
+      result.body = 'Sudah 3 putaran. Owner menutup nego. Reset atau ubah constraint Owner.';
+    }
+    n.lastResult = result;
+    n.history.push({ round:n.round, price:n.bidPriceJt, duration:n.bidDuration, quality:n.bidQuality, status:result.status });
+    if (result.status === 'accept') {
+      n.deal = true;
+      const price = Number(n.bidPriceJt);
+      const contingency = Math.round((this.oeJt - price) * 10) / 10;
+      n.contract = {
+        price,
+        duration: Number(n.bidDuration),
+        quality: n.bidQuality,
+        oe: this.oeJt,
+        contingency,
+        contingencyPct: this.oeJt ? Math.round(contingency / this.oeJt * 1000) / 10 : 0,
+      };
+    }
+    this.save();
+  },
   save() { saveState(this.state); },
-
   exportJSON() {
-    const b = new Blob([JSON.stringify(this.state, null, 2)], { type: 'application/json' });
+    const b = new Blob([JSON.stringify(this.state, null, 2)], { type:'application/json' });
     const u = URL.createObjectURL(b);
-    const a = document.createElement('a');
-    a.href = u;
-    a.download = `SiapKerja_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(u);
+    const a = document.createElement('a'); a.href = u; a.download = `SiapKerja_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(u);
   },
-
   async importJSON(e) {
-    const f = e.target.files[0];
-    if (!f) return;
+    const f = e.target.files[0]; if (!f) return;
     try {
-      const t = await f.text();
-      const p = JSON.parse(t);
+      const p = JSON.parse(await f.text());
       if (!p.version) throw new Error('Invalid');
       if (confirm('Import akan menimpa progress. Lanjutkan?')) {
         this.state = p;
+        if (!this.state.negotiation) this.state.negotiation = emptyNego();
         this.currentStage = p.currentStage || 'owner';
         this.recalcPlan();
         saveState(this.state);
@@ -612,7 +819,6 @@ Alpine.data('app', () => ({
     e.target.value = '';
   }
 }));
-
 Alpine.start();
 </script>
 </body>
