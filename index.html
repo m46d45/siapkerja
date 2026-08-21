@@ -767,6 +767,47 @@
           </ul>
         </div>
       </div>
+            <div x-show="state.contractor.pullLocked" class="p-5 border-t border-paper-line space-y-3">
+        <div class="flex items-end justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-forest">Jadwal Phase Plan (terkunci)</h3>
+            <p class="text-[11px] text-ink-mute">Urutan maju: awal → akhir. Baseline produksi sebelum Look-ahead.</p>
+          </div>
+          <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-forest-soft text-forest">Terkunci</span>
+        </div>
+        <div class="board-scroll">
+          <div class="phase-col">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
+            <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[72px]">
+              <p class="text-sm font-bold text-ink-soft">Mulai</p>
+              <p class="text-[11px] text-ink-mute mt-1">Minggu 1</p>
+            </div>
+          </div>
+          <template x-for="ph in forwardPhasesView" :key="'fwd'+ph.id">
+            <div class="phase-col">
+              <div class="mb-2 px-0.5">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                <p class="text-[9px] text-ink-mute" x-text="ph.isFocus ? '★ dari latihan' : 'Given'"></p>
+              </div>
+              <div class="space-y-2">
+                <template x-for="w in ph.stickies" :key="'f'+w.id">
+                  <div class="sticky-note opacity-90" :style="'--c:'+w.color">
+                    <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
+                    <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <div class="phase-col">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Milestone</p>
+            <div class="rounded-xl border-2 border-dashed border-forest/40 bg-forest-soft/50 p-3 min-h-[72px]">
+              <p class="text-sm font-bold text-forest">Serah terima</p>
+              <p class="text-[11px] text-forest mt-1" x-text="'Minggu '+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('contractor-master')" class="btn-ghost">← Master Plan</button>
         <button x-show="!state.contractor.pullLocked" @click="lockPullPlan()" class="btn-primary flex-1 sm:flex-none">Kunci Phase Plan →</button>
@@ -1315,6 +1356,39 @@ Alpine.data('app', () => ({
         });
       }
       stickies.sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
+      return { ...ph, isFocus, stickies };
+    });
+  },
+    get forwardPhasesView() {
+    // Setelah dikunci: urutan maju (awal → akhir), kebalikan papan pull.
+    return this.phasesView.map(ph => {
+      const isFocus = ph.id === FOCUS_PHASE;
+      const stickies = [];
+      for (const w of (ph.works || [])) {
+        const zones = WORK_ZONES[w.id] || ['z3'];
+        const start = Number(w.startWeek) || 1;
+        const finish = Number(w.finishWeek) || start;
+        const weeks = [];
+        for (let m = start; m <= finish; m++) weeks.push(m);
+        weeks.forEach((wk, wi) => {
+          const zid = zones[wi % zones.length];
+          const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
+          const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
+          stickies.push({
+            id: w.id + '_w' + wk + '_' + zid,
+            parentId: w.id,
+            name: w.name,
+            team: w.team,
+            color: w.color,
+            startWeek: wk,
+            finishWeek: wk,
+            zoneId: zid,
+            zoneLabel,
+            isFocus,
+          });
+        });
+      }
+      stickies.sort((a, b) => (a.startWeek - b.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
   },
