@@ -697,8 +697,11 @@
                       <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
                         x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(ph.isFocus ? (state.contractor.reviewed[w.id]?'ditinjau':'ketuk') : 'given')"></p>
                     </button>
-                  </template>
-                        <div class="phase-col">
+                                   </template>
+                </div>
+              </div>
+            </template>
+            <div class="phase-col">
               <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
               <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[84px]">
                 <p class="text-sm font-bold text-ink-soft">Mulai</p>
