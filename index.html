@@ -687,18 +687,17 @@
                     <button type="button" class="sticky-note" :style="'--c:'+w.color"
                       :class="{
                         'is-on': state.contractor.selectedWork===w.id,
-                        'is-committed': !!(state.contractor.commitments||{})[w.team]
+                        'is-committed': !!(state.contractor.commitments||{})[w.team],
+                        'opacity-70': !ph.isFocus
                       }"
-                      @click="selectWork(w.id)">
+                      :disabled="!ph.isFocus || state.contractor.pullLocked"
+                      @click="ph.isFocus && selectWork(w.id)">
                       <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
-                      <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek+(w.finishWeek!==w.startWeek ? ('–'+w.finishWeek) : '')"></p>
+                      <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
                       <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
-                        x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(state.contractor.reviewed[w.id]?'ditinjau':'ketuk')"></p>
+                        x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(ph.isFocus ? (state.contractor.reviewed[w.id]?'ditinjau':'ketuk') : 'given')"></p>
                     </button>
                   </template>
-                </div>
-              </div>
-            </template>
                         <div class="phase-col">
               <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
               <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[84px]">
@@ -1282,49 +1281,37 @@ Alpine.data('app', () => ({
     });
   },
   get pullPhasesView() {
+    // Semua fase: sticky = pekerjaan × minggu × zona. Struktur = latihan; lain = given (read-only).
     return this.phasesView.slice().reverse().map(ph => {
       const isFocus = ph.id === FOCUS_PHASE;
-      let stickies;
-      if (isFocus) {
-        stickies = [];
-        for (const w of (ph.works || [])) {
-          const zones = WORK_ZONES[w.id] || ['z3'];
-          const start = Number(w.startWeek) || 1;
-          const finish = Number(w.finishWeek) || start;
-          const weeks = [];
-          for (let m = start; m <= finish; m++) weeks.push(m);
-          weeks.forEach((wk, wi) => {
-            const zid = zones[wi % zones.length];
-            const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
-            const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
-            stickies.push({
-              id: w.id + '_w' + wk + '_' + zid,
-              parentId: w.id,
-              name: w.name,
-              team: w.team,
-              color: w.color,
-              startWeek: wk,
-              finishWeek: wk,
-              zoneId: zid,
-              zoneLabel,
-              costJt: w.costJt,
-              isFocus: true,
-              pred: w.pred || [],
-            });
-          });
-        }
-        stickies.sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
-      } else {
-        stickies = (ph.works || []).slice()
-          .sort((a, b) => (b.finishWeek - a.finishWeek) || (b.startWeek - a.startWeek))
-          .map(w => ({
-            ...w,
+      const stickies = [];
+      for (const w of (ph.works || [])) {
+        const zones = WORK_ZONES[w.id] || ['z3'];
+        const start = Number(w.startWeek) || 1;
+        const finish = Number(w.finishWeek) || start;
+        const weeks = [];
+        for (let m = start; m <= finish; m++) weeks.push(m);
+        weeks.forEach((wk, wi) => {
+          const zid = zones[wi % zones.length];
+          const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
+          const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
+          stickies.push({
+            id: w.id + '_w' + wk + '_' + zid,
             parentId: w.id,
-            zoneId: (WORK_ZONES[w.id] || [])[0] || null,
-            zoneLabel: null,
-            isFocus: false,
-          }));
+            name: w.name,
+            team: w.team,
+            color: w.color,
+            startWeek: wk,
+            finishWeek: wk,
+            zoneId: zid,
+            zoneLabel,
+            costJt: w.costJt,
+            isFocus,
+            pred: w.pred || [],
+          });
+        });
       }
+      stickies.sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
   },
@@ -1602,24 +1589,34 @@ Alpine.data('app', () => ({
     }
     this.state.contractor.phaseWindows = wins;
     this.state.contractor.milestonesLocked = true;
-    this.seedStrukturConstraints();
+    this.seedGivenConstraints();
     this.save();
   },
-  seedStrukturConstraints() {
+  seedGivenConstraints() {
     const c = this.state.contractor;
     if ((c.constraints || []).some(x => x.seeded)) return;
-    const focus = (this.pullPhasesView || []).find(p => p.id === FOCUS_PHASE);
-    const stickies = (focus && focus.stickies) || [];
-    if (!stickies.length) return;
-    const picks = stickies.filter((_, i) => i % 3 === 1).slice(0, 4);
-    const types = ['material', 'labor', 'info', 'access'];
+    const all = [];
+    for (const ph of (this.pullPhasesView || [])) {
+      for (const s of (ph.stickies || [])) all.push(s);
+    }
+    if (!all.length) return;
+    const picks = [];
+    all.forEach((s, i) => {
+      if (s.isFocus && i % 3 === 1) picks.push(s);
+      else if (!s.isFocus && i % 7 === 0) picks.push(s);
+    });
+    const types = ['material', 'labor', 'info', 'access', 'prereq', 'weather'];
     const notes = [
       'Besi tulangan belum sampai site',
       'Tukang besi baru available minggu depan',
       'Shop drawing kolom belum approve',
       'Akses scaffolding belum aman',
+      'Pekerjaan sebelumnya belum serah terima',
+      'Prakiraan hujan deras 2 hari',
+      'Material keramik masih indent',
+      'MEP layout belum final',
     ];
-    const seeded = picks.map((s, i) => ({
+    const seeded = picks.slice(0, 8).map((s, i) => ({
       id: 'seed' + Date.now() + i,
       workId: s.id,
       workLabel: s.name + ' · ' + s.zoneLabel + ' · M' + s.startWeek,
