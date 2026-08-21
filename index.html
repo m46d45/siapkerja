@@ -25,8 +25,7 @@
     }
   </script>
   <style>
-    button{cursor:pointer}
-    button:disabled{cursor:default}
+    [x-cloak]{display:none!important}
     html,body{background:#F7F3EE}
     .field{width:100%;border:1.5px solid #E8E0D5;background:#FFFcf8;border-radius:12px;padding:.7rem .9rem;font-size:.95rem;color:#1C1917}
     .field:focus{outline:none;border-color:#C45C26;box-shadow:0 0 0 3px rgba(196,92,38,.15)}
@@ -42,6 +41,8 @@
     .sticky-note{display:block;width:100%;text-align:left;background:#FFF8E1;border:0;border-left:4px solid var(--c,#C45C26);border-radius:3px;box-shadow:0 1px 1px rgba(28,25,23,.06),0 5px 12px rgba(28,25,23,.07);padding:.65rem .7rem;min-height:84px;cursor:pointer}
     .sticky-note.is-on{box-shadow:0 0 0 2px #C45C26, 0 5px 12px rgba(28,25,23,.08)}
     .sticky-note:disabled{cursor:default}
+    .gantt-label{width:132px;flex-shrink:0;padding-right:8px}
+    .gantt-bar{position:absolute;top:4px;height:14px;border-radius:3px;min-width:6px}
   </style>
 </head>
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
@@ -283,7 +284,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3 · Tender</p>
           <h2 class="text-xl font-bold text-ink">Negosiasi Kontrak</h2>
-          <p class="text-sm text-ink-soft mt-1">Deal mengunci nilai, durasi, dan Kurva S kontrak (sumbu Rp × minggu) — itu yang nanti diprogress kontraktor.</p>
+          <p class="text-sm text-ink-soft mt-1">Deal mengunci nilai, durasi, Kurva S, dan Gantt — itu dokumen kontrak yang diprogress kontraktor.</p>
         </div>
         <span x-show="state.negotiation.deal" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Deal</span>
       </div>
@@ -384,12 +385,52 @@
               <h3 class="text-sm font-bold" x-text="state.negotiation.deal ? 'Kurva S Kontrak' : 'Pratinjau Kurva S penawaran'"></h3>
               <p class="text-[11px] text-ink-mute mt-0.5">Sumbu Y = Rp (juta) · Sumbu X = minggu konstruksi</p>
             </div>
-            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.negotiation.deal ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.negotiation.deal ? 'Baseline progress' : 'Belum kontrak'"></span>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.negotiation.deal ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.negotiation.deal ? 'Frozen · kontrak' : 'Belum kontrak'"></span>
           </div>
           <div class="w-full mt-1" x-html="negoChartSvg"></div>
           <p class="text-[11px] text-ink-mute mt-1 leading-relaxed">
-            Akumulasi biaya mengikuti urutan pekerjaan. Setelah deal, ini baseline yang harus dikejar kontraktor.
+            Akumulasi biaya mengikuti urutan pekerjaan. Setelah deal, Kurva S + Gantt dibekukan sebagai kontrak.
           </p>
+        </div>
+
+        <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <h3 class="text-sm font-bold" x-text="state.negotiation.deal ? 'Gantt Kontrak' : 'Pratinjau Gantt penawaran'"></h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Jadwal pekerjaan × minggu. Sumbu yang sama dengan Kurva S.</p>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.negotiation.deal ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.negotiation.deal ? 'Frozen · kontrak' : 'Belum kontrak'"></span>
+          </div>
+          <div class="overflow-x-auto">
+            <div class="min-w-[560px]">
+              <div class="flex items-end mb-1">
+                <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
+                <div class="flex-1 flex">
+                  <template x-for="w in ganttWeekNums" :key="'gw'+w">
+                    <div class="flex-1 text-center text-[9px] tabular-nums text-ink-mute" x-text="w"></div>
+                  </template>
+                </div>
+              </div>
+              <template x-for="row in ganttRows" :key="'gr'+row.id">
+                <div class="flex items-center h-7 border-t border-paper-line/70">
+                  <div class="gantt-label">
+                    <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name" :title="row.name"></p>
+                    <p class="text-[9px] text-ink-mute truncate" x-text="'M'+row.startWeek+'–'+row.finishWeek"></p>
+                  </div>
+                  <div class="flex-1 relative h-7">
+                    <div class="absolute inset-0 flex">
+                      <template x-for="w in ganttWeekNums" :key="'gc'+row.id+w">
+                        <div class="flex-1 border-l border-paper-line/60"></div>
+                      </template>
+                    </div>
+                    <div class="gantt-bar" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"
+                      :title="row.name+' · M'+row.startWeek+'–'+row.finishWeek+' · Rp '+row.costJt+' jt'"></div>
+                  </div>
+                </div>
+              </template>
+              <p class="text-[10px] text-ink-mute mt-2 text-right">Minggu konstruksi →</p>
+            </div>
+          </div>
         </div>
 
         <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(negoPlan||[]).length">
@@ -448,6 +489,53 @@
           Kontrak <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.price)+' jt'"></strong>
           · <span x-text="(state.negotiation.contract&&state.negotiation.contract.duration)+' mgg'"></span>
           · cadangan VO <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.contingency)+' jt'"></strong>
+        </div>
+
+        <div class="rounded-xl border border-forest/20 bg-paper/40 p-4 space-y-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold">Dokumen kontrak — target</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Kurva S + Gantt frozen. Tidak boleh diubah di lapangan.</p>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-forest-soft text-forest border border-forest/20">Frozen</span>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold text-ink-soft mb-1">Kurva S · Rp × minggu</p>
+            <div class="w-full" x-html="negoChartSvgPm"></div>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold text-ink-soft mb-2">Gantt · pekerjaan × minggu</p>
+            <div class="overflow-x-auto">
+              <div class="min-w-[560px]">
+                <div class="flex items-end mb-1">
+                  <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
+                  <div class="flex-1 flex">
+                    <template x-for="w in ganttWeekNums" :key="'cgw'+w">
+                      <div class="flex-1 text-center text-[9px] tabular-nums text-ink-mute" x-text="w"></div>
+                    </template>
+                  </div>
+                </div>
+                <template x-for="row in ganttRows" :key="'cgr'+row.id">
+                  <div class="flex items-center h-7 border-t border-paper-line/70">
+                    <div class="gantt-label">
+                      <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
+                      <p class="text-[9px] text-ink-mute" x-text="'M'+row.startWeek+'–'+row.finishWeek"></p>
+                    </div>
+                    <div class="flex-1 relative h-7">
+                      <div class="absolute inset-0 flex">
+                        <template x-for="w in ganttWeekNums" :key="'cgc'+row.id+w">
+                          <div class="flex-1 border-l border-paper-line/60"></div>
+                        </template>
+                      </div>
+                      <div class="gantt-bar" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"
+                        :title="row.name+' · M'+row.startWeek+'–'+row.finishWeek+' · Rp '+row.costJt+' jt'"></div>
+                    </div>
+                  </div>
+                </template>
+                <p class="text-[10px] text-ink-mute mt-2 text-right">Minggu konstruksi →</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
@@ -558,12 +646,6 @@
             </template>
           </ul>
         </div>
-
-        <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
-          <h3 class="text-sm font-bold mb-1">Kurva S kontrak — target</h3>
-          <p class="text-[11px] text-ink-mute mb-2">Baseline dari nego. Actual vs rencana di Fase 3.</p>
-          <div class="w-full" x-html="negoChartSvgPm"></div>
-        </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('negotiation')" class="btn-ghost">← Negosiasi</button>
@@ -588,7 +670,7 @@
         </div>
         <div x-show="state.contractor.pullLocked" class="space-y-3">
           <div class="rounded-xl border border-forest/20 bg-forest-soft/40 p-3.5 text-xs text-forest leading-relaxed">
-            Pull plan terkunci. Berikutnya Fase 3: look-ahead 6 minggu, make-ready constraint, Weekly Work Plan, dan PPC vs Kurva S kontrak.
+            Pull plan terkunci. Berikutnya: look-ahead, make-ready, WWP, dan PPC vs Kurva S + Gantt kontrak.
           </div>
           <div class="rounded-xl border border-paper-line p-4">
             <h3 class="text-sm font-bold mb-2">Antrian Make-Ready</h3>
@@ -601,10 +683,6 @@
                 </li>
               </template>
             </ul>
-          </div>
-          <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-8 text-center">
-            <p class="font-semibold text-ink-soft">Look-ahead · WWP · PPC</p>
-            <p class="text-sm text-ink-mute mt-1">Simulasi minggu-ke-minggu menyusul.</p>
           </div>
         </div>
       </div>
@@ -619,7 +697,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.4.0';
+const VER = '1.5.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -917,6 +995,36 @@ Alpine.data('app', () => ({
   get negoChartSvgPm() {
     return makeChart(this.negoBundle.curve, this.negoBundle.maxJt, { color: '#2F6B4F', fillId: 'scFillPm' }).markup;
   },
+  get negoWorkPlan() {
+    const n = this.state.negotiation;
+    if (n.deal && n.contract && n.contract.workPlan && n.contract.workPlan.length) return n.contract.workPlan;
+    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
+    const price = Number(n.bidPriceJt) || this.safeBidJt;
+    return buildPlan(weeks, price).plan;
+  },
+  get negoWeeks() {
+    const n = this.state.negotiation;
+    if (n.deal && n.contract) return Number(n.contract.duration) || 16;
+    return Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
+  },
+  get ganttWeekNums() {
+    return Array.from({ length: Math.max(1, this.negoWeeks) }, (_, i) => i + 1);
+  },
+  get ganttRows() {
+    const weeks = Math.max(1, this.negoWeeks);
+    return this.negoWorkPlan.map(w => {
+      const s = Number(w.start0);
+      const e = Number(w.end0);
+      const left = (Number.isFinite(s) ? s : (w.startWeek - 1)) / weeks * 100;
+      const dur = Number.isFinite(e) && Number.isFinite(s) ? (e - s) : Math.max(1, w.finishWeek - w.startWeek + 1);
+      return {
+        id: w.id, name: w.name, team: w.team, color: w.color,
+        startWeek: w.startWeek, finishWeek: w.finishWeek, costJt: w.costJt,
+        left: Math.max(0, left),
+        width: Math.max(1.8, (dur / weeks) * 100),
+      };
+    });
+  },
   get contractPlan() {
     const c = this.state.negotiation.contract;
     return (c && c.workPlan && c.workPlan.length) ? c.workPlan : (this.state.owner.workPlan || []);
@@ -924,7 +1032,7 @@ Alpine.data('app', () => ({
   get phasesView() {
     const plan = this.contractPlan;
     const byId = Object.fromEntries(plan.map(w => [w.id, w]));
-    const cons = this.state.contractor.constraints || [];
+    const cons = (this.state.contractor && this.state.contractor.constraints) || [];
     return PHASES.map(ph => {
       const works = ph.works.map(id => byId[id]).filter(Boolean);
       return {
@@ -938,19 +1046,18 @@ Alpine.data('app', () => ({
     });
   },
   get reviewedCount() {
-    const r = this.state.contractor.reviewed || {};
+    const r = (this.state.contractor && this.state.contractor.reviewed) || {};
     return this.contractPlan.filter(w => r[w.id]).length;
   },
   get selectedWorkObj() {
-    const id = this.state.contractor.selectedWork;
+    const id = this.state.contractor && this.state.contractor.selectedWork;
     return this.contractPlan.find(w => w.id === id) || null;
   },
   get handoffPredsLabel() {
     const w = this.selectedWorkObj;
     if (!w) return '—';
     if (!w.pred.length) return 'Titik awal (tidak ada pendahulu)';
-    const names = w.pred.map(id => this.workName(id));
-    return names.join(', ');
+    return w.pred.map(id => this.workName(id)).join(', ');
   },
   get handoffSuccsLabel() {
     const w = this.selectedWorkObj;
@@ -1085,7 +1192,7 @@ Alpine.data('app', () => ({
   },
   constraintLabel(type) { return CONSTRAINT_LABEL[type] || type; },
   workConstraintCount(id) {
-    return (this.state.contractor.constraints || []).filter(c => c.workId === id).length;
+    return ((this.state.contractor && this.state.contractor.constraints) || []).filter(c => c.workId === id).length;
   },
   selectWork(id) {
     this.state.contractor.selectedWork = id;
