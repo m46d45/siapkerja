@@ -768,7 +768,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.7.0';
+const VER = '1.8.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -939,76 +939,76 @@ function makeChart(curve, maxJt, opts = {}) {
 }
 
 function houseSvg(showZones, selectedId) {
-  const zfill = (id, hex) => {
-    if (!showZones) return '#FFFcf8';
-    const on = selectedId === id;
-    const op = on ? 0.45 : 0.22;
-    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-    return `rgba(${r},${g},${b},${op})`;
-  };
   const ff = 'ui-sans-serif,system-ui,sans-serif';
-  const label = (id, text, x, y, fill) => showZones
-    ? `<text x="${x}" y="${y}" text-anchor="middle" font-size="10" font-weight="700" fill="${fill}" font-family="${ff}">${id.toUpperCase()} · ${text}</text>`
-    : `<text x="${x}" y="${y}" text-anchor="middle" font-size="11" fill="#57534E" font-family="${ff}">${text}</text>`;
-  // hinge at (hx,hy); leaf opens 90° to (lx,ly); arc from closed point (cx,cy)
-  const door = (hx, hy, lx, ly, cx, cy, sweep) => `
-    <path d="M ${cx} ${cy} A 24 24 0 0 ${sweep} ${lx} ${ly}" fill="none" stroke="#8B5E3C" stroke-width="0.9" stroke-dasharray="2.2 1.6"/>
-    <line x1="${hx}" y1="${hy}" x2="${lx}" y2="${ly}" stroke="#1C1917" stroke-width="1.8" stroke-linecap="round"/>
-    <circle cx="${hx}" cy="${hy}" r="1.4" fill="#1C1917"/>`;
-  const gapH = (x, y, w) => `<rect x="${x}" y="${y - 3}" width="${w}" height="6" fill="#FFFcf8"/>`;
-  const gapV = (x, y, h) => `<rect x="${x - 3}" y="${y}" width="6" height="${h}" fill="#FFFcf8"/>`;
-  const winH = (x, y, w) => `<rect x="${x}" y="${y - 2.2}" width="${w}" height="4.4" fill="#FFFcf8"/><line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="#7C9CBF" stroke-width="1.6"/>`;
-  const winV = (x, y, h) => `<rect x="${x - 2.2}" y="${y}" width="4.4" height="${h}" fill="#FFFcf8"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" stroke="#7C9CBF" stroke-width="1.6"/>`;
+  const rgba = (hex, a) => {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+  const room = (id, hex) => {
+    if (!showZones) return '#FFFcf8';
+    return rgba(hex, selectedId === id ? 0.48 : 0.22);
+  };
+  const lab = (txt, x, y, fill, size = 11) =>
+    `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="${showZones ? 700 : 500}" fill="${fill}" font-family="${ff}">${txt}</text>`;
+  const wH = (x1, x2, y) => `<rect x="${Math.min(x1,x2)}" y="${y - 2.5}" width="${Math.abs(x2 - x1)}" height="5" fill="#1C1917"/>`;
+  const wV = (y1, y2, x) => `<rect x="${x - 2.5}" y="${Math.min(y1,y2)}" width="5" height="${Math.abs(y2 - y1)}" fill="#1C1917"/>`;
+  // hinge (hx,hy), open tip (ox,oy), closed tip along wall (cx,cy)
+  const door = (hx, hy, ox, oy, cx, cy, sweep) => {
+    const r = Math.hypot(ox - hx, oy - hy);
+    return `<path d="M ${cx} ${cy} A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 ${sweep} ${ox} ${oy}" fill="rgba(196,92,38,.12)" stroke="#C45C26" stroke-width="1.15"/>
+      <line x1="${hx}" y1="${hy}" x2="${ox}" y2="${oy}" stroke="#1C1917" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="${hx}" cy="${hy}" r="1.6" fill="#1C1917"/>`;
+  };
+  const winH = (x, w, y) => `<rect x="${x}" y="${y - 2.5}" width="${w}" height="5" fill="#FFFcf8"/><line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="#6B8AAB" stroke-width="2"/>`;
+  const winV = (y, h, x) => `<rect x="${x - 2.5}" y="${y}" width="5" height="${h}" fill="#FFFcf8"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" stroke="#6B8AAB" stroke-width="2"/>`;
 
-  return `<svg viewBox="0 0 400 360" role="img" aria-label="Denah Type 36">
+  return `<svg viewBox="0 0 400 360" role="img" aria-label="Denah Type 36 dengan bukaan pintu">
     <defs>
       <pattern id="hatchAtap" patternUnits="userSpaceOnUse" width="8" height="8">
-        <path d="M0 8 L8 0" stroke="#15803D" stroke-width="1" opacity="0.5"/>
+        <path d="M0 8 L8 0" stroke="#15803D" stroke-width="1" opacity="0.45"/>
       </pattern>
     </defs>
-    <rect x="10" y="10" width="380" height="340" fill="#EFE8DC" stroke="#C4B8A8" stroke-dasharray="5 4" stroke-width="1.4"/>
-    ${showZones ? `<rect x="10" y="10" width="380" height="340" fill="${zfill('z1','#A0522D')}"/>` : ''}
-    ${label(showZones ? 'z1' : '', showZones ? 'Site' : 'Pekarangan', 200, 26, '#A0522D')}
-    <rect x="52" y="54" width="296" height="256" fill="#E8E0D5"/>
-    <rect x="48" y="50" width="296" height="256" fill="#FFFcf8" stroke="${showZones && selectedId==='z2' ? '#8B5E3C' : '#1C1917'}" stroke-width="${showZones ? 5 : 2}"/>
-    <!-- ruang tamu Z3 -->
-    <rect x="48" y="50" width="148" height="128" fill="${zfill('z3','#C45C26')}" stroke="#1C1917" stroke-width="1.25"/>
-    ${label(showZones ? 'z3' : '', showZones ? 'Depan' : 'Ruang Tamu', 122, 112, '#9A4519')}
-    <!-- KM Z6 -->
-    <rect x="196" y="50" width="148" height="64" fill="${zfill('z6','#7C3AED')}" stroke="#1C1917" stroke-width="1.25"/>
-    ${label(showZones ? 'z6' : '', showZones ? 'Servis' : 'KM', 270, 78, '#6D28D9')}
-    ${showZones ? '' : `<text x="270" y="92" text-anchor="middle" font-size="9" fill="#A8A29E" font-family="${ff}">wc</text>`}
-    <!-- dapur Z6 -->
-    <rect x="196" y="114" width="148" height="64" fill="${zfill('z6','#7C3AED')}" stroke="#1C1917" stroke-width="1.25"/>
-    ${showZones ? '' : `<text x="270" y="150" text-anchor="middle" font-size="11" fill="#57534E" font-family="${ff}">Dapur</text>`}
-    <!-- kamar 1 Z4 -->
-    <rect x="48" y="178" width="148" height="128" fill="${zfill('z4','#EA580C')}" stroke="#1C1917" stroke-width="1.25"/>
-    ${label(showZones ? 'z4' : '', showZones ? 'Kamar 1' : 'Kamar 1', 122, 244, '#C2410C')}
-    <!-- kamar 2 Z5 -->
-    <rect x="196" y="178" width="148" height="128" fill="${zfill('z5','#D97706')}" stroke="#1C1917" stroke-width="1.25"/>
-    ${label(showZones ? 'z5' : '', showZones ? 'Kamar 2' : 'Kamar 2', 270, 244, '#B45309')}
-    ${showZones ? `<rect x="48" y="50" width="296" height="256" fill="url(#hatchAtap)" opacity="${selectedId==='z7'?0.5:0.16}"/>
-    <text x="200" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="#15803D" font-family="${ff}">Z7 · ATAP</text>` : ''}
-    <!-- bukaan: gap dinding + daun pintu + busur -->
-    ${gapH(100, 50, 26)}
-    ${door(100, 50, 100, 74, 124, 50, 1)}
-    ${gapV(196, 64, 24)}
-    ${door(196, 64, 220, 64, 196, 88, 0)}
-    ${gapV(196, 128, 24)}
-    ${door(196, 152, 220, 152, 196, 128, 1)}
-    ${gapH(80, 178, 26)}
-    ${door(80, 178, 80, 202, 106, 178, 1)}
-    ${gapH(236, 178, 26)}
-    ${door(236, 178, 236, 202, 262, 178, 1)}
-    ${gapH(248, 114, 24)}
-    ${door(272, 114, 272, 90, 248, 114, 1)}
+    <rect x="10" y="10" width="380" height="340" fill="${showZones ? room('z1','#A0522D') : '#EFE8DC'}" stroke="#C4B8A8" stroke-dasharray="5 4" stroke-width="1.3"/>
+    ${lab(showZones ? 'Z1 · SITE' : 'Pekarangan', 200, 26, showZones ? '#A0522D' : '#78716C', 10)}
+    <rect x="50" y="54" width="296" height="256" fill="#E4D9CB"/>
+    <!-- lantai ruang -->
+    <rect x="48" y="50" width="148" height="128" fill="${room('z3','#C45C26')}"/>
+    <rect x="196" y="50" width="148" height="64" fill="${room('z6','#7C3AED')}"/>
+    <rect x="196" y="114" width="148" height="64" fill="${room('z6','#7C3AED')}"/>
+    <rect x="48" y="178" width="148" height="128" fill="${room('z4','#EA580C')}"/>
+    <rect x="196" y="178" width="148" height="128" fill="${room('z5','#D97706')}"/>
+    ${showZones ? `<rect x="48" y="50" width="296" height="256" fill="url(#hatchAtap)" opacity="${selectedId==='z7' ? 0.45 : 0.12}"/>` : ''}
+    <!-- dinding luar (gap = pintu 40 / jendela) -->
+    ${wH(48, 100, 50)}${wH(140, 344, 50)}
+    ${wV(50, 306, 48)}
+    ${wH(48, 344, 306)}
+    ${wV(50, 132, 344)}${wV(172, 306, 344)}
+    <!-- partisi dalam -->
+    ${wV(50, 62, 196)}${wV(102, 124, 196)}${wV(164, 178, 196)}${wV(178, 306, 196)}
+    ${wH(48, 78, 178)}${wH(118, 230, 178)}${wH(270, 344, 178)}
+    ${wH(196, 248, 114)}${wH(288, 344, 114)}
+    ${showZones ? `<rect x="48" y="50" width="296" height="256" fill="none" stroke="${selectedId==='z2' ? '#8B5E3C' : 'transparent'}" stroke-width="6"/>` : ''}
+    <!-- pintu: daun + busur 90° -->
+    ${door(100, 50, 100, 90, 140, 50, 1)}
+    ${door(196, 62, 236, 62, 196, 102, 0)}
+    ${door(196, 164, 236, 164, 196, 124, 1)}
+    ${door(78, 178, 78, 218, 118, 178, 1)}
+    ${door(230, 178, 230, 218, 270, 178, 1)}
+    ${door(288, 114, 288, 74, 248, 114, 1)}
+    ${door(344, 172, 304, 172, 344, 132, 1)}
     <!-- jendela -->
-    ${winV(48, 88, 28)}
-    ${winH(86, 306, 32)}
-    ${winH(250, 306, 32)}
-    ${winV(344, 128, 28)}
-    ${winV(344, 62, 22)}
-    <text x="112" y="42" text-anchor="middle" font-size="8" fill="#8B5E3C" font-family="${ff}">pintu depan</text>
+    ${winV(86, 32, 48)}
+    ${winH(86, 36, 306)}
+    ${winH(248, 36, 306)}
+    ${winV(58, 24, 344)}
+    ${lab(showZones ? 'Z3 · DEPAN' : 'Ruang Tamu', 122, 116, showZones ? '#9A4519' : '#57534E')}
+    ${lab(showZones ? 'Z6 · SERVIS' : 'KM', 270, 80, showZones ? '#6D28D9' : '#57534E')}
+    ${showZones ? '' : lab('Dapur', 270, 150, '#57534E')}
+    ${lab(showZones ? 'Z4 · KAMAR 1' : 'Kamar 1', 122, 246, showZones ? '#C2410C' : '#57534E')}
+    ${lab(showZones ? 'Z5 · KAMAR 2' : 'Kamar 2', 270, 246, showZones ? '#B45309' : '#57534E')}
+    ${showZones ? lab('Z7 · ATAP', 200, 44, '#15803D', 10) : ''}
+    <text x="120" y="42" text-anchor="middle" font-size="8" fill="#8B5E3C" font-family="${ff}">pintu depan</text>
+    <text x="372" y="154" text-anchor="middle" font-size="8" fill="#8B5E3C" font-family="${ff}" transform="rotate(90 372 154)">pintu belakang</text>
     <text x="54" y="338" font-size="9" fill="#A8A29E" font-family="${ff}">Type 36 · denah + bukaan</text>
     <text x="346" y="338" text-anchor="end" font-size="9" fill="#A8A29E" font-family="${ff}">U ↑</text>
   </svg>`;
