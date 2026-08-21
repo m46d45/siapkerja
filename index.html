@@ -676,11 +676,14 @@
                 <p class="text-[10px] text-forest/80 mt-2">← tarik mundur</p>
               </div>
             </div>
-            <template x-for="ph in pullPhasesView" :key="'col'+ph.id">
+                        <template x-for="ph in pullPhasesView" :key="'col'+ph.id">
               <div class="phase-col">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                <div class="mb-2 px-0.5">
+                  <p class="text-[10px] font-semibold uppercase tracking-wide" :class="ph.isFocus ? 'text-terra' : 'text-ink-mute'" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                  <p class="text-[9px] font-medium" :class="ph.isFocus ? 'text-terra' : 'text-ink-mute'" x-text="ph.isFocus ? '★ Latihan pull' : 'Given'"></p>
+                </div>
                 <div class="space-y-2">
-                  <template x-for="w in ph.works" :key="w.id">
+                  <template x-for="w in (ph.stickies || ph.works)" :key="w.id">
                     <button type="button" class="sticky-note" :style="'--c:'+w.color"
                       :class="{
                         'is-on': state.contractor.selectedWork===w.id,
@@ -688,7 +691,7 @@
                       }"
                       @click="selectWork(w.id)">
                       <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
-                      <p class="text-[10px] text-ink-soft mt-1" x-text="w.team+' · M'+w.startWeek+'–'+w.finishWeek"></p>
+                      <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek+(w.finishWeek!==w.startWeek ? ('–'+w.finishWeek) : '')"></p>
                       <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
                         x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(state.contractor.reviewed[w.id]?'ditinjau':'ketuk')"></p>
                     </button>
@@ -813,7 +816,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.8.0';
+const VER = '1.9.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -839,6 +842,21 @@ const PHASES = [
 ];
 const TEAMS = ['Pondasi','Struktur','Dinding','Atap','MEP','Finishing'];
 const TEAM_PHASE = { Pondasi:'pondasi', Struktur:'struktur', Dinding:'struktur', Atap:'selubung', MEP:'selubung', Finishing:'finishing' };
+const FOCUS_PHASE = 'struktur';
+const WORK_ZONES = {
+  struct: ['z3','z4','z5','z6'],
+  wall:   ['z3','z4','z5','z6'],
+  site:   ['z1'],
+  found:  ['z2'],
+  roofS:  ['z7'],
+  roofC:  ['z7'],
+  mep:    ['z6'],
+  plaster:['z3','z4','z5','z6'],
+  floor:  ['z3','z4','z5','z6'],
+  doors:  ['z3','z4','z5','z6'],
+  paint:  ['z3','z4','z5','z6'],
+  close:  ['z1'],
+};
 const ZONES = [
   { id:'z1', name:'Z1 Site',     hint:'Pekarangan & akses masuk',  color:'#A0522D' },
   { id:'z2', name:'Z2 Pondasi',  hint:'Footprint, galian, sloof',  color:'#8B5E3C' },
@@ -1263,12 +1281,52 @@ Alpine.data('app', () => ({
       };
     });
   },
-    get pullPhasesView() {
-    // Kiri = akhir (dekat serah terima), kanan = lebih awal. Dalam kolom: atas = lebih akhir.
-    return this.phasesView.slice().reverse().map(ph => ({
-      ...ph,
-      works: (ph.works || []).slice().sort((a, b) => (b.finishWeek - a.finishWeek) || (b.startWeek - a.startWeek)),
-    }));
+  get pullPhasesView() {
+    return this.phasesView.slice().reverse().map(ph => {
+      const isFocus = ph.id === FOCUS_PHASE;
+      let stickies;
+      if (isFocus) {
+        stickies = [];
+        for (const w of (ph.works || [])) {
+          const zones = WORK_ZONES[w.id] || ['z3'];
+          const start = Number(w.startWeek) || 1;
+          const finish = Number(w.finishWeek) || start;
+          const weeks = [];
+          for (let m = start; m <= finish; m++) weeks.push(m);
+          weeks.forEach((wk, wi) => {
+            const zid = zones[wi % zones.length];
+            const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
+            const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
+            stickies.push({
+              id: w.id + '_w' + wk + '_' + zid,
+              parentId: w.id,
+              name: w.name,
+              team: w.team,
+              color: w.color,
+              startWeek: wk,
+              finishWeek: wk,
+              zoneId: zid,
+              zoneLabel,
+              costJt: w.costJt,
+              isFocus: true,
+              pred: w.pred || [],
+            });
+          });
+        }
+        stickies.sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
+      } else {
+        stickies = (ph.works || []).slice()
+          .sort((a, b) => (b.finishWeek - a.finishWeek) || (b.startWeek - a.startWeek))
+          .map(w => ({
+            ...w,
+            parentId: w.id,
+            zoneId: (WORK_ZONES[w.id] || [])[0] || null,
+            zoneLabel: null,
+            isFocus: false,
+          }));
+      }
+      return { ...ph, isFocus, stickies };
+    });
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
@@ -1276,7 +1334,14 @@ Alpine.data('app', () => ({
   },
   get selectedWorkObj() {
     const id = this.state.contractor && this.state.contractor.selectedWork;
-    return this.contractPlan.find(w => w.id === id) || null;
+    if (!id) return null;
+    const fromPlan = this.contractPlan.find(w => w.id === id);
+    if (fromPlan) return fromPlan;
+    for (const ph of (this.pullPhasesView || [])) {
+      const s = (ph.stickies || []).find(x => x.id === id);
+      if (s) return s;
+    }
+    return null;
   },
   get handoffPredsLabel() {
     const w = this.selectedWorkObj;
@@ -1433,7 +1498,14 @@ Alpine.data('app', () => ({
   },
   workName(id) {
     const w = this.contractPlan.find(x => x.id === id) || WORKS.find(x => x.id === id);
-    return w ? w.name : id;
+    if (w) return w.name;
+    for (const ph of (this.pullPhasesView || [])) {
+      const s = (ph.stickies || []).find(x => x.id === id);
+      if (s) return s.name + (s.zoneLabel ? (' · ' + s.zoneLabel) : '') + ' · M' + s.startWeek;
+    }
+    const cons = ((this.state.contractor && this.state.contractor.constraints) || []).find(x => x.workId === id);
+    if (cons && cons.workLabel) return cons.workLabel;
+    return id;
   },
   constraintLabel(type) { return CONSTRAINT_LABEL[type] || type; },
   workConstraintCount(id) {
@@ -1530,7 +1602,32 @@ Alpine.data('app', () => ({
     }
     this.state.contractor.phaseWindows = wins;
     this.state.contractor.milestonesLocked = true;
+    this.seedStrukturConstraints();
     this.save();
+  },
+  seedStrukturConstraints() {
+    const c = this.state.contractor;
+    if ((c.constraints || []).some(x => x.seeded)) return;
+    const focus = (this.pullPhasesView || []).find(p => p.id === FOCUS_PHASE);
+    const stickies = (focus && focus.stickies) || [];
+    if (!stickies.length) return;
+    const picks = stickies.filter((_, i) => i % 3 === 1).slice(0, 4);
+    const types = ['material', 'labor', 'info', 'access'];
+    const notes = [
+      'Besi tulangan belum sampai site',
+      'Tukang besi baru available minggu depan',
+      'Shop drawing kolom belum approve',
+      'Akses scaffolding belum aman',
+    ];
+    const seeded = picks.map((s, i) => ({
+      id: 'seed' + Date.now() + i,
+      workId: s.id,
+      workLabel: s.name + ' · ' + s.zoneLabel + ' · M' + s.startWeek,
+      type: types[i % types.length],
+      note: notes[i % notes.length],
+      seeded: true,
+    }));
+    c.constraints = [...(c.constraints || []), ...seeded];
   },
   unlockMilestones() {
     if (this.state.contractor.pullLocked) return;
