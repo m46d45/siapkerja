@@ -43,6 +43,7 @@
     .sticky-note:disabled{cursor:default}
     .gantt-label{width:132px;flex-shrink:0;padding-right:8px}
     .gantt-bar{position:absolute;top:4px;height:14px;border-radius:3px;min-width:6px}
+    .house-wrap svg{width:100%;height:auto;display:block}
   </style>
 </head>
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
@@ -88,7 +89,7 @@
         <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='negotiation'?'text-terra':(state.negotiation.deal?'text-forest':'text-ink-mute')">Nego</span>
       </button>
       <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.negotiation.deal?'bg-forest/40':'bg-paper-line'"></div>
-      <button @click="canAccessContractor()&&setStage('contractor-pm')" :disabled="!canAccessContractor()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
+      <button @click="canAccessContractor()&&setStage('contractor-master')" :disabled="!canAccessContractor()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
         <span class="step-dot" :class="currentStage.startsWith('contractor')?'bg-terra text-white':'bg-paper-line text-ink-mute'">4</span>
         <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage.startsWith('contractor')?'text-terra':'text-ink-mute'">Kontraktor</span>
       </button>
@@ -97,9 +98,10 @@
 </header>
 
 <div x-show="currentStage.startsWith('contractor')" class="border-b border-paper-line bg-paper-card">
-  <div class="max-w-3xl mx-auto px-4 py-2 flex gap-2">
-    <button @click="setStage('contractor-pm')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold" :class="currentStage==='contractor-pm'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Manajemen Proyek</button>
-    <button @click="setStage('contractor-production')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Manajemen Produksi</button>
+  <div class="max-w-3xl mx-auto px-4 py-2 flex gap-1.5 overflow-x-auto">
+    <button @click="setStage('contractor-master')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-master'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Master Plan</button>
+    <button @click="setStage('contractor-phase')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-phase'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Phase Plan</button>
+    <button @click="state.contractor.pullLocked&&setStage('contractor-production')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Look-ahead</button>
   </div>
 </div>
 
@@ -192,7 +194,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 2 · Design</p>
           <h2 class="text-xl font-bold text-ink">Design Freeze & Owner's Estimate</h2>
-          <p class="text-sm text-ink-soft mt-1">Rilis OE per pekerjaan. Kurva S Rp × waktu baru disepakati di Negosiasi, jadi kontrak.</p>
+          <p class="text-sm text-ink-soft mt-1">Freeze denah Type 36 + OE. Zonasi konstruksi belum — itu kerjaan Phase Plan.</p>
         </div>
         <span x-show="state.designer.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
@@ -222,8 +224,19 @@
           </div>
         </div>
 
+        <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <h3 class="text-sm font-bold">Denah Type 36 — Design Freeze</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Gambar ruang (bukan zona kerja). Acuan pull planning nanti.</p>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-paper-card border border-paper-line text-ink-soft">Tanpa zonasi</span>
+          </div>
+          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="designDrawingSvg"></div>
+        </div>
+
         <div class="rounded-xl border border-dashed border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
-          Kurva S dengan sumbu <strong>Rp</strong> dan <strong>waktu</strong> tidak di tahap ini. Setelah OE dirilis, penawaran dikunci di Negosiasi — itu yang jadi kontrak progress kontraktor.
+          Kurva S dan Gantt belum. Setelah OE dirilis dan nego deal, itu jadi <strong>Master Plan</strong> (kontrak frozen). Zonasi baru di <strong>Phase Plan</strong>.
         </div>
 
         <div class="rounded-xl border border-paper-line overflow-hidden">
@@ -467,106 +480,164 @@
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('designer')" class="btn-ghost">← Kembali</button>
         <button x-show="!state.negotiation.deal" @click="submitBid()" class="btn-primary flex-1 sm:flex-none">Ajukan ke Owner</button>
-        <button x-show="state.negotiation.deal" @click="setStage('contractor-pm')" class="btn-primary flex-1 sm:flex-none">Masuk ke Kontraktor →</button>
+        <button x-show="state.negotiation.deal" @click="setStage('contractor-master')" class="btn-primary flex-1 sm:flex-none">Masuk ke Master Plan →</button>
         <button x-show="!state.negotiation.deal && state.negotiation.round>0" @click="resetNego()" class="btn-danger">Reset penawaran</button>
       </div>
     </div>
   </section>
 
-  <!-- CONTRACTOR PM -->
-  <section x-show="currentStage==='contractor-pm'" class="space-y-4">
+  <!-- MASTER PLAN -->
+  <section x-show="currentStage==='contractor-master'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 4a · Fase 2 LPS</p>
-          <h2 class="text-xl font-bold text-ink">Phase & Pull Planning</h2>
-          <p class="text-sm text-ink-soft mt-1">Pecah kontrak jadi fase, tarik urutan dari serah terima, catat constraint. Baru lalu produksi.</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Master Plan</p>
+          <h2 class="text-xl font-bold text-ink">Jadwal Induk Kontrak</h2>
+          <p class="text-sm text-ink-soft mt-1">Kurva S + Gantt hasil nego. Frozen — acuan semua tahap LPS berikutnya.</p>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Frozen</span>
+      </div>
+      <div class="p-5 space-y-5">
+        <div class="rounded-xl bg-forest-soft/50 border border-forest/15 p-3.5 text-xs text-forest" x-show="state.negotiation.contract">
+          Nilai <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.price)+' jt'"></strong>
+          · Durasi <strong x-text="(state.negotiation.contract&&state.negotiation.contract.duration)+' mgg'"></strong>
+          · VO cadangan <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.contingency)+' jt'"></strong>
+          · Quality <strong class="capitalize" x-text="state.negotiation.contract&&state.negotiation.contract.quality"></strong>
+        </div>
+        <div>
+          <p class="text-[11px] font-semibold text-ink-soft mb-1">Kurva S kontrak · Rp × minggu</p>
+          <div class="w-full" x-html="negoChartSvgPm"></div>
+        </div>
+        <div>
+          <p class="text-[11px] font-semibold text-ink-soft mb-2">Gantt kontrak · pekerjaan × minggu</p>
+          <div class="overflow-x-auto">
+            <div class="min-w-[560px]">
+              <div class="flex items-end mb-1">
+                <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
+                <div class="flex-1 flex">
+                  <template x-for="w in ganttWeekNums" :key="'mgw'+w">
+                    <div class="flex-1 text-center text-[9px] tabular-nums text-ink-mute" x-text="w"></div>
+                  </template>
+                </div>
+              </div>
+              <template x-for="row in ganttRows" :key="'mgr'+row.id">
+                <div class="flex items-center h-7 border-t border-paper-line/70">
+                  <div class="gantt-label">
+                    <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
+                    <p class="text-[9px] text-ink-mute" x-text="'M'+row.startWeek+'–'+row.finishWeek"></p>
+                  </div>
+                  <div class="flex-1 relative h-7">
+                    <div class="absolute inset-0 flex">
+                      <template x-for="w in ganttWeekNums" :key="'mgc'+row.id+w">
+                        <div class="flex-1 border-l border-paper-line/60"></div>
+                      </template>
+                    </div>
+                    <div class="gantt-bar" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        <p class="text-xs text-ink-soft leading-relaxed">Master Plan tidak diubah di lapangan. Phase Plan memakai milestone dari Gantt ini + denah desain, lalu memecah zona kerja.</p>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
+        <button @click="setStage('negotiation')" class="btn-ghost">← Negosiasi</button>
+        <button @click="setStage('contractor-phase')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Phase Plan →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE PLAN -->
+  <section x-show="currentStage==='contractor-phase'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Phase Plan</p>
+          <h2 class="text-xl font-bold text-ink">Collaborative Pull Planning</h2>
+          <p class="text-sm text-ink-soft mt-1">Zonasi denah, kaitkan milestone ke jadwal, semua tim commit. Baru lalu look-ahead.</p>
         </div>
         <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
       <div class="p-5 space-y-5">
-        <div class="rounded-xl bg-forest-soft/50 border border-forest/15 p-3.5 text-xs text-forest" x-show="state.negotiation.contract">
-          Kontrak <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.price)+' jt'"></strong>
-          · <span x-text="(state.negotiation.contract&&state.negotiation.contract.duration)+' mgg'"></span>
-          · cadangan VO <strong x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.contingency)+' jt'"></strong>
-        </div>
-
-        <div class="rounded-xl border border-forest/20 bg-paper/40 p-4 space-y-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <h3 class="text-sm font-bold">Dokumen kontrak — target</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5">Kurva S + Gantt frozen. Tidak boleh diubah di lapangan.</p>
-            </div>
-            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-forest-soft text-forest border border-forest/20">Frozen</span>
-          </div>
-          <div>
-            <p class="text-[11px] font-semibold text-ink-soft mb-1">Kurva S · Rp × minggu</p>
-            <div class="w-full" x-html="negoChartSvgPm"></div>
-          </div>
-          <div>
-            <p class="text-[11px] font-semibold text-ink-soft mb-2">Gantt · pekerjaan × minggu</p>
-            <div class="overflow-x-auto">
-              <div class="min-w-[560px]">
-                <div class="flex items-end mb-1">
-                  <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
-                  <div class="flex-1 flex">
-                    <template x-for="w in ganttWeekNums" :key="'cgw'+w">
-                      <div class="flex-1 text-center text-[9px] tabular-nums text-ink-mute" x-text="w"></div>
-                    </template>
-                  </div>
-                </div>
-                <template x-for="row in ganttRows" :key="'cgr'+row.id">
-                  <div class="flex items-center h-7 border-t border-paper-line/70">
-                    <div class="gantt-label">
-                      <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
-                      <p class="text-[9px] text-ink-mute" x-text="'M'+row.startWeek+'–'+row.finishWeek"></p>
-                    </div>
-                    <div class="flex-1 relative h-7">
-                      <div class="absolute inset-0 flex">
-                        <template x-for="w in ganttWeekNums" :key="'cgc'+row.id+w">
-                          <div class="flex-1 border-l border-paper-line/60"></div>
-                        </template>
-                      </div>
-                      <div class="gantt-bar" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"
-                        :title="row.name+' · M'+row.startWeek+'–'+row.finishWeek+' · Rp '+row.costJt+' jt'"></div>
-                    </div>
-                  </div>
-                </template>
-                <p class="text-[10px] text-ink-mute mt-2 text-right">Minggu konstruksi →</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
-          <strong class="text-ink">Pull, bukan push.</strong>
-          Mulai dari milestone serah terima, mundur: pekerjaan mana yang harus selesai sebelumnya, handoff antar tim apa. Constraint yang ketemu dicatat — dikerjakan di Make-Ready (Fase 3).
+          <strong class="text-ink">Dari denah, bukan dari Gantt saja.</strong>
+          Master Plan memberi minggu. Gambar desain (tanpa zona) jadi papan. Di sini baru dipecah 6 zona kerja, lalu ditarik mundur dari serah terima.
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <template x-for="ph in phasesView" :key="'sum'+ph.id">
-            <div class="rounded-xl border border-paper-line bg-paper-card p-3">
-              <p class="text-[10px] uppercase tracking-wide text-ink-mute" x-text="'Fase'"></p>
-              <p class="text-sm font-bold mt-0.5" x-text="ph.name"></p>
-              <p class="text-[11px] text-ink-soft mt-1 tabular-nums" x-text="'M'+ph.startWeek+'–'+ph.finishWeek"></p>
-              <p class="text-[11px] text-ink-mute tabular-nums" x-text="'Rp '+ph.costJt+' jt'"></p>
-              <p class="text-[11px] mt-1" :class="ph.cCount?'text-amber-800':'text-ink-mute'" x-text="ph.cCount? (ph.cCount+' constraint'):'siap'"></p>
+        <div class="rounded-xl border border-paper-line p-4">
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <h3 class="text-sm font-bold">Denah + zonasi konstruksi</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5" x-text="state.contractor.zonesLocked ? '6 zona ditetapkan. Acuan sticky pull plan.' : 'Masih denah desain. Tetapkan zonasi sebelum commit.'"></p>
             </div>
-          </template>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.zonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.zonesLocked ? 'Zona locked' : 'Belum zonasi'"></span>
+          </div>
+          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="phaseDrawingSvg"></div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-3" x-show="state.contractor.zonesLocked || state.contractor.zonesPreview">
+            <template x-for="z in ZONES" :key="z.id">
+              <button type="button" class="text-left rounded-lg border px-2.5 py-2" :class="state.contractor.selectedZone===z.id ? 'border-terra bg-terra-soft/40' : 'border-paper-line bg-paper-card'" @click="state.contractor.selectedZone=z.id">
+                <span class="inline-block w-2 h-2 rounded-full mr-1" :style="'background:'+z.color"></span>
+                <span class="text-[11px] font-semibold" x-text="z.name"></span>
+                <p class="text-[10px] text-ink-mute mt-0.5" x-text="z.hint"></p>
+              </button>
+            </template>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-2" x-show="!state.contractor.zonesLocked && !state.contractor.pullLocked">
+            <button type="button" class="btn-ghost text-sm" x-show="!state.contractor.zonesPreview" @click="previewZones()">Usulkan 6 zona</button>
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.zonesPreview" @click="lockZones()">Tetapkan zonasi</button>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-bold mb-2">Milestone ↔ jadwal Master Plan</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <template x-for="ph in phasesView" :key="'ms'+ph.id">
+              <div class="rounded-xl border border-paper-line bg-paper-card p-3">
+                <p class="text-[10px] uppercase tracking-wide text-ink-mute">Milestone</p>
+                <p class="text-sm font-bold mt-0.5" x-text="ph.name"></p>
+                <p class="text-[11px] text-ink-soft mt-1 tabular-nums" x-text="'M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                <p class="text-[11px] text-ink-mute" x-text="'Rp '+ph.costJt+' jt'"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between">
+            <h3 class="text-sm font-bold">Komitmen tim (collaborative)</h3>
+            <span class="text-[11px] text-ink-mute" x-text="committedCount+'/'+TEAMS.length+' commit'"></span>
+          </div>
+          <ul class="divide-y divide-paper-line">
+            <template x-for="t in teamCommitRows" :key="'tm'+t.id">
+              <li class="px-4 py-2.5 flex items-center justify-between gap-2 text-xs">
+                <div>
+                  <p class="font-medium" x-text="t.id"></p>
+                  <p class="text-ink-mute" x-text="t.phaseName+' · M'+t.startWeek+'–'+t.finishWeek"></p>
+                </div>
+                <button type="button" class="px-3 py-1.5 rounded-full text-[11px] font-semibold"
+                  :class="t.committed ? 'bg-forest-soft text-forest' : 'bg-paper border border-paper-line text-ink-soft'"
+                  :disabled="state.contractor.pullLocked || !state.contractor.zonesLocked"
+                  @click="toggleCommit(t.id)"
+                  x-text="t.committed ? 'Committed' : 'Commit'"></button>
+              </li>
+            </template>
+          </ul>
+          <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="!state.contractor.zonesLocked">Tetapkan zonasi dulu, baru tim bisa commit.</p>
         </div>
 
         <div>
           <div class="flex items-end justify-between gap-2 mb-2">
             <div>
               <h3 class="text-sm font-bold">Papan Pull Plan</h3>
-              <p class="text-[11px] text-ink-mute">Kiri → kanan = urutan bangun. Rencana ditarik dari kanan (serah terima).</p>
+              <p class="text-[11px] text-ink-mute">Tarik dari kanan (serah terima). Setiap sticky punya minggu dari Master Plan.</p>
             </div>
-            <span class="text-[11px] text-ink-mute whitespace-nowrap" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
+            <span class="text-[11px] text-ink-mute" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
           </div>
           <div class="board-scroll">
             <template x-for="ph in phasesView" :key="'col'+ph.id">
               <div class="phase-col">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5" x-text="ph.name"></p>
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
                 <div class="space-y-2">
                   <template x-for="w in ph.works" :key="w.id">
                     <button type="button" class="sticky-note" :style="'--c:'+w.color"
@@ -575,7 +646,7 @@
                       <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
                       <p class="text-[10px] text-ink-soft mt-1" x-text="w.team+' · M'+w.startWeek+'–'+w.finishWeek"></p>
                       <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
-                        x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(state.contractor.reviewed[w.id]?'ditinjau':'ketuk untuk tarik')"></p>
+                        x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(state.contractor.reviewed[w.id]?'ditinjau':'ketuk')"></p>
                     </button>
                   </template>
                 </div>
@@ -586,7 +657,6 @@
               <div class="rounded-xl border-2 border-dashed border-forest/30 bg-forest-soft/40 p-3 min-h-[84px]">
                 <p class="text-sm font-bold text-forest">Serah terima</p>
                 <p class="text-[11px] text-forest mt-1" x-text="'Minggu '+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
-                <p class="text-[10px] text-ink-mute mt-2">Titik tarik pull plan</p>
               </div>
             </div>
           </div>
@@ -633,7 +703,7 @@
             <h3 class="text-sm font-bold">Log constraint</h3>
             <span class="text-[11px] text-ink-mute" x-text="(state.contractor.constraints||[]).length+' item · ke Make-Ready'"></span>
           </div>
-          <div x-show="!(state.contractor.constraints||[]).length" class="p-4 text-xs text-ink-mute">Belum ada. Ketuk sticky, catat apa yang menghalangi pekerjaan itu.</div>
+          <div x-show="!(state.contractor.constraints||[]).length" class="p-4 text-xs text-ink-mute">Belum ada. Ketuk sticky, catat yang menghalangi.</div>
           <ul class="divide-y divide-paper-line">
             <template x-for="c in (state.contractor.constraints||[])" :key="c.id">
               <li class="px-4 py-2.5 flex items-start justify-between gap-2 text-xs">
@@ -648,25 +718,26 @@
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
-        <button @click="setStage('negotiation')" class="btn-ghost">← Negosiasi</button>
-        <button x-show="!state.contractor.pullLocked" @click="lockPullPlan()" class="btn-primary flex-1 sm:flex-none">Kunci Pull Plan →</button>
-        <button x-show="state.contractor.pullLocked" @click="setStage('contractor-production')" class="btn-primary flex-1 sm:flex-none">Masuk Produksi →</button>
+        <button @click="setStage('contractor-master')" class="btn-ghost">← Master Plan</button>
+        <button x-show="!state.contractor.pullLocked" @click="lockPullPlan()" class="btn-primary flex-1 sm:flex-none">Kunci Phase Plan →</button>
+        <button x-show="state.contractor.pullLocked" @click="setStage('contractor-production')" class="btn-primary flex-1 sm:flex-none">Masuk Look-ahead →</button>
         <button x-show="state.contractor.pullLocked" @click="unlockPullPlan()" class="btn-danger">Unlock</button>
       </div>
     </div>
   </section>
 
+
   <!-- CONTRACTOR PRODUCTION -->
   <section x-show="currentStage==='contractor-production'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 4b · Produksi LPS</p>
-        <h2 class="text-xl font-bold text-ink">Manajemen Produksi</h2>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead</p>
+        <h2 class="text-xl font-bold text-ink">Make-Ready & Produksi</h2>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.pullLocked" class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-8 text-center">
           <p class="font-semibold text-ink-soft">Fase 3 belum dibuka</p>
-          <p class="text-sm text-ink-mute mt-1">Kunci Pull Plan di Manajemen Proyek dulu. Look-ahead, Make-Ready, dan WWP memakai fase + constraint itu.</p>
+          <p class="text-sm text-ink-mute mt-1">Kunci Phase Plan dulu. Look-ahead memakai zona, milestone, dan constraint itu.</p>
         </div>
         <div x-show="state.contractor.pullLocked" class="space-y-3">
           <div class="rounded-xl border border-forest/20 bg-forest-soft/40 p-3.5 text-xs text-forest leading-relaxed">
@@ -687,7 +758,7 @@
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line">
-        <button @click="setStage('contractor-pm')" class="btn-ghost">← Manajemen Proyek</button>
+        <button @click="setStage('contractor-phase')" class="btn-ghost">← Phase Plan</button>
       </div>
     </div>
   </section>
@@ -697,7 +768,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.5.0';
+const VER = '1.6.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -720,6 +791,16 @@ const PHASES = [
   { id:'struktur',  name:'Struktur',   works:['struct','wall'] },
   { id:'selubung',  name:'Atap & MEP', works:['roofS','roofC','mep','doors'] },
   { id:'finishing', name:'Finishing',  works:['plaster','floor','paint','close'] },
+];
+const TEAMS = ['Pondasi','Struktur','Dinding','Atap','MEP','Finishing'];
+const TEAM_PHASE = { Pondasi:'pondasi', Struktur:'struktur', Dinding:'struktur', Atap:'selubung', MEP:'selubung', Finishing:'finishing' };
+const ZONES = [
+  { id:'z1', name:'Z1 Site',    hint:'Pekarangan & akses masuk',     color:'#A0522D' },
+  { id:'z2', name:'Z2 Pondasi', hint:'Footprint, galian, sloof',     color:'#8B5E3C' },
+  { id:'z3', name:'Z3 Depan',   hint:'Ruang tamu',                   color:'#C45C26' },
+  { id:'z4', name:'Z4 Kamar',   hint:'Kamar 1 & kamar 2',            color:'#EA580C' },
+  { id:'z5', name:'Z5 Servis',  hint:'Dapur & kamar mandi',          color:'#7C3AED' },
+  { id:'z6', name:'Z6 Atap',    hint:'Rangka & penutup atap',        color:'#15803D' },
 ];
 const CONSTRAINT_LABEL = {
   info:'Gambar / info', material:'Material', labor:'Tukang',
@@ -856,11 +937,63 @@ function makeChart(curve, maxJt, opts = {}) {
   return { markup, padL, padR, line, area, ymax };
 }
 
+function houseSvg(showZones, selectedId) {
+  const zfill = (id, hex, a) => {
+    if (!showZones) return 'transparent';
+    const on = selectedId === id;
+    const op = on ? 0.42 : 0.22;
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a != null ? a : op})`;
+  };
+  const zstroke = (id, hex) => (!showZones ? '#1C1917' : (selectedId === id ? hex : '#1C1917'));
+  const label = (id, text, x, y, fill) => {
+    if (!showZones) return `<text x="${x}" y="${y}" text-anchor="middle" font-size="11" fill="#57534E" font-family="ui-sans-serif,system-ui">${text}</text>`;
+    return `<text x="${x}" y="${y}" text-anchor="middle" font-size="10" font-weight="700" fill="${fill}" font-family="ui-sans-serif,system-ui">${id.toUpperCase()} · ${text}</text>`;
+  };
+  return `<svg viewBox="0 0 400 360" role="img" aria-label="Denah Type 36">
+    <defs>
+      <pattern id="hatchAtap" patternUnits="userSpaceOnUse" width="8" height="8">
+        <path d="M0 8 L8 0" stroke="#15803D" stroke-width="1" opacity="0.45"/>
+      </pattern>
+    </defs>
+    <rect x="10" y="10" width="380" height="340" fill="#EFE8DC" stroke="#C4B8A8" stroke-dasharray="5 4" stroke-width="1.4"/>
+    ${showZones ? `<rect x="10" y="10" width="380" height="340" fill="${zfill('z1','#A0522D')}" />` : ''}
+    ${label(showZones ? 'z1' : '', showZones ? 'Site' : 'Pekarangan', 200, 28, '#A0522D')}
+    <rect x="52" y="54" width="296" height="256" fill="#E8E0D5"/>
+    <rect x="48" y="50" width="296" height="256" fill="#FFFcf8" stroke="${showZones ? zstroke('z2','#8B5E3C') : '#1C1917'}" stroke-width="${showZones ? 5 : 2}"/>
+    ${showZones ? `<rect x="48" y="50" width="296" height="256" fill="none" stroke="${zfill('z2','#8B5E3C',0)}" />` : ''}
+    <!-- ruang tamu Z3 -->
+    <rect x="48" y="50" width="148" height="128" fill="${showZones ? zfill('z3','#C45C26') : '#FFFcf8'}" stroke="#1C1917" stroke-width="1.2"/>
+    ${label(showZones ? 'z3' : '', showZones ? 'Depan' : 'Ruang Tamu', 122, 118, '#9A4519')}
+    <!-- KM Z5 -->
+    <rect x="196" y="50" width="148" height="64" fill="${showZones ? zfill('z5','#7C3AED') : '#FFFcf8'}" stroke="#1C1917" stroke-width="1.2"/>
+    ${label(showZones ? 'z5' : '', showZones ? 'Servis' : 'KM', 270, 86, '#6D28D9')}
+    <!-- dapur Z5 -->
+    <rect x="196" y="114" width="148" height="64" fill="${showZones ? zfill('z5','#7C3AED') : '#FFFcf8'}" stroke="#1C1917" stroke-width="1.2"/>
+    <text x="270" y="150" text-anchor="middle" font-size="11" fill="#57534E" font-family="ui-sans-serif,system-ui">${showZones ? '' : 'Dapur'}</text>
+    <!-- kamar Z4 -->
+    <rect x="48" y="178" width="148" height="128" fill="${showZones ? zfill('z4','#EA580C') : '#FFFcf8'}" stroke="#1C1917" stroke-width="1.2"/>
+    ${label(showZones ? 'z4' : '', showZones ? 'Kamar' : 'Kamar 1', 122, 246, '#C2410C')}
+    <rect x="196" y="178" width="148" height="128" fill="${showZones ? zfill('z4','#EA580C') : '#FFFcf8'}" stroke="#1C1917" stroke-width="1.2"/>
+    <text x="270" y="246" text-anchor="middle" font-size="11" fill="#57534E" font-family="ui-sans-serif,system-ui">${showZones ? '' : 'Kamar 2'}</text>
+    ${showZones ? `<rect x="48" y="50" width="296" height="256" fill="url(#hatchAtap)" opacity="${selectedId==='z6'?0.55:0.2}"/>
+    <text x="200" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="#15803D" font-family="ui-sans-serif,system-ui">Z6 · ATAP</text>` : ''}
+    <!-- pintu depan -->
+    <rect x="108" y="48" width="28" height="4" fill="#F7F3EE"/>
+    <text x="54" y="338" font-size="9" fill="#A8A29E" font-family="ui-sans-serif,system-ui">Type 36 · denah</text>
+    <text x="346" y="338" text-anchor="end" font-size="9" fill="#A8A29E" font-family="ui-sans-serif,system-ui">U ↑</text>
+  </svg>`;
+}
+
 function emptyNego() {
   return { bidPriceJt: null, bidDuration: null, bidQuality: 'standard', round: 0, maxRounds: 3, deal: false, lastResult: null, history: [], contract: null };
 }
 function emptyContractor() {
-  return { pullLocked:false, selectedWork:null, constraints:[], reviewed:{}, draftType:'material', draftNote:'' };
+  return {
+    pullLocked:false, selectedWork:null, constraints:[], reviewed:{},
+    draftType:'material', draftNote:'',
+    zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
+  };
 }
 
 function evaluateOwner(owner, nego, oe) {
@@ -947,6 +1080,8 @@ function saveState(s) { try { localStorage.setItem(SK, JSON.stringify(s)); } cat
 Alpine.data('app', () => ({
   state: null,
   currentStage: 'owner',
+  ZONES,
+  TEAMS,
 
   init() {
     this.state = loadState();
@@ -954,6 +1089,7 @@ Alpine.data('app', () => ({
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     this.currentStage = this.state.currentStage || 'owner';
+    if (this.currentStage === 'contractor-pm') this.currentStage = 'contractor-master';
     this.recalcPlan();
   },
 
@@ -1066,6 +1202,24 @@ Alpine.data('app', () => ({
     if (!succs.length) return 'Milestone serah terima';
     return succs.map(p => p.name).join(', ');
   },
+  get designDrawingSvg() { return houseSvg(false, null); },
+  get phaseDrawingSvg() {
+    const c = this.state.contractor;
+    return houseSvg(!!(c.zonesLocked || c.zonesPreview), c.selectedZone);
+  },
+  get teamCommitRows() {
+    const phBy = Object.fromEntries(this.phasesView.map(p => [p.id, p]));
+    const comm = this.state.contractor.commitments || {};
+    return TEAMS.map(id => {
+      const pid = TEAM_PHASE[id];
+      const ph = phBy[pid] || { name: pid, startWeek: 1, finishWeek: 1 };
+      return { id, phaseName: ph.name, startWeek: ph.startWeek, finishWeek: ph.finishWeek, committed: !!comm[id] };
+    });
+  },
+  get committedCount() {
+    const comm = this.state.contractor.commitments || {};
+    return TEAMS.filter(t => comm[t]).length;
+  },
   get priorityHint() {
     const p = this.state.owner.priority;
     if (p === 'cost') return { title:'COST', box:'border-terra/25 bg-terra-soft/40', body:'Harga jadi acuan. Ideal: penawaran ≈ OE ÷ 1,1 agar VO +10% masih ≤ budget Owner. Terlalu murah juga dicurigai.' };
@@ -1081,6 +1235,8 @@ Alpine.data('app', () => ({
     if (s === 'designer' && !this.canAccessDesigner()) return;
     if (s === 'negotiation' && !this.canAccessNego()) return;
     if (s.startsWith('contractor') && !this.canAccessContractor()) return;
+    if (s === 'contractor-pm') s = 'contractor-master';
+    if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     this.currentStage = s;
     this.state.currentStage = s;
     this.save();
@@ -1218,16 +1374,41 @@ Alpine.data('app', () => ({
     this.save();
   },
   lockPullPlan() {
+    if (!this.state.contractor.zonesLocked) {
+      alert('Tetapkan zonasi denah dulu.');
+      return;
+    }
+    if (this.committedCount < TEAMS.length) {
+      alert('Semua tim harus commit dulu (collaborative pull planning).');
+      return;
+    }
     const n = this.contractPlan.length;
     const r = this.reviewedCount;
     const msg = r < n
-      ? `Baru ${r}/${n} sticky ditinjau. Kunci tetap bisa — constraint yang tercatat ikut ke Make-Ready. Lanjutkan?`
-      : 'Kunci Pull Plan? Fase & constraint jadi acuan Manajemen Produksi.';
+      ? `Baru ${r}/${n} sticky ditinjau. Kunci tetap bisa — constraint ikut ke Make-Ready. Lanjutkan?`
+      : 'Kunci Phase Plan? Zona, milestone, dan komitmen jadi acuan Look-ahead.';
     if (!confirm(msg)) return;
     this.state.contractor.pullLocked = true;
     this.state.contractor.selectedWork = null;
     this.save();
     this.setStage('contractor-production');
+  },
+  previewZones() {
+    this.state.contractor.zonesPreview = true;
+    this.state.contractor.selectedZone = 'z3';
+    this.save();
+  },
+  lockZones() {
+    this.state.contractor.zonesLocked = true;
+    this.state.contractor.zonesPreview = true;
+    this.save();
+  },
+  toggleCommit(id) {
+    if (this.state.contractor.pullLocked || !this.state.contractor.zonesLocked) return;
+    const c = this.state.contractor.commitments || {};
+    c[id] = !c[id];
+    this.state.contractor.commitments = c;
+    this.save();
   },
   unlockPullPlan() {
     if (confirm('Unlock Pull Plan? Produksi belum boleh jalan sampai dikunci lagi.')) {
