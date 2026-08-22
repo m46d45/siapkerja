@@ -59,10 +59,9 @@
       <span class="text-[11px] text-ink-mute hidden sm:inline">LPS Simulator</span>
     </div>
     <div class="flex items-center gap-1.5">
-      <button @click="save()" class="px-2.5 py-1.5 text-xs font-medium text-ink-soft rounded-lg">Simpan</button>
-      <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg">Export</button>
+      <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
-        Import
+        Muat sesi
         <input type="file" accept=".json" class="hidden" @change="importJSON($event)">
       </label>
       <button @click="rewindTo('owner')" class="px-2.5 py-1.5 text-xs font-medium text-red-700 rounded-lg">Reset semua</button>
