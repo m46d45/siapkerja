@@ -829,8 +829,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead</p>
           <h2 class="text-xl font-bold text-ink">Make-Ready (jendela L1–L4)</h2>
-          <p class="text-sm text-ink-soft mt-1">Relatif L1–L4 · Absolut M0, M1, M2… · Prioritas: L1 paling bebas constraint.</p>
-        </div>
+                    <p class="text-sm text-ink-soft mt-1">Relatif L1–L4 · Absolut M1, M2… · M0 = minggu kalender persiapan (tidak masuk L1). Prioritas: L1 paling bebas constraint.</p>        </div>
         <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20" x-text="'Offset '+state.contractor.lookOffset"></span>
       </div>
       <div class="p-5 space-y-4">
@@ -842,8 +841,8 @@
         <div x-show="state.contractor.pullLocked" class="space-y-4">
           <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
             <strong class="text-ink">Awal minggu (Senin).</strong>
-            L1 selalu slot terdekat. Di awal proyek L1 = <strong>M0</strong> (kosong — make-ready untuk L2/M1).
-            Setelah digulir, L1 mengunci ke minggu absolut berikutnya. Label kartu: <em>L· + M·</em>.
+            L1 = minggu eksekusi terdekat. Di awal: <strong>L1=M1 · L2=M2 · L3=M3 · L4=M4</strong>.
+            M0 ada di kalender proyek tetapi tidak menjadi slot L. Setelah gulir: L1=M2, dst.
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1363,7 +1362,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.15.0';
+const VER = '1.16.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -1926,10 +1925,11 @@ Alpine.data('app', () => ({
     const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
     const resolved = new Set(mr.filter(x => x.status === 'done').map(x => x.constraintId));
     return [1,2,3,4].map(i => {
-      const abs = off + (i - 1);
-      const isPrep = abs === 0;
+      // L1 = M(off+1): awal L1=M1; setelah gulir offset=1 → L1=M2
+      const abs = off + i;
+      const isPrep = false;
       const absLabel = 'M' + abs;
-      const stickies = isPrep ? [] : allStickies.filter(s => Number(s.startWeek) === abs);
+      const stickies = allStickies.filter(s => Number(s.startWeek) === abs);
       const stickyIds = new Set(stickies.map(s => s.id));
       const openConstraints = cons.filter(c => !resolved.has(c.id) && stickyIds.has(c.workId)).length;
       return { rel: 'L' + i, abs, absLabel, isPrep, stickies, workCount: stickies.length, openConstraints };
@@ -1979,9 +1979,9 @@ Alpine.data('app', () => ({
   get selectedSlotConstraintCount() {
     return (this.selectedWorkConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
   },
-    get targetExecWeek() {
+  get targetExecWeek() {
     const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
-    return off === 0 ? 1 : off;
+    return off + 1; // L1
   },
   _allStickies() {
     const all = [];
