@@ -1752,11 +1752,12 @@ Alpine.data('app', () => ({
       alert('Semua tim harus commit dulu (collaborative pull planning).');
       return;
     }
-    const n = this.contractPlan.length;
-    const r = this.reviewedCount;
-    const msg = r < n
-      ? `Baru ${r}/${n} sticky ditinjau. Kunci tetap bisa — constraint ikut ke Make-Ready. Lanjutkan?`
-      : 'Kunci Phase Plan? Zona, milestone, dan komitmen jadi acuan Look-ahead.';
+    const fokus = (this.pullPhasesView || []).find(p => p.id === FOCUS_PHASE);
+    const fokusIds = new Set(((fokus && fokus.stickies) || []).map(s => s.id));
+    const nFokusCons = ((this.state.contractor.constraints) || []).filter(c => fokusIds.has(c.workId)).length;
+    const msg = nFokusCons === 0
+      ? 'Fase Struktur (latihan) belum ada constraint. Ketuk sticky Struktur & catat constraint dulu, atau kunci tetap lanjut?'
+      : 'Kunci Phase Plan? Struktur + given jadi acuan Look-ahead.';
     if (!confirm(msg)) return;
     this.state.contractor.pullLocked = true;
     this.state.contractor.selectedWork = null;
