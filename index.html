@@ -844,12 +844,15 @@
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <template x-for="slot in lookSlots" :key="slot.rel">
-              <div class="rounded-xl border p-3" :class="slot.rel==='L1' ? 'border-terra bg-terra-soft/30' : 'border-paper-line bg-paper-card'">
-                <p class="text-[10px] font-semibold uppercase tracking-wide" :class="slot.rel==='L1' ? 'text-terra' : 'text-ink-mute'" x-text="slot.rel"></p>
+              <button type="button" class="rounded-xl border p-3 text-left w-full"
+                :class="state.contractor.selectedLookRel===slot.rel ? 'border-terra bg-terra-soft/40 ring-1 ring-terra/30' : (slot.rel==='L1' ? 'border-terra/40 bg-terra-soft/20' : 'border-paper-line bg-paper-card')"
+                @click="state.contractor.selectedLookRel = slot.rel; save()">
+                <p class="text-[10px] font-semibold uppercase tracking-wide" :class="state.contractor.selectedLookRel===slot.rel || slot.rel==='L1' ? 'text-terra' : 'text-ink-mute'" x-text="slot.rel"></p>
                 <p class="text-sm font-bold mt-0.5" x-text="slot.absLabel"></p>
                 <p class="text-[10px] text-ink-mute mt-1" x-text="slot.isPrep ? 'Persiapan · make-ready' : (slot.workCount+' pekerjaan')"></p>
                 <p class="text-[10px] mt-1" :class="slot.openConstraints ? 'text-amber-800' : 'text-forest'" x-text="slot.isPrep ? 'Fokus hilangkan constraint L2' : (slot.openConstraints ? (slot.openConstraints+' constraint') : 'siap')"></p>
-              </div>
+                <p class="text-[10px] text-terra mt-1.5 font-medium" x-show="state.contractor.selectedLookRel===slot.rel">▼ constraint slot ini</p>
+              </button>
             </template>
           </div>
 
@@ -880,16 +883,16 @@
             </div>
           </div>
 
-          <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.selectedLookRel">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
               <div>
                 <h3 class="text-sm font-bold">Constraint analysis & removal</h3>
-                <p class="text-[11px] text-ink-mute">Prioritas L1, lalu L2. Tim commit menghilangkan constraint.</p>
+                                <p class="text-[11px] text-ink-mute" x-text="'Hanya untuk '+state.contractor.selectedLookRel+' · ketuk kotak lain untuk ganti'"></p>
               </div>
-              <span class="text-[11px] text-ink-mute" x-text="openConstraintCount+' terbuka'"></span>
+              <span class="text-[11px] text-ink-mute" x-text="selectedSlotConstraintCount+' terbuka'"></span>
             </div>
-            <div class="p-3 space-y-2" x-show="lookConstraints.length">
-              <template x-for="row in lookConstraints" :key="row.id">
+            <div class="p-3 space-y-2" x-show="selectedLookConstraints.length">
+              <template x-for="row in selectedLookConstraints" :key="row.id">
                 <div class="rounded-lg border border-paper-line bg-paper-card p-3 text-xs space-y-2">
                   <div class="flex flex-wrap items-start justify-between gap-2">
                     <div>
@@ -911,8 +914,9 @@
                 </div>
               </template>
             </div>
-            <p class="p-4 text-xs text-ink-mute" x-show="!lookConstraints.length">Tidak ada constraint terbuka di jendela ini — L1 siap digulir bila waktunya.</p>
+            <p class="p-4 text-xs text-ink-mute" x-show="!selectedLookConstraints.length">Tidak ada constraint terbuka di slot ini.</p>
           </div>
+                    <p class="text-xs text-ink-mute" x-show="!state.contractor.selectedLookRel">Ketuk salah satu kotak L1–L4 di atas untuk analisis constraint slot itu saja.</p>
 
           <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -1204,7 +1208,7 @@ function emptyContractor() {
     draftType:'material', draftNote:'',
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
     milestonesLocked:false, phaseWindows:{},
-    lookOffset:0,
+    lookOffset:0, selectedLookRel:null,
     makeReady:[],
   };
 }
@@ -1516,6 +1520,18 @@ Alpine.data('app', () => ({
   },
   get openConstraintCount() {
     return (this.lookConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
+  },
+  get selectedLookConstraints() {
+    const rel = this.state.contractor && this.state.contractor.selectedLookRel;
+    if (!rel) return [];
+    const slot = (this.lookSlots || []).find(s => s.rel === rel);
+    if (slot && slot.isPrep) {
+      return (this.lookConstraints || []).filter(c => c.slotRel === 'L2');
+    }
+    return (this.lookConstraints || []).filter(c => c.slotRel === rel);
+  },
+  get selectedSlotConstraintCount() {
+    return (this.selectedLookConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
@@ -1872,6 +1888,7 @@ Alpine.data('app', () => ({
       return x;
     });
     this.state.contractor.lookOffset = (Number(this.state.contractor.lookOffset) || 0) + 1;
+    this.state.contractor.selectedLookRel = 'L1';
     this.save();
     alert('Jendela digulir. L1 sekarang = M' + this.state.contractor.lookOffset);
   },
