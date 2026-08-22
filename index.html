@@ -106,6 +106,8 @@
     <button @click="state.contractor.pullLocked&&setStage('contractor-production')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Look-ahead</button>
     <button @click="state.contractor.pullLocked&&setStage('contractor-wwp')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-wwp'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">WWP</button>
     <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Huddle</button>
+        <button @click="state.contractor.huddleComplete&&setStage('contractor-learning')" :disabled="!state.contractor.huddleComplete" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-learning'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Learning</button>
+    <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Progress</button>
   </div>
 </div>
 
@@ -1067,43 +1069,19 @@
             <button type="button" class="btn-primary text-sm" @click="setStage('contractor-huddle')">Buka Huddle →</button>
           </div>
 
-          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.huddleComplete">
-            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
-              <h3 class="text-sm font-bold">Tutup minggu · PPC</h3>
-              <p class="text-[11px] text-ink-mute">Selesai / gagal + alasan lapangan.</p>
-            </div>
-            <div class="p-3 space-y-2 text-xs">
-              <template x-for="item in state.contractor.wwp" :key="'ppc'+item.id">
-                <div class="rounded-lg border border-paper-line bg-paper-card p-2.5 flex flex-wrap gap-2 items-center justify-between"
-                  :style="'border-left:4px solid '+(item.color||'#C45C26')">
-                  <div>
-                    <p class="font-semibold" x-text="item.name+(item.zoneLabel?(' · '+item.zoneLabel):'')"></p>
-                    <p class="text-ink-mute" x-text="(item.day||'').toUpperCase()+' · '+(item.team||'')+(item.promoted?' · promosi':'')"></p>
-                  </div>
-                  <div class="flex flex-wrap gap-1.5 items-center" x-show="!state.contractor.weekClosed">
-                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="setPpc(item.id,'done',null)">Selesai</button>
-                    <select class="field !py-1 !text-[10px] w-auto" :id="'ppc-'+item.id">
-                      <option value="">Alasan gagal…</option>
-                      <template x-for="r in PPC_REASONS" :key="r"><option :value="r" x-text="constraintLabel(r)"></option></template>
-                    </select>
-                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-red-200 text-red-700" @click="setPpc(item.id,'failed', (document.getElementById('ppc-'+item.id)||{}).value)">Gagal</button>
-                  </div>
-                  <span class="text-[10px] font-semibold" x-show="state.contractor.weekClosed" x-text="ppcLabel(item.id)"></span>
-                </div>
-              </template>
-              <div class="flex flex-wrap gap-2 pt-1">
-                <button type="button" class="btn-primary text-sm" x-show="!state.contractor.weekClosed" @click="closeWeek()">Kunci tutup minggu</button>
-                <p class="text-[11px] text-forest self-center" x-show="state.contractor.weekClosed" x-text="'PPC: '+ppcPercent+'% · '+ppcDoneCount+'/'+state.contractor.wwp.length+' selesai'"></p>
-              </div>
-            </div>
-          </div>
-
-          <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.weekClosed">
+                   <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.huddleComplete && !state.contractor.weekClosed">
             <div>
-              <h3 class="text-sm font-bold">Gulir jendela Look-ahead</h3>
-              <p class="text-[11px] text-ink-mute">Minggu ditutup. Geser L1 ke absolut berikutnya.</p>
+              <h3 class="text-sm font-bold">Huddle selesai · lanjut Learning</h3>
+              <p class="text-[11px] text-ink-mute">PPC & registry ada di tab Learning.</p>
             </div>
-            <button type="button" class="btn-primary text-sm" @click="rollLookahead()">Gulir ke minggu berikutnya →</button>
+            <button type="button" class="btn-primary text-sm" @click="setStage('contractor-learning')">Buka Learning →</button>
+          </div>
+          <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.weekClosed">
+            <div>
+              <h3 class="text-sm font-bold text-forest">Minggu terkunci</h3>
+              <p class="text-[11px] text-ink-mute">Gulir dari tab Learning.</p>
+            </div>
+            <button type="button" class="btn-primary text-sm" @click="setStage('contractor-learning')">Ke Learning →</button>
           </div>
         </div>
       </div>
@@ -1229,7 +1207,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.13.0';
+const VER = '1.15.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -1513,6 +1491,9 @@ function emptyContractor() {
     huddleComplete:false,
     extendId:null,
     extendNote:'',
+    problemRegistry:[],
+    weeklyProgress:[],
+    learningNote:'',
   };
 }
 
@@ -1999,6 +1980,7 @@ Alpine.data('app', () => ({
     if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
+        if (s === 'contractor-learning' && !this.state.contractor.huddleComplete) s = 'contractor-huddle';
     this.currentStage = s;
     this.state.currentStage = s;
     this.save();
@@ -2506,15 +2488,15 @@ Alpine.data('app', () => ({
     this.state.contractor.extendId = null;
     this.save();
   },
-  completeHuddle() {
+    completeHuddle() {
     const pending = this.huddleTodayItems.filter(it => !this.huddleStatus(it.id));
     if (pending.length) {
       if (!confirm(pending.length + ' item Sabtu belum dinilai. Selesai huddle tetap?')) return;
     }
     this.state.contractor.huddleComplete = true;
     this.save();
-    this.setStage('contractor-wwp');
-    alert('Huddle selesai. Lanjut PPC di tab WWP.');
+    this.setStage('contractor-learning');
+    alert('Huddle selesai. Lanjut Learning (PPC + registry).');
   },
   closeWeek() {
     const items = this.state.contractor.wwp || [];
