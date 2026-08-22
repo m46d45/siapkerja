@@ -65,6 +65,7 @@
         Import
         <input type="file" accept=".json" class="hidden" @change="importJSON($event)">
       </label>
+      <button @click="rewindTo('owner')" class="px-2.5 py-1.5 text-xs font-medium text-red-700 rounded-lg">Reset semua</button>
     </div>
   </div>
   <div class="max-w-3xl mx-auto px-4 pb-3">
@@ -110,7 +111,17 @@
     <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Huddle</button>
         <button @click="state.contractor.huddleComplete&&setStage('contractor-learning')" :disabled="!state.contractor.huddleComplete" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-learning'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Learning</button>
     <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Progress</button>
-    <span x-show="state.contractor.pullLocked" class="ml-auto shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
+    <select class="ml-auto shrink-0 text-[11px] font-semibold px-2 py-1.5 rounded-full border border-paper-line bg-paper text-ink-soft"
+      @change="rewindTo($event.target.value); $event.target.selectedIndex=0">
+      <option value="">Ulang dari…</option>
+      <option value="huddle">Huddle minggu ini</option>
+      <option value="wwp">WWP minggu ini</option>
+      <option value="lookahead">Look-ahead minggu ini</option>
+      <option value="phase">Phase Plan</option>
+      <option value="contract">Kontrak (Master Plan)</option>
+      <option value="owner">Owner (semua)</option>
+    </select>
+    <span x-show="state.contractor.pullLocked" class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
       x-text="currentStage==='contractor-production' ? ('Sesi · M'+sessionWeek) : ('Sesi · M'+playWeek)"></span>
   </div>
 </div>
@@ -2992,6 +3003,107 @@ Alpine.data('app', () => ({
     if (confirm('Unlock Pull Plan? Produksi belum boleh jalan sampai dikunci lagi.')) {
       this.state.contractor.pullLocked = false;
       this.save();
+    }
+  },
+  _stripWeekLogs(week) {
+    const w = Number(week);
+    this.state.contractor.weeklyProgress = (this.state.contractor.weeklyProgress || []).filter(r => Number(r.week) !== w);
+    this.state.contractor.actualLog = (this.state.contractor.actualLog || []).filter(r => Number(r.week) !== w);
+    this.state.contractor.progressLocks = (this.state.contractor.progressLocks || []).filter(r => Number(r.week) !== w);
+    this.state.contractor.problemRegistry = (this.state.contractor.problemRegistry || []).filter(r => Number(r.week) !== w);
+  },
+  _resetWeekOps() {
+    this.state.contractor.wwp = [];
+    this.state.contractor.ppc = [];
+    this.state.contractor.weekClosed = false;
+    this.state.contractor.wwpLocked = false;
+    this.state.contractor.huddleDayIdx = 0;
+    this.state.contractor.huddleResults = {};
+    this.state.contractor.followUps = [];
+    this.state.contractor.huddleComplete = false;
+    this.state.contractor.extendId = null;
+    this.state.contractor.extendNote = '';
+    this.state.contractor.learningNote = '';
+    this.progressDraft = null;
+    this.stopHuddleTimer();
+    this._stripWeekLogs(this.playWeek);
+  },
+  rewindTo(target) {
+    if (!target) return;
+    const msgs = {
+      huddle: 'Ulang Daily Huddle minggu ini?\nWWP tetap. Hasil huddle, PPC, dan bakukan minggu ini dihapus. Minggu sebelumnya tetap.',
+      wwp: 'Ulang WWP minggu ini?\nLook-ahead tetap. Pecah hari, huddle, PPC, dan bakukan minggu ini dihapus.',
+      lookahead: 'Ulang Look-ahead minggu ini?\nPhase Plan tetap. Make-ready + WWP + huddle minggu ini dihapus. Minggu sebelumnya tetap.',
+      phase: 'Kembali ke Phase Plan?\nLook-ahead dan semua produksi direset. Kontrak nego tetap.',
+      contract: 'Kembali ke Master Plan?\nSemua LPS lapangan direset. Kontrak nego tetap.',
+      owner: 'Reset ke Owner?\nSemua progres (Owner → Kontraktor) hilang.',
+    };
+    if (!msgs[target]) return;
+    if (!confirm(msgs[target])) return;
+    if (target === 'owner') {
+      this.stopHuddleTimer();
+      this.state = initState();
+      this.currentStage = 'owner';
+      this.progressDraft = null;
+      this.save();
+      return;
+    }
+    if (target === 'contract') {
+      this.stopHuddleTimer();
+      this.state.contractor = emptyContractor();
+      this.progressDraft = null;
+      this.setStage('contractor-master');
+      return;
+    }
+    if (target === 'phase') {
+      this.stopHuddleTimer();
+      const keep = this.state.contractor;
+      this.state.contractor = Object.assign(emptyContractor(), {
+        zonesLocked: keep.zonesLocked,
+        zonesPreview: keep.zonesPreview,
+        selectedZone: keep.selectedZone,
+        milestonesLocked: keep.milestonesLocked,
+        phaseWindows: keep.phaseWindows || {},
+        commitments: keep.commitments || {},
+        constraints: keep.constraints || [],
+        reviewed: keep.reviewed || {},
+        pullLocked: false,
+      });
+      this.progressDraft = null;
+      this.setStage('contractor-phase');
+      return;
+    }
+    if (target === 'lookahead') {
+      const off = this.state.contractor.lookOffset || 0;
+      this._resetWeekOps();
+      this.state.contractor.makeReady = (this.state.contractor.makeReady || []).filter(x => Number(x.atOffset) !== Number(off));
+      this.state.contractor.selectedLookRel = 'L1';
+      this.state.contractor.selectedLookWorkId = null;
+      this.setStage('contractor-production');
+      return;
+    }
+    if (target === 'wwp') {
+      this._resetWeekOps();
+      this.buildWwp();
+      this.setStage('contractor-wwp');
+      return;
+    }
+    if (target === 'huddle') {
+      if (!(this.state.contractor.wwp || []).length) this.buildWwp();
+      this.state.contractor.wwpLocked = true;
+      this.state.contractor.huddleDayIdx = 0;
+      this.state.contractor.huddleResults = {};
+      this.state.contractor.followUps = [];
+      this.state.contractor.huddleComplete = false;
+      this.state.contractor.extendId = null;
+      this.state.contractor.extendNote = '';
+      this.state.contractor.ppc = [];
+      this.state.contractor.weekClosed = false;
+      this.state.contractor.learningNote = '';
+      this.progressDraft = null;
+      this._stripWeekLogs(this.playWeek);
+      this.setStage('contractor-huddle');
+      this.startHuddleTimer();
     }
   },
     promiseMakeReady(constraintId) {
