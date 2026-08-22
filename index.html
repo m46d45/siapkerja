@@ -108,6 +108,8 @@
     <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Huddle</button>
         <button @click="state.contractor.huddleComplete&&setStage('contractor-learning')" :disabled="!state.contractor.huddleComplete" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-learning'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Learning</button>
     <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Progress</button>
+    <span x-show="state.contractor.pullLocked" class="ml-auto shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
+      x-text="currentStage==='contractor-production' ? ('Sesi · M'+sessionWeek) : ('Sesi · M'+playWeek)"></span>
   </div>
 </div>
 
@@ -992,10 +994,10 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Weekly Work Plan</p>
-          <h2 class="text-xl font-bold text-ink">Rencana harian · M<span x-text="targetExecWeek"></span></h2>
-          <p class="text-sm text-ink-soft mt-1">Hanya ready · pecah zona harian · backlog · PPC.</p>
+          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">Rencana harian minggu ini. Hanya ready · pecah zona · backlog.</p>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-paper-line" x-text="(state.contractor.wwp||[]).length+' item'"></span>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!(state.contractor.wwp||[]).length" class="rounded-xl border border-dashed border-paper-line p-6 text-center space-y-2">
@@ -1114,10 +1116,10 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Daily Huddle</p>
-          <h2 class="text-xl font-bold text-ink">Huddle · <span x-text="huddleDayLabel"></span></h2>
+          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span> · <span x-text="huddleDayLabel"></span></h2>
           <p class="text-sm text-ink-soft mt-1">Max 15 menit per tim. Centang yang siap · masalah dicatat, tidak didiskusikan di sini.</p>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-paper-line" x-text="'Hari '+(state.contractor.huddleDayIdx+1)+'/6'"></span>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek+' · '+(state.contractor.huddleDayIdx+1)+'/6'"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.wwpLocked" class="rounded-xl border-2 border-dashed border-paper-line p-6 text-center text-sm text-ink-mute">
@@ -1224,10 +1226,10 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Learning</p>
-          <h2 class="text-xl font-bold text-ink">Learning · M<span x-text="targetExecWeek"></span></h2>
+          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span></h2>
           <p class="text-sm text-ink-soft mt-1">PPC, klasifikasi masalah, registry. Lalu kunci minggu & gulir.</p>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-paper-line" x-text="ppcPercent+'% PPC'"></span>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek+' · '+ppcPercent+'% PPC'"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.huddleComplete" class="rounded-xl border-2 border-dashed border-paper-line p-6 text-center text-sm text-ink-mute">Selesaikan Daily Huddle dulu.</div>
@@ -1327,10 +1329,13 @@
   <!-- PROGRESS -->
   <section x-show="currentStage==='contractor-progress'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
-      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Progress</p>
-        <h2 class="text-xl font-bold text-ink">Laporan progress (akumulatif)</h2>
-        <p class="text-sm text-ink-soft mt-1">PPC per minggu + top masalah untuk Owner.</p>
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Progress</p>
+          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">Laporan akumulatif ke Owner. PPC per minggu + top masalah.</p>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek"></span>
       </div>
       <div class="p-5 space-y-4 text-xs">
         <div class="overflow-x-auto">
@@ -2032,6 +2037,9 @@ Alpine.data('app', () => ({
 
   get sessionWeek() {
     return Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
+  },
+  get playWeek() {
+    return this.targetExecWeek;
   },
   get timelineWeeks() {
     const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
