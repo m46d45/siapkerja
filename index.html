@@ -842,7 +842,7 @@
           <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
             <strong class="text-ink">Awal minggu (Senin).</strong>
             L1 = minggu eksekusi terdekat. Di awal: <strong>L1=M1 · L2=M2 · L3=M3 · L4=M4</strong>.
-            M0 ada di kalender proyek tetapi tidak menjadi slot L. Setelah gulir: L1=M2, dst.
+            Setelah gulir, L1 bergeser ke minggu absolut berikutnya (M2, M3, …).
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1362,7 +1362,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.16.0';
+const VER = '1.16.1';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -2762,7 +2762,7 @@ Alpine.data('app', () => ({
     this.state.contractor.learningNote = '';
     this.save();
     this.setStage('contractor-production');
-    alert('Jendela digulir. L1 sekarang = M' + this.state.contractor.lookOffset);
+    alert('Jendela digulir. L1 sekarang = M' + (Number(this.state.contractor.lookOffset) + 1));
   },
   save() { saveState(this.state); },
   exportJSON() {
