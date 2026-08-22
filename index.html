@@ -828,9 +828,10 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead</p>
-          <h2 class="text-xl font-bold text-ink">Make-Ready (jendela L1–L4)</h2>
-                    <p class="text-sm text-ink-soft mt-1">Relatif L1–L4 · Absolut M1, M2… · M0 = minggu kalender persiapan (tidak masuk L1). Prioritas: L1 paling bebas constraint.</p>        </div>
-        <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20" x-text="'Offset '+state.contractor.lookOffset"></span>
+          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="sessionWeek"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">Make-ready jendela L1–L4. Sesi = minggu kalender saat rapat (M0 dulu, lalu M1, M2… setiap gulir). L1 = minggu eksekusi terdekat.</p>
+        </div>
+        <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+sessionWeek"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.pullLocked" class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-8 text-center">
@@ -840,47 +841,44 @@
 
         <div x-show="state.contractor.pullLocked" class="space-y-4">
           <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
-            <strong class="text-ink">Awal minggu (Senin).</strong>
-            L1 = minggu eksekusi terdekat. Di awal: <strong>L1=M1 · L2=M2 · L3=M3 · L4=M4</strong>.
-            Setelah gulir, L1 bergeser ke minggu absolut berikutnya (M2, M3, …).
+            <strong class="text-ink">Sesi M<span x-text="sessionWeek"></span></strong>
+            — rapat Look-ahead di awal minggu kalender itu.
+            Jendela: <strong x-text="'L1=M'+targetExecWeek+' · L2=M'+(targetExecWeek+1)+' · L3=M'+(targetExecWeek+2)+' · L4=M'+(targetExecWeek+3)"></strong>.
+            Prioritas: L1 paling bebas constraint. Setelah gulir, judul sesi naik (M0→M1→M2…).
+          </div>
+
+          <div class="rounded-xl border border-paper-line bg-paper-card p-3 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-[11px] font-semibold text-ink-mute uppercase tracking-wide">Timeline minggu absolut</p>
+              <p class="text-[10px] text-ink-mute" x-text="'Jendela L1–L4 = M'+targetExecWeek+'–M'+(targetExecWeek+3)"></p>
+            </div>
+            <div class="flex gap-1 overflow-x-auto pb-1">
+              <template x-for="m in timelineWeeks" :key="'tm'+m.n">
+                <div class="shrink-0 w-11 text-center">
+                  <div class="h-8 rounded-md flex items-center justify-center text-[10px] font-bold border"
+                    :class="m.inWindow ? (m.isL1 ? 'bg-terra text-white border-terra' : 'bg-terra-soft/50 text-terra border-terra/30') : 'bg-paper-card text-ink-soft border-paper-line'">
+                    <span x-text="'M'+m.n"></span>
+                  </div>
+                  <p class="text-[9px] mt-0.5 font-semibold" :class="m.isL1 ? 'text-terra' : 'text-ink-mute'" x-text="m.label"></p>
+                </div>
+              </template>
+            </div>
+            <p class="text-[10px] text-ink-mute">Tidak ada kotak M0. Sesi tercatat di judul. Kotak terra = jendela Look-ahead.</p>
+          </div>
+
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="registryInsight">
+            <p class="font-semibold text-amber-950">Umpan balik Learning → Look-ahead</p>
+            <p class="text-amber-900 leading-relaxed" x-text="registryInsight"></p>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-
-            <!-- A: Timeline absolut + jendela L -->
-            <div class="rounded-xl border border-paper-line bg-paper-card p-3 space-y-2">
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-[11px] font-semibold text-ink-mute uppercase tracking-wide">Timeline minggu absolut</p>
-                <p class="text-[10px] text-ink-mute" x-text="'Jendela L1–L4 = M'+targetExecWeek+'–M'+(targetExecWeek+3)"></p>
-              </div>
-              <div class="flex gap-1 overflow-x-auto pb-1">
-                <template x-for="m in timelineWeeks" :key="'tm'+m.n">
-                  <div class="shrink-0 w-11 text-center">
-                    <div class="h-8 rounded-md flex items-center justify-center text-[10px] font-bold border"
-                      :class="m.inWindow ? (m.isL1 ? 'bg-terra text-white border-terra' : 'bg-terra-soft/50 text-terra border-terra/30') : (m.n===0 ? 'bg-paper text-ink-mute border-dashed border-paper-line' : 'bg-paper-card text-ink-soft border-paper-line')">
-                      <span x-text="'M'+m.n"></span>
-                    </div>
-                    <p class="text-[9px] mt-0.5 font-semibold" :class="m.isL1 ? 'text-terra' : 'text-ink-mute'" x-text="m.label"></p>
-                  </div>
-                </template>
-              </div>
-              <p class="text-[10px] text-ink-mute">M0 = persiapan kalender (bukan L). Kotak terra = jendela Look-ahead; L1 paling tegas.</p>
-            </div>
-
-            <!-- C: Banner registry → make-ready -->
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="registryInsight">
-              <p class="font-semibold text-amber-950">Umpan balik Learning → Look-ahead</p>
-              <p class="text-amber-900 leading-relaxed" x-text="registryInsight"></p>
-            </div>
-
             <template x-for="slot in lookSlots" :key="slot.rel">
               <div class="rounded-xl border p-3" :class="slot.rel==='L1' ? 'border-terra bg-terra-soft/30' : 'border-paper-line bg-paper-card'">
                 <p class="text-[10px] font-semibold uppercase tracking-wide" :class="slot.rel==='L1' ? 'text-terra' : 'text-ink-mute'" x-text="slot.rel"></p>
                 <p class="text-sm font-bold mt-0.5" x-text="slot.absLabel"></p>
-                <p class="text-[10px] text-ink-mute mt-1" x-text="slot.isPrep ? 'Persiapan · make-ready' : (slot.workCount+' pekerjaan')"></p>
-                <p class="text-[10px] mt-1" :class="slot.openConstraints ? 'text-amber-800' : 'text-forest'" x-text="slot.isPrep ? 'Fokus hilangkan constraint L2' : (slot.openConstraints ? (slot.openConstraints+' constraint') : 'siap')"></p>
+                <p class="text-[10px] text-ink-mute mt-1" x-text="slot.workCount+' pekerjaan'"></p>
+                <p class="text-[10px] mt-1" :class="slot.openConstraints ? 'text-amber-800' : 'text-forest'" x-text="slot.openConstraints ? (slot.openConstraints+' constraint') : 'siap'"></p>
               </div>
-            
             </template>
           </div>
 
@@ -890,13 +888,7 @@
               <template x-for="slot in lookSlots" :key="'col'+slot.rel">
                 <div class="phase-col">
                   <p class="text-[10px] font-semibold uppercase tracking-wide mb-2 px-0.5" :class="slot.rel==='L1' ? 'text-terra' : 'text-ink-mute'" x-text="slot.rel+' · '+slot.absLabel"></p>
-                  <div class="space-y-2" x-show="slot.isPrep">
-                    <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[72px]">
-                      <p class="text-sm font-bold text-ink-soft">M0 · kosong</p>
-                      <p class="text-[11px] text-ink-mute mt-1">Tidak ada eksekusi. Buat L2 (M1) ready.</p>
-                    </div>
-                  </div>
-                  <div class="space-y-2" x-show="!slot.isPrep">
+                  <div class="space-y-2">
                     <template x-for="w in slot.stickies" :key="w.id">
                       <button type="button" class="sticky-note" :style="'--c:'+w.color"
                         :class="state.contractor.selectedLookWorkId===w.id ? 'is-on' : ''"
@@ -2038,18 +2030,21 @@ Alpine.data('app', () => ({
     return (this.selectedWorkConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
   },
 
+  get sessionWeek() {
+    return Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
+  },
   get timelineWeeks() {
     const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
     const l1 = off + 1;
     const maxN = Math.max(12, l1 + 5);
     const out = [];
-    for (let n = 0; n <= maxN; n++) {
+    for (let n = 1; n <= maxN; n++) {
       const inWindow = n >= l1 && n <= l1 + 3;
       out.push({
         n,
         inWindow,
         isL1: n === l1,
-        label: n === 0 ? 'prep' : (n === l1 ? 'L1' : (n === l1 + 1 ? 'L2' : (n === l1 + 2 ? 'L3' : (n === l1 + 3 ? 'L4' : '')))),
+        label: n === l1 ? 'L1' : (n === l1 + 1 ? 'L2' : (n === l1 + 2 ? 'L3' : (n === l1 + 3 ? 'L4' : ''))),
       });
     }
     return out;
@@ -2878,7 +2873,7 @@ Alpine.data('app', () => ({
     this.state.contractor.learningNote = '';
     this.save();
     this.setStage('contractor-production');
-    alert('Jendela digulir. L1 sekarang = M' + (Number(this.state.contractor.lookOffset) + 1));
+    alert('Jendela digulir. Sesi sekarang M' + Number(this.state.contractor.lookOffset) + ' · L1 = M' + (Number(this.state.contractor.lookOffset) + 1));
   },
   save() { saveState(this.state); },
   exportJSON() {
