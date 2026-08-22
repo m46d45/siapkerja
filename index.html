@@ -1000,7 +1000,7 @@
                             <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
                           </template>
                         </select>
-                        <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed && item.canSplit">
+                                                <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed && item.canSplit">
                           <select class="text-[10px] border border-paper-line rounded flex-1" :id="'split-'+item.id">
                             <option value="1">1 hari</option>
                             <option value="2">2 hari</option>
@@ -1011,6 +1011,7 @@
                           </select>
                           <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-terra text-white font-semibold" @click="splitWwpItem(item.id)">Pecah</button>
                         </div>
+                        <button type="button" class="mt-1 w-full text-[10px] py-0.5 rounded border border-paper-line text-ink-soft" x-show="!state.contractor.weekClosed && item.isLead" @click="unsplitWwpItem(item.id)">Ulang ke induk</button>
                       </div>
                     </template>
                     <p class="text-[10px] text-ink-mute" x-show="!wwpByDay(d.id).length">—</p>
@@ -2156,7 +2157,7 @@ Alpine.data('app', () => ({
     const order = WORKS.findIndex(w => w.id === parent);
     return (order < 0 ? 99 : order) * 100 + (Number(s.startWeek) || 0);
   },
-     _makeWwpItem(s, day, zoneLabel, promoted) {
+       _makeWwpItem(s, day, zoneLabel, promoted) {
     const parent = s.parentId || (s.id || '').split('_')[0];
     const base = WORKS.find(w => w.id === parent) || s;
     const zLabel = zoneLabel || s.zoneLabel || (s.zoneId || 'Z1').toUpperCase();
@@ -2173,6 +2174,8 @@ Alpine.data('app', () => ({
       day,
       promoted: !!promoted,
       canSplit: true,
+      isLead: false,
+      origZoneLabel: zLabel,
     };
   },
   buildWwp() {
@@ -2193,7 +2196,7 @@ Alpine.data('app', () => ({
     this.state.contractor.wwp = (this.state.contractor.wwp || []).map(x => x.id === itemId ? { ...x, day } : x);
     this.save();
   },
-  splitWwpItem(itemId) {
+    splitWwpItem(itemId) {
     if (this.state.contractor.weekClosed) return;
     const sel = document.getElementById('split-' + itemId);
     const n = Math.max(1, Math.min(6, Number(sel && sel.value) || 1));
@@ -2214,10 +2217,33 @@ Alpine.data('app', () => ({
         day,
         zoneLabel: prefix + '-' + (i + 1),
         canSplit: false,
+        isLead: i === 0,
+        origZoneLabel: prefix,
       });
     }
     list.splice(idx, 1, ...created);
     this.state.contractor.wwp = list;
+    this.save();
+  },
+  unsplitWwpItem(itemId) {
+    if (this.state.contractor.weekClosed) return;
+    const list = [...(this.state.contractor.wwp || [])];
+    const lead = list.find(x => x.id === itemId);
+    if (!lead || !lead.origZoneLabel) return;
+    const workId = lead.workId;
+    const orig = lead.origZoneLabel;
+    const rest = list.filter(x => !(x.workId === workId && x.origZoneLabel === orig && !x.canSplit));
+    const parent = {
+      ...lead,
+      id: 'wwp' + Date.now() + Math.random().toString(36).slice(2, 6),
+      day: lead.day,
+      zoneLabel: orig,
+      canSplit: true,
+      isLead: false,
+      origZoneLabel: orig,
+    };
+    rest.push(parent);
+    this.state.contractor.wwp = rest;
     this.save();
   },
   promoteToWwp(workId) {
