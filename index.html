@@ -925,29 +925,36 @@
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
               <h3 class="text-sm font-bold">Laporan Make-Ready</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5" x-text="'Target eksekusi: M'+targetExecWeek+(targetExecWeek===0?' (persiapan)':'')"></p>
+              <p class="text-[11px] text-ink-mute mt-0.5">Ringkasan seluruh jendela L1–L4 · hijau ready · kuning dijanjikan · merah terbuka</p>
             </div>
-            <div class="p-4 space-y-2 text-xs">
-              <p class="text-ink-soft" x-show="targetExecWeek===0">M0: tidak ada kerja lapangan. Fokus hilangkan constraint untuk M1.</p>
-              <div class="grid grid-cols-3 gap-2" x-show="targetExecWeek>0">
-                <div class="rounded-lg border border-forest/20 bg-forest-soft/30 p-2.5">
-                  <p class="text-[10px] text-ink-mute">Siap (ready)</p>
-                  <p class="text-lg font-bold text-forest" x-text="makeReadyReport.ready"></p>
+            <div class="p-3 space-y-2 text-xs">
+              <template x-for="row in makeReadyReportRows" :key="row.rel">
+                <div class="rounded-lg border border-paper-line bg-paper-card p-3">
+                  <div class="flex items-center justify-between gap-2 mb-2">
+                    <p class="font-semibold text-ink" x-text="row.rel+' · '+row.absLabel+(row.isPrep?' · persiapan':'')"></p>
+                    <p class="text-[10px] text-ink-mute" x-text="row.total+' pekerjaan'"></p>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2" x-show="!row.isPrep">
+                    <div class="rounded-md border border-forest/25 bg-forest-soft/40 p-2 text-center">
+                      <p class="text-[10px] text-forest">Ready</p>
+                      <p class="text-base font-bold text-forest" x-text="row.ready"></p>
+                    </div>
+                    <div class="rounded-md border border-amber-300 bg-amber-50 p-2 text-center">
+                      <p class="text-[10px] text-amber-800">Dijanjikan</p>
+                      <p class="text-base font-bold text-amber-800" x-text="row.promised"></p>
+                    </div>
+                    <div class="rounded-md border border-red-200 bg-red-50 p-2 text-center">
+                      <p class="text-[10px] text-red-700">Terbuka</p>
+                      <p class="text-base font-bold text-red-700" x-text="row.open"></p>
+                    </div>
+                  </div>
+                  <p class="text-[11px] text-ink-mute mt-1.5" x-text="row.summary"></p>
                 </div>
-                <div class="rounded-lg border border-terra/20 bg-terra-soft/30 p-2.5">
-                  <p class="text-[10px] text-ink-mute">Dijanjikan</p>
-                  <p class="text-lg font-bold text-terra" x-text="makeReadyReport.promised"></p>
-                </div>
-                <div class="rounded-lg border border-amber-200 bg-amber-50 p-2.5">
-                  <p class="text-[10px] text-ink-mute">Masih terbuka</p>
-                  <p class="text-lg font-bold text-amber-900" x-text="makeReadyReport.open"></p>
-                </div>
-              </div>
-              <p class="text-ink-soft leading-relaxed" x-text="makeReadyReport.summary"></p>
+              </template>
               <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0 && !state.contractor.wwp.length" @click="buildWwp()">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
-              <p class="text-[11px] text-ink-mute" x-show="targetExecWeek>0 && makeReadyReport.open>0">Item dengan constraint terbuka tidak masuk WWP — masuk backlog.</p>
+              <p class="text-[11px] text-ink-mute" x-show="targetExecWeek>0">WWP hanya mengambil item <strong>ready</strong> di M<span x-text="targetExecWeek"></span>; yang terbuka masuk backlog.</p>
             </div>
-          </div>
+          </div>        
 
           <!-- WWP -->
           <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.wwp.length">
@@ -1699,23 +1706,46 @@ Alpine.data('app', () => ({
     const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
     return cons.filter(c => mr.some(x => x.constraintId === c.id && x.status === 'promised')).length;
   },
+  get makeReadyReportRows() {
+    return (this.lookSlots || []).map(slot => {
+      if (slot.isPrep) {
+        return {
+          rel: slot.rel,
+          absLabel: slot.absLabel,
+          isPrep: true,
+          ready: 0, promised: 0, open: 0, total: 0,
+          summary: 'M0 kosong — fokus hilangkan constraint untuk L2 / M1.',
+        };
+      }
+      const stickies = slot.stickies || [];
+      let ready = 0, promised = 0, open = 0;
+      for (const s of stickies) {
+        const o = this._workOpenConstraintCount(s.id);
+        const p = this._workPromisedCount(s.id);
+        if (o === 0) ready++;
+        else if (p > 0) promised++;
+        else open++;
+      }
+      let summary = '';
+      if (!stickies.length) summary = 'Tidak ada pekerjaan.';
+      else if (open === 0 && promised === 0) summary = 'Semua ready.';
+      else if (open === 0) summary = promised + ' mengandalkan komitmen make-ready.';
+      else summary = open + ' terbuka tanpa pemilik — risiko / backlog.';
+      return {
+        rel: slot.rel,
+        absLabel: slot.absLabel,
+        isPrep: false,
+        ready, promised, open, total: stickies.length,
+        summary,
+      };
+    });
+  },
   get makeReadyReport() {
+    // kompatibilitas: ringkas target eksekusi
     const week = this.targetExecWeek;
-    const stickies = this._allStickies().filter(s => Number(s.startWeek) === week);
-    let ready=0, promised=0, open=0;
-    for (const s of stickies) {
-      const o = this._workOpenConstraintCount(s.id);
-      const p = this._workPromisedCount(s.id);
-      if (o === 0) ready++;
-      else if (p > 0) promised++;
-      else open++;
-    }
-    let summary = '';
-    if (!stickies.length) summary = 'Tidak ada pekerjaan di M' + week + '.';
-    else if (open === 0 && promised === 0) summary = 'M' + week + ' siap masuk WWP — semua ready.';
-    else if (open === 0) summary = 'M' + week + ' dapat masuk WWP; ' + promised + ' item mengandalkan komitmen make-ready.';
-    else summary = 'M' + week + ': ' + ready + ' ready, ' + promised + ' dijanjikan, ' + open + ' terbuka — item terbuka ke backlog.';
-    return { ready, promised, open, summary, total: stickies.length };
+    const row = (this.makeReadyReportRows || []).find(r => r.absLabel === ('M' + week));
+    if (!row) return { ready: 0, promised: 0, open: 0, summary: '', total: 0 };
+    return row;
   },
   get backlogHeld() {
     const week = this.targetExecWeek;
