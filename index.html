@@ -1200,6 +1200,162 @@
       </div>
     </div>
   </section>
+  <!-- LEARNING -->
+  <section x-show="currentStage==='contractor-learning'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Learning</p>
+          <h2 class="text-xl font-bold text-ink">Learning · M<span x-text="targetExecWeek"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">PPC, klasifikasi masalah, registry. Lalu kunci minggu & gulir.</p>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-paper-line" x-text="ppcPercent+'% PPC'"></span>
+      </div>
+      <div class="p-5 space-y-4">
+        <div x-show="!state.contractor.huddleComplete" class="rounded-xl border-2 border-dashed border-paper-line p-6 text-center text-sm text-ink-mute">Selesaikan Daily Huddle dulu.</div>
+        <div x-show="state.contractor.huddleComplete" class="space-y-4">
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="rounded-lg border border-paper-line bg-paper p-2.5 text-center">
+              <p class="text-[10px] text-ink-mute">Direncanakan</p>
+              <p class="text-lg font-bold" x-text="(state.contractor.wwp||[]).length"></p>
+            </div>
+            <div class="rounded-lg border border-forest/25 bg-forest-soft/30 p-2.5 text-center">
+              <p class="text-[10px] text-forest">Selesai</p>
+              <p class="text-lg font-bold text-forest" x-text="ppcDoneCount"></p>
+            </div>
+            <div class="rounded-lg border border-terra/20 bg-terra-soft/30 p-2.5 text-center">
+              <p class="text-[10px] text-terra">PPC</p>
+              <p class="text-lg font-bold text-terra" x-text="ppcPercent+'%'"></p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="btn-ghost !text-xs border border-paper-line" x-show="!state.contractor.weekClosed" @click="applyHuddleToPpc()">Isi PPC dari Huddle</button>
+            <p class="text-[11px] text-ink-mute self-center">Hijau huddle → selesai; masalah → gagal (boleh diubah).</p>
+          </div>
+          <div class="rounded-xl border border-paper-line overflow-hidden">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line"><h3 class="text-sm font-bold">Penilaian PPC per item</h3></div>
+            <div class="p-3 space-y-2 text-xs">
+              <template x-for="item in state.contractor.wwp" :key="'lp'+item.id">
+                <div class="rounded-lg border border-paper-line bg-paper-card p-2.5 flex flex-wrap gap-2 items-center justify-between" :style="'border-left:4px solid '+(item.color||'#C45C26')">
+                  <div>
+                    <p class="font-semibold" x-text="item.name+(item.zoneLabel?(' · '+item.zoneLabel):'')"></p>
+                    <p class="text-ink-mute" x-text="(item.day||'').toUpperCase()+' · '+(item.team||'')"></p>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 items-center" x-show="!state.contractor.weekClosed">
+                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="setPpc(item.id,'done',null)">Selesai</button>
+                    <select class="field !py-1 !text-[10px] w-auto" :id="'lppc-'+item.id">
+                      <option value="">Klasifikasi gagal…</option>
+                      <template x-for="r in PPC_REASONS" :key="r"><option :value="r" x-text="constraintLabel(r)"></option></template>
+                    </select>
+                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-red-200 text-red-700" @click="setPpc(item.id,'failed', (document.getElementById('lppc-'+item.id)||{}).value)">Gagal</button>
+                  </div>
+                  <span class="text-[10px] font-semibold" x-show="state.contractor.weekClosed" x-text="ppcLabel(item.id)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.followUps||[]).length">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line"><h3 class="text-sm font-bold">Tindak lanjut Huddle</h3></div>
+            <ul class="divide-y divide-paper-line text-xs">
+              <template x-for="f in state.contractor.followUps" :key="'lf'+f.id">
+                <li class="px-4 py-2.5">
+                  <p class="font-medium" x-text="f.name+(f.zoneLabel?(' · '+f.zoneLabel):'')"></p>
+                  <p class="text-ink-soft" x-text="f.dayLabel+' · '+f.problem"></p>
+                </li>
+              </template>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-paper-line overflow-hidden">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Registry masalah (akumulatif)</h3>
+              <p class="text-[11px] text-ink-mute">Frekuensi klasifikasi semua minggu</p>
+            </div>
+            <div class="p-3 space-y-3 text-xs">
+              <div class="space-y-1.5">
+                <template x-for="row in problemFrequency" :key="row.type">
+                  <div class="flex items-center gap-2">
+                    <span class="w-20 shrink-0 font-medium" x-text="constraintLabel(row.type)"></span>
+                    <div class="flex-1 h-2 rounded-full bg-paper overflow-hidden"><div class="h-full bg-terra rounded-full" :style="'width:'+row.pct+'%'"></div></div>
+                    <span class="w-6 text-right text-ink-mute" x-text="row.count"></span>
+                  </div>
+                </template>
+                <p class="text-ink-mute" x-show="!problemFrequency.length">Kosong sampai Learning dikunci.</p>
+              </div>
+              <ul class="max-h-40 overflow-y-auto divide-y divide-paper-line border border-paper-line rounded-lg" x-show="(state.contractor.problemRegistry||[]).length">
+                <template x-for="e in state.contractor.problemRegistry.slice().reverse()" :key="e.id">
+                  <li class="px-3 py-2">
+                    <p class="font-medium" x-text="'M'+e.week+' · '+(e.name||'')+(e.zoneLabel?(' · '+e.zoneLabel):'')"></p>
+                    <p class="text-ink-soft" x-text="constraintLabel(e.type)+(e.note?(' · '+e.note):'')"></p>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-ink-mute">Pembelajaran minggu ini</label>
+            <textarea class="field mt-1 text-xs" rows="2" x-model="state.contractor.learningNote" :disabled="state.contractor.weekClosed" placeholder="1–3 poin…"></textarea>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="btn-primary text-sm" x-show="!state.contractor.weekClosed" @click="lockLearning()">Kunci Learning minggu ini →</button>
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed" @click="rollLookahead()">Gulir Look-ahead →</button>
+            <button type="button" class="btn-ghost text-sm" x-show="state.contractor.weekClosed" @click="setStage('contractor-progress')">Lihat Progress →</button>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line"><button @click="setStage('contractor-huddle')" class="btn-ghost">← Huddle</button></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section x-show="currentStage==='contractor-progress'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Progress</p>
+        <h2 class="text-xl font-bold text-ink">Laporan progress (akumulatif)</h2>
+        <p class="text-sm text-ink-soft mt-1">PPC per minggu + top masalah untuk Owner.</p>
+      </div>
+      <div class="p-5 space-y-4 text-xs">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left min-w-[480px]">
+            <thead>
+              <tr class="border-b border-paper-line text-ink-mute">
+                <th class="py-2 pr-2 font-semibold">Minggu</th>
+                <th class="py-2 pr-2 font-semibold">Rencana</th>
+                <th class="py-2 pr-2 font-semibold">Selesai</th>
+                <th class="py-2 pr-2 font-semibold">PPC</th>
+                <th class="py-2 font-semibold">Catatan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="row in state.contractor.weeklyProgress" :key="'wp'+row.week">
+                <tr class="border-b border-paper-line/80">
+                  <td class="py-2 pr-2 font-semibold" x-text="'M'+row.week"></td>
+                  <td class="py-2 pr-2" x-text="row.planned"></td>
+                  <td class="py-2 pr-2" x-text="row.done"></td>
+                  <td class="py-2 pr-2 font-semibold" x-text="row.ppc+'%'"></td>
+                  <td class="py-2 text-ink-soft" x-text="row.note||'—'"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
+        </div>
+        <div class="rounded-xl border border-paper-line p-3" x-show="problemFrequency.length">
+          <h3 class="text-sm font-bold mb-2">Top klasifikasi masalah</h3>
+          <template x-for="row in problemFrequency.slice(0,5)" :key="'tp'+row.type">
+            <div class="flex justify-between py-1 border-b border-paper-line/60">
+              <span x-text="constraintLabel(row.type)"></span>
+              <span class="font-semibold" x-text="row.count"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
+        <button @click="setStage('contractor-learning')" class="btn-ghost">← Learning</button>
+        <button x-show="state.contractor.weekClosed" @click="rollLookahead()" class="btn-primary">Gulir Look-ahead →</button>
+      </div>
+    </div>
+  </section>
 
 </main>
 
@@ -2498,6 +2654,74 @@ Alpine.data('app', () => ({
     this.setStage('contractor-learning');
     alert('Huddle selesai. Lanjut Learning (PPC + registry).');
   },
+    applyHuddleToPpc() {
+    if (this.state.contractor.weekClosed) return;
+    const items = this.state.contractor.wwp || [];
+    const hr = this.state.contractor.huddleResults || {};
+    const list = [];
+    for (const item of items) {
+      let everDone = false;
+      for (const d of WWP_DAYS) {
+        const r = hr[d.id + ':' + item.id];
+        if (r && r.status === 'done') everDone = true;
+      }
+      list.push(everDone
+        ? { workId: item.id, status: 'done', reason: null }
+        : { workId: item.id, status: 'failed', reason: 'lain' });
+    }
+    this.state.contractor.ppc = list;
+    this.save();
+  },
+  get problemFrequency() {
+    const reg = this.state.contractor.problemRegistry || [];
+    const map = {};
+    for (const e of reg) {
+      const t = e.type || 'lain';
+      map[t] = (map[t] || 0) + 1;
+    }
+    const total = reg.length || 1;
+    return Object.keys(map)
+      .map(type => ({ type, count: map[type], pct: Math.round(100 * map[type] / total) }))
+      .sort((a, b) => b.count - a.count);
+  },
+  lockLearning() {
+    const items = this.state.contractor.wwp || [];
+    const ppc = this.state.contractor.ppc || [];
+    const missing = items.filter(i => !ppc.some(p => p.workId === i.id));
+    if (missing.length) {
+      if (!confirm(missing.length + ' item belum dinilai PPC. Kunci tetap?')) return;
+    }
+    if (!confirm('Kunci Learning M' + this.targetExecWeek + '?')) return;
+    const reg = [...(this.state.contractor.problemRegistry || [])];
+    const week = this.targetExecWeek;
+    for (const p of ppc) {
+      if (p.status !== 'failed') continue;
+      const item = items.find(x => x.id === p.workId) || {};
+      reg.push({
+        id: 'pr' + Date.now() + Math.random().toString(36).slice(2, 5),
+        week, workId: p.workId, name: item.name || '', zoneLabel: item.zoneLabel || '',
+        type: p.reason || 'lain', note: '', team: item.team || '',
+      });
+    }
+    for (const f of (this.state.contractor.followUps || [])) {
+      reg.push({
+        id: 'pr' + Date.now() + Math.random().toString(36).slice(2, 5),
+        week, workId: f.workId, name: f.name || '', zoneLabel: f.zoneLabel || '',
+        type: 'lain', note: (f.dayLabel || '') + ': ' + (f.problem || ''), team: '',
+      });
+    }
+    this.state.contractor.problemRegistry = reg;
+    const done = ppc.filter(p => p.status === 'done').length;
+    const planned = items.length;
+    const pct = planned ? Math.round(100 * done / planned) : 0;
+    const wp = [...(this.state.contractor.weeklyProgress || [])].filter(r => r.week !== week);
+    wp.push({ week, planned, done, ppc: pct, note: (this.state.contractor.learningNote || '').trim() });
+    wp.sort((a, b) => a.week - b.week);
+    this.state.contractor.weeklyProgress = wp;
+    this.state.contractor.weekClosed = true;
+    this.save();
+    alert('Learning M' + week + ' terkunci. PPC ' + pct + '%.');
+  },
   closeWeek() {
     const items = this.state.contractor.wwp || [];
     const ppc = this.state.contractor.ppc || [];
@@ -2525,10 +2749,19 @@ Alpine.data('app', () => ({
     this.state.contractor.lookOffset = (Number(this.state.contractor.lookOffset) || 0) + 1;
     this.state.contractor.selectedLookRel = 'L1';
     this.state.contractor.selectedLookWorkId = null;
-    this.state.contractor.wwp = [];
+        this.state.contractor.wwp = [];
     this.state.contractor.ppc = [];
     this.state.contractor.weekClosed = false;
+    this.state.contractor.wwpLocked = false;
+    this.state.contractor.huddleDayIdx = 0;
+    this.state.contractor.huddleResults = {};
+    this.state.contractor.followUps = [];
+    this.state.contractor.huddleComplete = false;
+    this.state.contractor.extendId = null;
+    this.state.contractor.extendNote = '';
+    this.state.contractor.learningNote = '';
     this.save();
+    this.setStage('contractor-production');
     alert('Jendela digulir. L1 sekarang = M' + this.state.contractor.lookOffset);
   },
   save() { saveState(this.state); },
