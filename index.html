@@ -105,6 +105,7 @@
     <button @click="setStage('contractor-phase')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-phase'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Phase Plan</button>
     <button @click="state.contractor.pullLocked&&setStage('contractor-production')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Look-ahead</button>
     <button @click="state.contractor.pullLocked&&setStage('contractor-wwp')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-wwp'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">WWP</button>
+    <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Huddle</button>
   </div>
 </div>
 
@@ -1000,7 +1001,7 @@
                             <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
                           </template>
                         </select>
-                                                <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed && item.canSplit">
+                                                <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked && item.canSplit">
                           <select class="text-[10px] border border-paper-line rounded flex-1" :id="'split-'+item.id">
                             <option value="1">1 hari</option>
                             <option value="2">2 hari</option>
@@ -1011,7 +1012,7 @@
                           </select>
                           <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-terra text-white font-semibold" @click="splitWwpItem(item.id)">Pecah</button>
                         </div>
-                        <button type="button" class="mt-1 w-full text-[10px] py-0.5 rounded border border-paper-line text-ink-soft" x-show="!state.contractor.weekClosed && item.isLead" @click="unsplitWwpItem(item.id)">Ulang ke induk</button>
+                        <button type="button" class="mt-1 w-full text-[10px] py-0.5 rounded border border-paper-line text-ink-soft" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked && item.isLead" @click="unsplitWwpItem(item.id)">Ulang ke induk</button>
                       </div>
                     </template>
                     <p class="text-[10px] text-ink-mute" x-show="!wwpByDay(d.id).length">—</p>
@@ -1043,7 +1044,7 @@
                   <template x-for="w in backlogWorkable" :key="'w'+w.id">
                     <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
                       <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
-                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed" @click="promoteToWwp(w.id)">Promosikan</button>
+                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked" @click="promoteToWwp(w.id)">Promosikan</button>
                     </li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
@@ -1051,8 +1052,22 @@
               </div>
             </div>
           </div>
+          <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="!state.contractor.wwpLocked">
+            <div>
+              <h3 class="text-sm font-bold">Kunci WWP · mulai minggu</h3>
+              <p class="text-[11px] text-ink-mute">Setelah dikunci, pecah/hari dibekukan. Lanjut Daily Huddle dari Senin (max 15 menit/tim).</p>
+            </div>
+            <button type="button" class="btn-primary text-sm" @click="lockWwp()">Kunci WWP → Huddle</button>
+          </div>
+          <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.wwpLocked && !state.contractor.huddleComplete">
+            <div>
+              <h3 class="text-sm font-bold text-forest">WWP terkunci</h3>
+              <p class="text-[11px] text-ink-mute">Daily Huddle berjalan. PPC setelah huddle Sabtu.</p>
+            </div>
+            <button type="button" class="btn-primary text-sm" @click="setStage('contractor-huddle')">Buka Huddle →</button>
+          </div>
 
-          <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.huddleComplete">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
               <h3 class="text-sm font-bold">Tutup minggu · PPC</h3>
               <p class="text-[11px] text-ink-mute">Selesai / gagal + alasan lapangan.</p>
@@ -1097,6 +1112,115 @@
       </div>
     </div>
   </section>
+  <!-- DAILY HUDDLE -->
+  <section x-show="currentStage==='contractor-huddle'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Daily Huddle</p>
+          <h2 class="text-xl font-bold text-ink">Huddle · <span x-text="huddleDayLabel"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">Max 15 menit per tim. Centang yang siap · masalah dicatat, tidak didiskusikan di sini.</p>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-paper-line" x-text="'Hari '+(state.contractor.huddleDayIdx+1)+'/6'"></span>
+      </div>
+      <div class="p-5 space-y-4">
+        <div x-show="!state.contractor.wwpLocked" class="rounded-xl border-2 border-dashed border-paper-line p-6 text-center text-sm text-ink-mute">
+          Kunci WWP dulu di tab WWP.
+        </div>
+
+        <div x-show="state.contractor.wwpLocked" class="space-y-4">
+          <div class="rounded-xl border border-terra/20 bg-terra-soft/30 p-3.5 text-xs text-ink-soft leading-relaxed">
+            <strong class="text-ink">Aturan huddle (15 menit):</strong>
+            (1) Lihat rencana hari ini per tim.
+            (2) Siap → centang hijau.
+            (3) Belum → perpanjang ke hari berikutnya + catat masalah (simpan, jangan bahas panjang).
+            (4) Promosi hanya dari workable backlog jika kapasitas kosong.
+            (5) Masalah = tindak lanjut untuk PPC Sabtu.
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            <template x-for="(d, i) in WWP_DAYS" :key="'hd'+d.id">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                :class="i===state.contractor.huddleDayIdx ? 'bg-terra text-white' : (i<state.contractor.huddleDayIdx ? 'bg-forest-soft text-forest' : 'bg-paper border border-paper-line text-ink-mute')"
+                x-text="d.label"></span>
+            </template>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold mb-2">Rencana hari ini</h3>
+            <div class="space-y-2">
+              <template x-for="item in huddleTodayItems" :key="'ht'+item.id">
+                <div class="rounded-xl border border-paper-line p-3 text-xs"
+                  :style="'border-left:4px solid '+(item.color||'#C45C26')"
+                  :class="huddleStatus(item.id)==='done' ? 'bg-forest-soft/40' : (huddleStatus(item.id)==='extended' ? 'bg-amber-50' : 'bg-paper-card')">
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p class="font-semibold text-sm text-ink" x-text="item.name"></p>
+                      <p class="text-ink-soft mt-0.5" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
+                      <p class="text-[10px] font-semibold text-forest mt-1" x-show="huddleStatus(item.id)==='done'">✓ Selesai hari ini</p>
+                      <p class="text-[10px] font-semibold text-amber-800 mt-1" x-show="huddleStatus(item.id)==='extended'">→ Diperpanjang + masalah dicatat</p>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5" x-show="!huddleStatus(item.id) && !state.contractor.huddleComplete">
+                      <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="markHuddleDone(item.id)">Centang hijau</button>
+                      <button type="button" class="btn-ghost !text-[10px] !py-1 border border-amber-300 text-amber-900" @click="openExtend(item.id)">Perpanjang</button>
+                    </div>
+                  </div>
+                  <div class="mt-2 space-y-1.5" x-show="state.contractor.extendId===item.id">
+                    <input class="field !text-xs !py-1.5" placeholder="Masalah / hambatan (wajib, untuk tindak lanjut)" x-model="state.contractor.extendNote">
+                    <div class="flex gap-2">
+                      <button type="button" class="btn-primary !text-xs !py-1.5" @click="extendHuddleItem(item.id)">Simpan & perpanjang</button>
+                      <button type="button" class="btn-ghost !text-xs !py-1.5" @click="state.contractor.extendId=null; state.contractor.extendNote=''">Batal</button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <p class="text-xs text-ink-mute" x-show="!huddleTodayItems.length">Tidak ada pekerjaan di hari ini.</p>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-paper-line overflow-hidden">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Workable · promosi cepat</h3>
+              <p class="text-[11px] text-ink-mute">Hanya dari backlog ready, jika ada kapasitas.</p>
+            </div>
+            <ul class="p-3 space-y-1 text-xs">
+              <template x-for="w in backlogWorkable" :key="'hw'+w.id">
+                <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
+                  <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
+                  <button type="button" class="btn-primary !text-[10px] !py-1" x-show="!state.contractor.huddleComplete" @click="promoteToWwp(w.id)">Promosikan ke hari ini</button>
+                </li>
+              </template>
+              <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
+            </ul>
+          </div>
+
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.followUps||[]).length">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Tindak lanjut (masalah tersimpan)</h3>
+              <p class="text-[11px] text-ink-mute">Tidak dibahas di huddle · dibawa ke PPC Sabtu</p>
+            </div>
+            <ul class="divide-y divide-paper-line text-xs">
+              <template x-for="f in state.contractor.followUps" :key="f.id">
+                <li class="px-4 py-2.5">
+                  <p class="font-medium" x-text="f.name+(f.zoneLabel?(' · '+f.zoneLabel):'')"></p>
+                  <p class="text-ink-soft" x-text="f.dayLabel+' · '+f.problem"></p>
+                </li>
+              </template>
+            </ul>
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleDayIdx<5 && !state.contractor.huddleComplete" @click="nextHuddleDay()">Lanjut hari berikutnya →</button>
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleDayIdx>=5 && !state.contractor.huddleComplete" @click="completeHuddle()">Selesai huddle Sabtu · buka PPC →</button>
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleComplete" @click="setStage('contractor-wwp')">Ke PPC di tab WWP →</button>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line">
+        <button @click="setStage('contractor-wwp')" class="btn-ghost">← WWP</button>
+      </div>
+    </div>
+  </section>
 
 </main>
 
@@ -1104,7 +1228,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.12.0';
+const VER = '1.13.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -1377,11 +1501,17 @@ function emptyContractor() {
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
     milestonesLocked:false, phaseWindows:{},
     lookOffset:0, selectedLookRel:null, selectedLookWorkId:null,
-      makeReady:[],
-      wwp:[],
-      ppc:[],
-      weekClosed:false,
     makeReady:[],
+    wwp:[],
+    ppc:[],
+    weekClosed:false,
+    wwpLocked:false,
+    huddleDayIdx:0,
+    huddleResults:{},
+    followUps:[],
+    huddleComplete:false,
+    extendId:null,
+    extendNote:'',
   };
 }
 
@@ -1867,6 +1997,7 @@ Alpine.data('app', () => ({
     if (s === 'contractor-pm') s = 'contractor-master';
     if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
+        if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
     this.currentStage = s;
     this.state.currentStage = s;
     this.save();
@@ -2188,7 +2319,11 @@ Alpine.data('app', () => ({
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i, days.length - 1)], s.zoneLabel, false));
     this.state.contractor.wwp = items;
     this.state.contractor.ppc = [];
-    this.state.contractor.weekClosed = false;
+        this.state.contractor.wwpLocked = false;
+    this.state.contractor.huddleDayIdx = 0;
+    this.state.contractor.huddleResults = {};
+    this.state.contractor.followUps = [];
+    this.state.contractor.huddleComplete = false;
     this.save();
   },
   moveWwpItem(itemId, day) {
@@ -2280,6 +2415,95 @@ Alpine.data('app', () => ({
     if (!p) return 'Belum dinilai';
     if (p.status === 'done') return 'Selesai';
     return 'Gagal' + (p.reason ? (' · ' + this.constraintLabel(p.reason)) : '');
+  },
+    lockWwp() {
+    if (!(this.state.contractor.wwp || []).length) {
+      alert('Susun WWP dulu.');
+      return;
+    }
+    if (!confirm('Kunci WWP dan mulai Daily Huddle dari Senin?')) return;
+    this.state.contractor.wwpLocked = true;
+    this.state.contractor.huddleDayIdx = 0;
+    this.state.contractor.huddleResults = {};
+    this.state.contractor.followUps = [];
+    this.state.contractor.huddleComplete = false;
+    this.state.contractor.extendId = null;
+    this.state.contractor.extendNote = '';
+    this.save();
+    this.setStage('contractor-huddle');
+  },
+  get huddleDayLabel() {
+    const d = WWP_DAYS[this.state.contractor.huddleDayIdx || 0];
+    return d ? d.label : 'Sen';
+  },
+  get huddleTodayItems() {
+    const day = (WWP_DAYS[this.state.contractor.huddleDayIdx || 0] || {}).id;
+    return this.wwpByDay(day);
+  },
+  huddleStatus(id) {
+    const r = (this.state.contractor.huddleResults || {})[id];
+    return r ? r.status : null;
+  },
+  markHuddleDone(id) {
+    if (this.state.contractor.huddleComplete) return;
+    const hr = { ...(this.state.contractor.huddleResults || {}) };
+    hr[id] = { status: 'done' };
+    this.state.contractor.huddleResults = hr;
+    this.state.contractor.extendId = null;
+    this.save();
+  },
+  openExtend(id) {
+    this.state.contractor.extendId = id;
+    this.state.contractor.extendNote = '';
+  },
+  extendHuddleItem(id) {
+    const note = (this.state.contractor.extendNote || '').trim();
+    if (!note) {
+      alert('Catat masalah/hambatan (wajib). Disimpan untuk tindak lanjut.');
+      return;
+    }
+    const days = WWP_DAYS.map(d => d.id);
+    const idx = this.state.contractor.huddleDayIdx || 0;
+    const nextDay = days[Math.min(idx + 1, days.length - 1)];
+    const list = [...(this.state.contractor.wwp || [])];
+    const item = list.find(x => x.id === id);
+    if (!item) return;
+    this.state.contractor.wwp = list.map(x => x.id === id ? { ...x, day: nextDay } : x);
+    const hr = { ...(this.state.contractor.huddleResults || {}) };
+    hr[id] = { status: 'extended', problem: note };
+    this.state.contractor.huddleResults = hr;
+    this.state.contractor.followUps = [...(this.state.contractor.followUps || []), {
+      id: 'fu' + Date.now(),
+      workId: id,
+      name: item.name,
+      zoneLabel: item.zoneLabel,
+      dayLabel: (WWP_DAYS[idx] || {}).label || '',
+      problem: note,
+    }];
+    this.state.contractor.extendId = null;
+    this.state.contractor.extendNote = '';
+    this.save();
+  },
+  nextHuddleDay() {
+    const idx = this.state.contractor.huddleDayIdx || 0;
+    if (idx >= 5) return;
+    const pending = this.huddleTodayItems.filter(it => !this.huddleStatus(it.id));
+    if (pending.length) {
+      if (!confirm(pending.length + ' item hari ini belum dinilai. Lanjut tetap?')) return;
+    }
+    this.state.contractor.huddleDayIdx = idx + 1;
+    this.state.contractor.extendId = null;
+    this.save();
+  },
+  completeHuddle() {
+    const pending = this.huddleTodayItems.filter(it => !this.huddleStatus(it.id));
+    if (pending.length) {
+      if (!confirm(pending.length + ' item Sabtu belum dinilai. Selesai huddle tetap?')) return;
+    }
+    this.state.contractor.huddleComplete = true;
+    this.save();
+    this.setStage('contractor-wwp');
+    alert('Huddle selesai. Lanjut PPC di tab WWP.');
   },
   closeWeek() {
     const items = this.state.contractor.wwp || [];
