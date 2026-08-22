@@ -2035,6 +2035,7 @@ Alpine.data('app', () => ({
     if (this.currentStage === 'contractor-pm') this.currentStage = 'contractor-master';
     this.recalcPlan();
     this._ensurePpcFromHuddle();
+    this._syncDesignFreeze();
     if (this.currentStage === 'contractor-huddle' && this.state.contractor.wwpLocked && !this.state.contractor.huddleComplete) {
       this.startHuddleTimer();
     }
@@ -2757,18 +2758,27 @@ Alpine.data('app', () => ({
     const { plan, curve } = buildPlan(weeks, mid);
     this.state.owner.workPlan = plan;
     this.state.owner.plannedSCurve = curve;
+    this._syncDesignFreeze();
   },
   lockOwnerAndNext() {
     this.recalcPlan();
     this.state.owner.locked = true;
-    if (!this.state.designer.designFreezeWeek) this.state.designer.designFreezeWeek = this.state.owner.designDuration;
+    this._syncDesignFreeze();
     this.save();
     this.setStage('designer');
+  },
+  _syncDesignFreeze() {
+    if (!this.state || !this.state.designer) return;
+    const max = Number(this.state.owner.designDuration) || 6;
+    const f = Number(this.state.designer.designFreezeWeek);
+    if (!Number.isFinite(f) || f < 1 || f > max) {
+      this.state.designer.designFreezeWeek = max;
+    }
   },
   unlockOwner() {
     if (confirm('Unlock Owner mereset Designer dan Negosiasi. Lanjutkan?')) {
       this.state.owner.locked = false;
-      this.state.designer.locked = false;
+      this.state.designer = { designFreezeWeek: this.state.owner.designDuration, levelOfDetail: 'detailed', locked: false };
       this.state.negotiation = emptyNego();
       this.state.contractor = emptyContractor();
       this.save();
