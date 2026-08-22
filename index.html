@@ -1156,6 +1156,7 @@
                   <div class="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p class="font-semibold text-sm text-ink" x-text="item.name"></p>
+                                            <p class="text-[10px] text-amber-800 mt-0.5" x-show="wasCarriedOver(item.id) && !huddleStatus(item.id)">↻ Dari perpanjangan — konfirmasi hari ini: jalan atau perpanjang lagi</p>
                       <p class="text-ink-soft mt-0.5" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
                       <p class="text-[10px] font-semibold text-forest mt-1" x-show="huddleStatus(item.id)==='done'">✓ Selesai hari ini</p>
                       <p class="text-[10px] font-semibold text-amber-800 mt-1" x-show="huddleStatus(item.id)==='extended'">→ Diperpanjang + masalah dicatat</p>
@@ -2440,14 +2441,22 @@ Alpine.data('app', () => ({
     const day = (WWP_DAYS[this.state.contractor.huddleDayIdx || 0] || {}).id;
     return this.wwpByDay(day);
   },
+    _huddleKey(id) {
+    const day = (WWP_DAYS[this.state.contractor.huddleDayIdx || 0] || {}).id || 'sen';
+    return day + ':' + id;
+  },
   huddleStatus(id) {
-    const r = (this.state.contractor.huddleResults || {})[id];
+    const r = (this.state.contractor.huddleResults || {})[this._huddleKey(id)];
     return r ? r.status : null;
+  },
+  wasCarriedOver(id) {
+    // ada follow-up sebelumnya untuk kartu ini → datang dari perpanjangan
+    return ((this.state.contractor.followUps || []).some(f => f.workId === id));
   },
   markHuddleDone(id) {
     if (this.state.contractor.huddleComplete) return;
     const hr = { ...(this.state.contractor.huddleResults || {}) };
-    hr[id] = { status: 'done' };
+    hr[this._huddleKey(id)] = { status: 'done' };
     this.state.contractor.huddleResults = hr;
     this.state.contractor.extendId = null;
     this.save();
@@ -2468,10 +2477,12 @@ Alpine.data('app', () => ({
     const list = [...(this.state.contractor.wwp || [])];
     const item = list.find(x => x.id === id);
     if (!item) return;
-    this.state.contractor.wwp = list.map(x => x.id === id ? { ...x, day: nextDay } : x);
+    // catat status HARI INI sebagai extended
     const hr = { ...(this.state.contractor.huddleResults || {}) };
-    hr[id] = { status: 'extended', problem: note };
+    hr[this._huddleKey(id)] = { status: 'extended', problem: note };
     this.state.contractor.huddleResults = hr;
+    // pindah ke hari berikutnya — di sana belum ada status (harus dikonfirmasi lagi)
+    this.state.contractor.wwp = list.map(x => x.id === id ? { ...x, day: nextDay } : x);
     this.state.contractor.followUps = [...(this.state.contractor.followUps || []), {
       id: 'fu' + Date.now(),
       workId: id,
