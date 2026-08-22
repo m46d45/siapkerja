@@ -818,33 +818,108 @@
   </section>
 
 
-  <!-- CONTRACTOR PRODUCTION -->
+  <!-- CONTRACTOR PRODUCTION / LOOK-AHEAD -->
   <section x-show="currentStage==='contractor-production'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
-      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead</p>
-        <h2 class="text-xl font-bold text-ink">Make-Ready & Produksi</h2>
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead</p>
+          <h2 class="text-xl font-bold text-ink">Make-Ready (jendela L1–L4)</h2>
+          <p class="text-sm text-ink-soft mt-1">Relatif L1–L4 · Absolut M0, M1, M2… · Prioritas: L1 paling bebas constraint.</p>
+        </div>
+        <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20" x-text="'Offset '+state.contractor.lookOffset"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.pullLocked" class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-8 text-center">
-          <p class="font-semibold text-ink-soft">Fase 3 belum dibuka</p>
-          <p class="text-sm text-ink-mute mt-1">Kunci Phase Plan dulu. Look-ahead memakai zona, milestone, dan constraint itu.</p>
+          <p class="font-semibold text-ink-soft">Look-ahead belum dibuka</p>
+          <p class="text-sm text-ink-mute mt-1">Kunci Phase Plan dulu. Look-ahead memakai jadwal dan constraint yang sudah dikunci.</p>
         </div>
-        <div x-show="state.contractor.pullLocked" class="space-y-3">
-          <div class="rounded-xl border border-forest/20 bg-forest-soft/40 p-3.5 text-xs text-forest leading-relaxed">
-            Pull plan terkunci. Berikutnya: look-ahead, make-ready, WWP, dan PPC vs Kurva S + Gantt kontrak.
+
+        <div x-show="state.contractor.pullLocked" class="space-y-4">
+          <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
+            <strong class="text-ink">Awal minggu (Senin).</strong>
+            L1 selalu slot terdekat. Di awal proyek L1 = <strong>M0</strong> (kosong — make-ready untuk L2/M1).
+            Setelah digulir, L1 mengunci ke minggu absolut berikutnya. Label kartu: <em>L· + M·</em>.
           </div>
-          <div class="rounded-xl border border-paper-line p-4">
-            <h3 class="text-sm font-bold mb-2">Antrian Make-Ready</h3>
-            <p class="text-xs text-ink-mute mb-2" x-show="!(state.contractor.constraints||[]).length">Tidak ada constraint tercatat — semua pekerjaan dianggap siap dijadwalkan.</p>
-            <ul class="space-y-1.5 text-xs" x-show="(state.contractor.constraints||[]).length">
-              <template x-for="c in (state.contractor.constraints||[])" :key="'mr'+c.id">
-                <li class="flex justify-between gap-2 border-b border-paper-line/70 py-1.5">
-                  <span x-text="workName(c.workId)+' · '+constraintLabel(c.type)"></span>
-                  <span class="text-ink-mute">belum ready</span>
-                </li>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <template x-for="slot in lookSlots" :key="slot.rel">
+              <div class="rounded-xl border p-3" :class="slot.rel==='L1' ? 'border-terra bg-terra-soft/30' : 'border-paper-line bg-paper-card'">
+                <p class="text-[10px] font-semibold uppercase tracking-wide" :class="slot.rel==='L1' ? 'text-terra' : 'text-ink-mute'" x-text="slot.rel"></p>
+                <p class="text-sm font-bold mt-0.5" x-text="slot.absLabel"></p>
+                <p class="text-[10px] text-ink-mute mt-1" x-text="slot.isPrep ? 'Persiapan · make-ready' : (slot.workCount+' pekerjaan')"></p>
+                <p class="text-[10px] mt-1" :class="slot.openConstraints ? 'text-amber-800' : 'text-forest'" x-text="slot.isPrep ? 'Fokus hilangkan constraint L2' : (slot.openConstraints ? (slot.openConstraints+' constraint') : 'siap')"></p>
+              </div>
+            </template>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold mb-2">Pekerjaan di jendela</h3>
+            <div class="board-scroll">
+              <template x-for="slot in lookSlots" :key="'col'+slot.rel">
+                <div class="phase-col">
+                  <p class="text-[10px] font-semibold uppercase tracking-wide mb-2 px-0.5" :class="slot.rel==='L1' ? 'text-terra' : 'text-ink-mute'" x-text="slot.rel+' · '+slot.absLabel"></p>
+                  <div class="space-y-2" x-show="slot.isPrep">
+                    <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[72px]">
+                      <p class="text-sm font-bold text-ink-soft">M0 · kosong</p>
+                      <p class="text-[11px] text-ink-mute mt-1">Tidak ada eksekusi. Buat L2 (M1) ready.</p>
+                    </div>
+                  </div>
+                  <div class="space-y-2" x-show="!slot.isPrep">
+                    <template x-for="w in slot.stickies" :key="w.id">
+                      <div class="sticky-note" :style="'--c:'+w.color">
+                        <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
+                        <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
+                        <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'" x-text="workConstraintCount(w.id)?(workConstraintCount(w.id)+' constraint'):'ready'"></p>
+                      </div>
+                    </template>
+                    <p class="text-[10px] text-ink-mute" x-show="!slot.stickies.length">Tidak ada pekerjaan di minggu ini.</p>
+                  </div>
+                </div>
               </template>
-            </ul>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-paper-line overflow-hidden">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
+              <div>
+                <h3 class="text-sm font-bold">Constraint analysis & removal</h3>
+                <p class="text-[11px] text-ink-mute">Prioritas L1, lalu L2. Tim commit menghilangkan constraint.</p>
+              </div>
+              <span class="text-[11px] text-ink-mute" x-text="openConstraintCount+' terbuka'"></span>
+            </div>
+            <div class="p-3 space-y-2" x-show="lookConstraints.length">
+              <template x-for="row in lookConstraints" :key="row.id">
+                <div class="rounded-lg border border-paper-line bg-paper-card p-3 text-xs space-y-2">
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p class="font-semibold text-ink" x-text="row.workLabel || workName(row.workId)"></p>
+                      <p class="text-ink-soft mt-0.5" x-text="constraintLabel(row.type)+(row.note?(' — '+row.note):'')"></p>
+                      <p class="text-[10px] text-ink-mute mt-0.5" x-text="row.slotRel ? (row.slotRel+' · '+row.absLabel) : 'Di luar jendela / umum'"></p>
+                    </div>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':'bg-amber-100 text-amber-900')" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':'Terbuka')"></span>
+                  </div>
+                  <div class="flex flex-wrap gap-2 items-center" x-show="!row.commitStatus || row.commitStatus==='promised'">
+                    <select class="field !py-1.5 !text-xs w-auto" x-show="!row.commitStatus" :id="'tm-'+row.id">
+                      <template x-for="t in TEAMS" :key="'ct'+t"><option :value="t" x-text="t"></option></template>
+                    </select>
+                    <button type="button" class="btn-primary !text-xs !py-1.5" x-show="!row.commitStatus" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
+                    <button type="button" class="btn-ghost !text-xs !py-1.5 border border-forest/30 text-forest" x-show="row.commitStatus==='promised'" @click="resolveMakeReady(row.id, true)">Sudah dilaksanakan</button>
+                    <button type="button" class="btn-ghost !text-xs !py-1.5 border border-red-200 text-red-700" x-show="row.commitStatus==='promised'" @click="resolveMakeReady(row.id, false)">Gagal</button>
+                    <span class="text-[10px] text-ink-mute" x-show="row.commitTeam" x-text="'oleh '+row.commitTeam"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <p class="p-4 text-xs text-ink-mute" x-show="!lookConstraints.length">Tidak ada constraint terbuka di jendela ini — L1 siap digulir bila waktunya.</p>
+          </div>
+
+          <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold">Gulir jendela</h3>
+              <p class="text-[11px] text-ink-mute">Evaluasi komitmen L1, geser absolut: L1 mengunci ke minggu berikutnya.</p>
+            </div>
+            <button type="button" class="btn-primary text-sm" @click="rollLookahead()">Gulir ke minggu berikutnya →</button>
           </div>
         </div>
       </div>
@@ -853,13 +928,14 @@
       </div>
     </div>
   </section>
+
 </main>
 
 <script type="module">
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.9.0';
+const VER = '1.10.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -1128,6 +1204,8 @@ function emptyContractor() {
     draftType:'material', draftNote:'',
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
     milestonesLocked:false, phaseWindows:{},
+    lookOffset:0,
+    makeReady:[],
   };
 }
 
@@ -1391,6 +1469,53 @@ Alpine.data('app', () => ({
       stickies.sort((a, b) => (a.startWeek - b.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
+  },
+    get lookSlots() {
+    const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
+    const allStickies = [];
+    for (const ph of (this.forwardPhasesView || this.pullPhasesView || [])) {
+      for (const s of (ph.stickies || [])) allStickies.push(s);
+    }
+    const cons = (this.state.contractor && this.state.contractor.constraints) || [];
+    const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
+    const resolved = new Set(mr.filter(x => x.status === 'done').map(x => x.constraintId));
+    return [1,2,3,4].map(i => {
+      const abs = off + (i - 1);
+      const isPrep = abs === 0;
+      const absLabel = 'M' + abs;
+      const stickies = isPrep ? [] : allStickies.filter(s => Number(s.startWeek) === abs);
+      const stickyIds = new Set(stickies.map(s => s.id));
+      const openConstraints = cons.filter(c => !resolved.has(c.id) && stickyIds.has(c.workId)).length;
+      return { rel: 'L' + i, abs, absLabel, isPrep, stickies, workCount: stickies.length, openConstraints };
+    });
+  },
+  get lookConstraints() {
+    const cons = (this.state.contractor && this.state.contractor.constraints) || [];
+    const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
+    const byC = Object.fromEntries(mr.map(x => [x.constraintId, x]));
+    const workSlot = {};
+    for (const slot of (this.lookSlots || [])) {
+      for (const s of (slot.stickies || [])) workSlot[s.id] = slot;
+    }
+    return cons.map(c => {
+      const commit = byC[c.id];
+      const slot = workSlot[c.workId];
+      return {
+        ...c,
+        commitStatus: commit ? commit.status : null,
+        commitTeam: commit ? commit.team : null,
+        slotRel: slot ? slot.rel : null,
+        absLabel: slot ? slot.absLabel : null,
+      };
+    }).filter(c => c.commitStatus !== 'done')
+      .sort((a, b) => {
+        const ra = a.slotRel ? Number(a.slotRel.slice(1)) : 99;
+        const rb = b.slotRel ? Number(b.slotRel.slice(1)) : 99;
+        return ra - rb;
+      });
+  },
+  get openConstraintCount() {
+    return (this.lookConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
@@ -1716,6 +1841,39 @@ Alpine.data('app', () => ({
       this.state.contractor.pullLocked = false;
       this.save();
     }
+  },
+    promiseMakeReady(constraintId) {
+    const sel = document.getElementById('tm-' + constraintId);
+    const team = sel ? sel.value : 'Struktur';
+    const list = [...(this.state.contractor.makeReady || [])];
+    if (list.some(x => x.constraintId === constraintId && x.status === 'promised')) return;
+    list.push({ id: 'mr' + Date.now(), constraintId, team, status: 'promised', atOffset: this.state.contractor.lookOffset || 0 });
+    this.state.contractor.makeReady = list;
+    this.save();
+  },
+  resolveMakeReady(constraintId, ok) {
+    this.state.contractor.makeReady = (this.state.contractor.makeReady || []).map(x => {
+      if (x.constraintId === constraintId && x.status === 'promised') return { ...x, status: ok ? 'done' : 'failed' };
+      return x;
+    });
+    if (ok) {
+      this.state.contractor.constraints = (this.state.contractor.constraints || []).filter(c => c.id !== constraintId);
+    }
+    this.save();
+  },
+  rollLookahead() {
+    if (!this.state.contractor.pullLocked) return;
+    const promised = (this.state.contractor.makeReady || []).filter(x => x.status === 'promised');
+    if (promised.length) {
+      if (!confirm(promised.length + ' komitmen masih dijanjikan. Gulir tetap?')) return;
+    }
+    this.state.contractor.makeReady = (this.state.contractor.makeReady || []).map(x => {
+      if (x.status === 'promised' && x.atOffset === (this.state.contractor.lookOffset || 0)) return { ...x, status: 'failed' };
+      return x;
+    });
+    this.state.contractor.lookOffset = (Number(this.state.contractor.lookOffset) || 0) + 1;
+    this.save();
+    alert('Jendela digulir. L1 sekarang = M' + this.state.contractor.lookOffset);
   },
   save() { saveState(this.state); },
   exportJSON() {
