@@ -1251,6 +1251,37 @@
             </div>
           </div>
           <p class="text-[11px] text-ink-mute">PPC dihitung otomatis dari Huddle (hijau = selesai, tidak tercapai = gagal). Boleh diubah per item.</p>
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="learningTeamPpc.length">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">PPC per tim · M<span x-text="playWeek"></span></h3>
+              <p class="text-[11px] text-ink-mute">Hanya tim yang punya janji di minggu ini</p>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-paper-line text-ink-mute">
+                    <th class="px-4 py-2 font-semibold">Tim</th>
+                    <th class="px-3 py-2 font-semibold">Janji</th>
+                    <th class="px-3 py-2 font-semibold">Selesai</th>
+                    <th class="px-3 py-2 font-semibold">PPC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="t in learningTeamPpc" :key="'ltp'+t.team">
+                    <tr class="border-b border-paper-line/70">
+                      <td class="px-4 py-2 font-semibold">
+                        <span class="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" :style="'background:'+t.color"></span>
+                        <span x-text="t.team"></span>
+                      </td>
+                      <td class="px-3 py-2" x-text="t.planned"></td>
+                      <td class="px-3 py-2" x-text="t.done"></td>
+                      <td class="px-3 py-2 font-bold" :class="t.ppc>=80?'text-forest':(t.ppc>=50?'text-terra':'text-amber-700')" x-text="t.ppc+'%'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line"><h3 class="text-sm font-bold">Penilaian PPC per item</h3></div>
             <div class="p-3 space-y-2 text-xs">
@@ -1458,6 +1489,40 @@
               <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> <50%</span>
               <span>Angka bawah = minggu kontrak</span>
             </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">PPC per tim (ringkasan)</h3>
+            <p class="text-[11px] text-ink-mute">Min · max · rata-rata antar minggu yang sudah ada data. Rincian minggu ada di Learning.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-paper-line text-ink-mute">
+                  <th class="px-4 py-2 font-semibold">Tim</th>
+                  <th class="px-3 py-2 font-semibold">Min</th>
+                  <th class="px-3 py-2 font-semibold">Max</th>
+                  <th class="px-3 py-2 font-semibold">Rata-rata</th>
+                  <th class="px-3 py-2 font-semibold">n minggu</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="t in progressTeamPpc" :key="'ptp'+t.team">
+                  <tr class="border-b border-paper-line/70">
+                    <td class="px-4 py-2 font-semibold">
+                      <span class="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" :style="'background:'+t.color"></span>
+                      <span x-text="t.team"></span>
+                    </td>
+                    <td class="px-3 py-2" x-text="t.n ? (t.min+'%') : '—'"></td>
+                    <td class="px-3 py-2" x-text="t.n ? (t.max+'%') : '—'"></td>
+                    <td class="px-3 py-2 font-bold" :class="t.n && t.avg>=80 ? 'text-forest' : (t.n && t.avg>=50 ? 'text-terra' : 'text-ink')" x-text="t.n ? (t.avg+'%') : '—'"></td>
+                    <td class="px-3 py-2 text-ink-mute" x-text="t.n || '—'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -2274,6 +2339,65 @@ Alpine.data('app', () => ({
       };
     });
   },
+  _teamPpcRows(items, ppc) {
+    const by = {};
+    for (const it of (items || [])) {
+      const t = it.team || '—';
+      if (!by[t]) by[t] = { team: t, planned: 0, done: 0, color: it.color || '#C45C26' };
+      by[t].planned += 1;
+      const p = (ppc || []).find(x => x.workId === it.id);
+      if (p && p.status === 'done') by[t].done += 1;
+    }
+    return Object.values(by).map(r => ({
+      ...r,
+      ppc: r.planned ? Math.round(100 * r.done / r.planned) : 0,
+    }));
+  },
+  get learningTeamPpc() {
+    return this._teamPpcRows(this.state.contractor.wwp || [], this.state.contractor.ppc || []);
+  },
+  get progressTeamPpc() {
+    const acc = {};
+    const push = (t) => {
+      if (!t || !t.team) return;
+      if (!acc[t.team]) acc[t.team] = { team: t.team, color: t.color || '#C45C26', vals: [] };
+      acc[t.team].vals.push(Number(t.ppc) || 0);
+    };
+    for (const w of (this.state.contractor.weeklyProgress || [])) {
+      let rows = w.teamPpc;
+      if (!rows || !rows.length) {
+        const logs = (this.state.contractor.actualLog || []).filter(x => Number(x.week) === Number(w.week));
+        const by = {};
+        for (const e of logs) {
+          const work = WORKS.find(x => x.id === e.parentId) || {};
+          const t = work.team || '—';
+          if (!by[t]) by[t] = { team: t, planned: 0, done: 0, color: work.color || '#C45C26' };
+          by[t].planned += 1;
+          if (e.done) by[t].done += 1;
+        }
+        rows = Object.values(by).map(r => ({ ...r, ppc: r.planned ? Math.round(100 * r.done / r.planned) : 0 }));
+      }
+      rows.forEach(push);
+    }
+    const cur = this.playWeek;
+    const hasCur = (this.state.contractor.weeklyProgress || []).some(r => Number(r.week) === cur);
+    if (!hasCur) this.learningTeamPpc.forEach(push);
+    return TEAMS.map(id => {
+      const a = acc[id];
+      if (!a || !a.vals.length) {
+        const sample = WORKS.find(w => w.team === id);
+        return { team: id, color: (sample && sample.color) || '#C45C26', min: null, max: null, avg: null, n: 0 };
+      }
+      return {
+        team: id,
+        color: a.color,
+        min: Math.min(...a.vals),
+        max: Math.max(...a.vals),
+        avg: Math.round(a.vals.reduce((s, v) => s + v, 0) / a.vals.length),
+        n: a.vals.length,
+      };
+    });
+  },
   get sCurvePlanPoints() {
     const rows = this.state.contractor.weeklyProgress || [];
     if (!rows.length) return '30,100';
@@ -3046,7 +3170,11 @@ Alpine.data('app', () => ({
     const planned = items.length;
     const pct = planned ? Math.round(100 * done / planned) : 0;
     const wp = [...(this.state.contractor.weeklyProgress || [])].filter(r => r.week !== week);
-    wp.push({ week, planned, done, ppc: pct, note: (this.state.contractor.learningNote || '').trim() });
+    wp.push({
+      week, planned, done, ppc: pct,
+      note: (this.state.contractor.learningNote || '').trim(),
+      teamPpc: this._teamPpcRows(items, ppc),
+    });
     wp.sort((a, b) => a.week - b.week);
     this.state.contractor.weeklyProgress = wp;
     const log = [...(this.state.contractor.actualLog || [])].filter(x => Number(x.week) !== week);
