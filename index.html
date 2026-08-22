@@ -45,6 +45,8 @@
     .sticky-note:disabled{cursor:default}
     .gantt-label{width:132px;flex-shrink:0;padding-right:8px}
     .gantt-bar{position:absolute;top:4px;height:14px;border-radius:3px;min-width:6px}
+    .gantt-bar-plan{position:absolute;top:3px;height:8px;border-radius:2px;min-width:4px;opacity:.42}
+    .gantt-bar-act{position:absolute;top:13px;height:8px;border-radius:2px;min-width:4px}
     .house-wrap svg{width:100%;height:auto;display:block}
   </style>
 </head>
@@ -1335,6 +1337,42 @@
         <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek"></span>
       </div>
       <div class="p-5 space-y-4 text-xs">
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Gantt rencana vs aktual</h3>
+            <p class="text-[11px] text-ink-mute">Pucat = kontrak frozen · tegas = selesai di huddle · kolom terra = sesi ini</p>
+          </div>
+          <div class="p-3 overflow-x-auto">
+            <div class="min-w-[560px]">
+              <div class="flex items-end mb-1">
+                <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
+                <div class="flex-1 flex">
+                  <template x-for="w in ganttWeekNums" :key="'pgw'+w">
+                    <div class="flex-1 text-center text-[9px] tabular-nums" :class="w===playWeek ? 'text-terra font-bold' : 'text-ink-mute'" x-text="w"></div>
+                  </template>
+                </div>
+              </div>
+              <template x-for="row in progressGanttRows" :key="'pgr'+row.id">
+                <div class="flex items-center h-9 border-t border-paper-line/70">
+                  <div class="gantt-label">
+                    <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
+                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+(row.actStart!==row.actFinish ? ('–'+row.actFinish) : '')) : ' · belum aktual')"></p>
+                  </div>
+                  <div class="flex-1 relative h-9">
+                    <div class="absolute inset-0 flex">
+                      <template x-for="w in ganttWeekNums" :key="'pgc'+row.id+w">
+                        <div class="flex-1 border-l border-paper-line/60" :class="w===playWeek ? 'bg-terra-soft/30' : ''"></div>
+                      </template>
+                    </div>
+                    <div class="gantt-bar-plan" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"></div>
+                    <div class="gantt-bar-act" x-show="row.hasActual" :style="'left:'+row.actLeft+'%;width:'+row.actWidth+'%;background:'+row.color"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left min-w-[480px]">
             <thead>
@@ -1361,34 +1399,8 @@
           <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
         </div>
 
-        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.weeklyProgress||[]).length">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
-            <h3 class="text-sm font-bold">Kurva S &amp; PPC</h3>
-            <p class="text-[11px] text-ink-mute">Rencana kumulatif vs aktual · batang PPC per minggu</p>
-          </div>
-          <div class="p-3 space-y-3">
-            <svg viewBox="0 0 320 120" class="w-full h-auto max-h-36" aria-label="Kurva S">
-              <line x1="30" y1="10" x2="30" y2="100" stroke="#D6D0C4" stroke-width="1"/>
-              <line x1="30" y1="100" x2="310" y2="100" stroke="#D6D0C4" stroke-width="1"/>
-              <polyline fill="none" stroke="#C45C26" stroke-width="2" stroke-linejoin="round" :points="sCurvePlanPoints"></polyline>
-              <polyline fill="none" stroke="#15803D" stroke-width="2" stroke-linejoin="round" stroke-dasharray="4 3" :points="sCurveActualPoints"></polyline>
-              <text x="32" y="14" font-size="8" fill="#6B6560">100%</text>
-              <text x="32" y="98" font-size="8" fill="#6B6560">0</text>
-            </svg>
-            <div class="flex flex-wrap gap-3 text-[10px] text-ink-mute">
-              <span>Terra = rencana kumulatif</span>
-              <span>Hijau putus-putus = aktual (selesai kumulatif)</span>
-            </div>
-            <div class="flex items-end gap-1.5 h-16">
-              <template x-for="b in ppcBars" :key="'pb'+b.week">
-                <div class="flex-1 flex flex-col items-center gap-0.5 min-w-0">
-                  <span class="text-[9px] font-semibold text-ink-soft" x-text="b.ppc+'%'"></span>
-                  <div class="w-full rounded-t bg-terra/80" :style="'height:'+Math.max(4, b.ppc*0.56)+'px'"></div>
-                  <span class="text-[9px] text-ink-mute" x-text="'M'+b.week"></span>
-                </div>
-              </template>
-            </div>
-          </div>
+        <div class="rounded-xl border border-dashed border-paper-line bg-paper/40 p-3 text-[11px] text-ink-mute">
+          Kurva S frozen + aktual dan batang PPC menyusul setelah Gantt ini dipakai.
         </div>
 
         <div class="rounded-xl border border-paper-line p-3" x-show="problemFrequency.length">
@@ -1701,6 +1713,7 @@ function emptyContractor() {
     problemRegistry:[],
     weeklyProgress:[],
     learningNote:'',
+    actualLog:[],
   };
 }
 
@@ -1798,6 +1811,7 @@ Alpine.data('app', () => ({
     if (!this.state.owner.budgetLevel) this.state.owner.budgetLevel = 'standard';
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
+    if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     this.currentStage = this.state.currentStage || 'owner';
     if (this.currentStage === 'contractor-pm') this.currentStage = 'contractor-master';
     this.recalcPlan();
@@ -1869,6 +1883,40 @@ Alpine.data('app', () => ({
         startWeek: w.startWeek, finishWeek: w.finishWeek, costJt: w.costJt,
         left: Math.max(0, left),
         width: Math.max(1.8, (dur / weeks) * 100),
+      };
+    });
+  },
+  get progressGanttRows() {
+    const weeks = Math.max(1, this.negoWeeks);
+    const log = [...(this.state.contractor.actualLog || [])];
+    const loggedWeeks = new Set(log.map(x => Number(x.week)));
+    const cur = this.targetExecWeek;
+    if (!loggedWeeks.has(cur)) {
+      const ppc = this.state.contractor.ppc || [];
+      for (const item of (this.state.contractor.wwp || [])) {
+        const p = ppc.find(x => x.workId === item.id);
+        log.push({
+          week: cur,
+          parentId: item.parentId,
+          done: !!(p && p.status === 'done'),
+        });
+      }
+    }
+    return this.ganttRows.map(row => {
+      const hits = log.filter(x => x.parentId === row.id && x.done);
+      if (!hits.length) {
+        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, actFinish: null };
+      }
+      const ws = hits.map(h => Number(h.week));
+      const actStart = Math.min(...ws);
+      const actFinish = Math.max(...ws);
+      return {
+        ...row,
+        hasActual: true,
+        actStart,
+        actFinish,
+        actLeft: Math.max(0, (actStart - 1) / weeks * 100),
+        actWidth: Math.max(1.8, (actFinish - actStart + 1) / weeks * 100),
       };
     });
   },
@@ -2841,6 +2889,20 @@ Alpine.data('app', () => ({
     wp.push({ week, planned, done, ppc: pct, note: (this.state.contractor.learningNote || '').trim() });
     wp.sort((a, b) => a.week - b.week);
     this.state.contractor.weeklyProgress = wp;
+    const log = [...(this.state.contractor.actualLog || [])].filter(x => Number(x.week) !== week);
+    for (const item of items) {
+      const p = ppc.find(x => x.workId === item.id);
+      log.push({
+        id: 'al' + Date.now() + Math.random().toString(36).slice(2, 5),
+        week,
+        parentId: item.parentId,
+        stickyId: item.workId,
+        name: item.name || '',
+        zoneLabel: item.zoneLabel || '',
+        done: !!(p && p.status === 'done'),
+      });
+    }
+    this.state.contractor.actualLog = log;
     this.state.contractor.weekClosed = true;
     this.save();
     alert('Learning M' + week + ' terkunci. PPC ' + pct + '%.');
