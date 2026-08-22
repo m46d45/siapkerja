@@ -104,6 +104,7 @@
     <button @click="setStage('contractor-master')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-master'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Master Plan</button>
     <button @click="setStage('contractor-phase')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-phase'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Phase Plan</button>
     <button @click="state.contractor.pullLocked&&setStage('contractor-production')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Look-ahead</button>
+    <button @click="state.contractor.pullLocked&&setStage('contractor-wwp')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-wwp'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">WWP</button>
   </div>
 </div>
 
@@ -951,50 +952,79 @@
                   <p class="text-[11px] text-ink-mute mt-1.5" x-text="row.summary"></p>
                 </div>
               </template>
-              <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0 && !state.contractor.wwp.length" @click="buildWwp()">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
+              <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0" @click="buildWwp(); setStage('contractor-wwp')">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
               <p class="text-[11px] text-ink-mute" x-show="targetExecWeek>0">WWP hanya mengambil item <strong>ready</strong> di M<span x-text="targetExecWeek"></span>; yang terbuka masuk backlog.</p>
             </div>
           </div>        
 
-          <!-- WWP -->
-          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.wwp.length">
-            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
-              <div>
-                <h3 class="text-sm font-bold">Weekly Work Plan</h3>
-                <p class="text-[11px] text-ink-mute" x-text="'M'+targetExecWeek+' · harian · hanya yang ready'"></p>
-              </div>
-              <span class="text-[11px] text-ink-mute" x-text="state.contractor.wwp.length+' item'"></span>
-            </div>
-            <div class="p-3 overflow-x-auto">
-              <div class="grid grid-cols-6 gap-2 min-w-[640px]">
-                <template x-for="d in WWP_DAYS" :key="d.id">
-                  <div class="rounded-lg border border-paper-line bg-paper-card p-2">
-                    <p class="text-[10px] font-semibold uppercase text-ink-mute mb-1.5" x-text="d.label"></p>
-                    <div class="space-y-1.5">
-                      <template x-for="item in wwpByDay(d.id)" :key="item.workId">
-                        <div class="rounded border border-paper-line bg-paper px-1.5 py-1 text-[10px] leading-snug">
-                          <p class="font-semibold text-ink" x-text="workName(item.workId)"></p>
-                          <p class="text-ink-mute" x-text="item.promoted ? 'dipromosikan' : 'rencana'"></p>
-                          <select class="mt-1 w-full text-[10px] border border-paper-line rounded" :disabled="state.contractor.weekClosed" @change="moveWwpDay(item.workId, $event.target.value)">
-                            <template x-for="dd in WWP_DAYS" :key="dd.id+'m'+item.workId">
-                              <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
-                            </template>
+         
+        </div>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line">
+        <button @click="setStage('contractor-phase')" class="btn-ghost">← Phase Plan</button>
+      </div>
+    </div>
+  </section>
+  <!-- WWP TAB -->
+  <section x-show="currentStage==='contractor-wwp'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Weekly Work Plan</p>
+          <h2 class="text-xl font-bold text-ink">Rencana harian · M<span x-text="targetExecWeek"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">Hanya ready · pecah zona harian · backlog · PPC.</p>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-paper-line" x-text="(state.contractor.wwp||[]).length+' item'"></span>
+      </div>
+      <div class="p-5 space-y-4">
+        <div x-show="!(state.contractor.wwp||[]).length" class="rounded-xl border border-dashed border-paper-line p-6 text-center space-y-2">
+          <p class="text-sm text-ink-soft">WWP belum disusun. Dari Look-ahead, klik Susun WWP.</p>
+          <button type="button" class="btn-primary text-sm" @click="setStage('contractor-production')">← Look-ahead</button>
+        </div>
+
+        <div x-show="(state.contractor.wwp||[]).length" class="space-y-4">
+          <div class="overflow-x-auto">
+            <div class="grid grid-cols-6 gap-2 min-w-[640px]">
+              <template x-for="d in WWP_DAYS" :key="'w'+d.id">
+                <div class="rounded-lg border border-paper-line bg-paper-card p-2">
+                  <p class="text-[10px] font-semibold uppercase text-ink-mute mb-1.5" x-text="d.label"></p>
+                  <div class="space-y-1.5">
+                    <template x-for="item in wwpByDay(d.id)" :key="item.id">
+                      <div class="rounded border px-1.5 py-1 text-[10px] leading-snug"
+                        :style="'border-left:4px solid '+(item.color||'#C45C26')+';background:color-mix(in srgb, '+(item.color||'#C45C26')+' 18%, #FFFcf8)'">
+                        <p class="font-semibold text-ink" x-text="item.name"></p>
+                        <p class="text-ink-soft" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
+                        <p class="text-ink-mute" x-text="item.promoted ? 'dipromosikan' : 'rencana'"></p>
+                        <select class="mt-1 w-full text-[10px] border border-paper-line rounded" :disabled="state.contractor.weekClosed" @change="moveWwpItem(item.id, $event.target.value)">
+                          <template x-for="dd in WWP_DAYS" :key="dd.id+'m'+item.id">
+                            <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
+                          </template>
+                        </select>
+                        <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed">
+                          <select class="text-[10px] border border-paper-line rounded flex-1" :id="'split-'+item.id">
+                            <option value="1">1 hari</option>
+                            <option value="2">2 hari</option>
+                            <option value="3">3 hari</option>
+                            <option value="4">4 hari</option>
+                            <option value="5">5 hari</option>
+                            <option value="6">6 hari</option>
                           </select>
+                          <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-terra text-white font-semibold" @click="splitWwpItem(item.id)">Pecah</button>
                         </div>
-                      </template>
-                      <p class="text-[10px] text-ink-mute" x-show="!wwpByDay(d.id).length">—</p>
-                    </div>
+                      </div>
+                    </template>
+                    <p class="text-[10px] text-ink-mute" x-show="!wwpByDay(d.id).length">—</p>
                   </div>
-                </template>
-              </div>
+                </div>
+              </template>
             </div>
           </div>
+          <p class="text-[11px] text-ink-mute">Pecah = bagi ke beberapa hari + zona (Z1-1, Z1-2…). Default: Site dulu, baru Galian.</p>
 
-          <!-- Backlog -->
-          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="targetExecWeek>0">
+          <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
               <h3 class="text-sm font-bold">Backlog</h3>
-              <p class="text-[11px] text-ink-mute">Tahan (belum ready) · Workable (bisa dipromosikan ke WWP)</p>
+              <p class="text-[11px] text-ink-mute">Tahan (belum ready) · Workable (bisa dipromosikan)</p>
             </div>
             <div class="p-3 grid sm:grid-cols-2 gap-3 text-xs">
               <div>
@@ -1012,7 +1042,7 @@
                   <template x-for="w in backlogWorkable" :key="'w'+w.id">
                     <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
                       <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
-                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="state.contractor.wwp.length && !state.contractor.weekClosed" @click="promoteToWwp(w.id)">Promosikan</button>
+                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed" @click="promoteToWwp(w.id)">Promosikan</button>
                     </li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
@@ -1021,28 +1051,28 @@
             </div>
           </div>
 
-          <!-- PPC -->
-          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.wwp.length">
+          <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
               <h3 class="text-sm font-bold">Tutup minggu · PPC</h3>
-              <p class="text-[11px] text-ink-mute">Selesai / gagal + alasan. Constraint lapangan dicatat di sini.</p>
+              <p class="text-[11px] text-ink-mute">Selesai / gagal + alasan lapangan.</p>
             </div>
             <div class="p-3 space-y-2 text-xs">
-              <template x-for="item in state.contractor.wwp" :key="'ppc'+item.workId">
-                <div class="rounded-lg border border-paper-line bg-paper-card p-2.5 flex flex-wrap gap-2 items-center justify-between">
+              <template x-for="item in state.contractor.wwp" :key="'ppc'+item.id">
+                <div class="rounded-lg border border-paper-line bg-paper-card p-2.5 flex flex-wrap gap-2 items-center justify-between"
+                  :style="'border-left:4px solid '+(item.color||'#C45C26')">
                   <div>
-                    <p class="font-semibold" x-text="workName(item.workId)"></p>
-                    <p class="text-ink-mute" x-text="item.day.toUpperCase()+(item.promoted?' · promosi':'')"></p>
+                    <p class="font-semibold" x-text="item.name+(item.zoneLabel?(' · '+item.zoneLabel):'')"></p>
+                    <p class="text-ink-mute" x-text="(item.day||'').toUpperCase()+' · '+(item.team||'')+(item.promoted?' · promosi':'')"></p>
                   </div>
                   <div class="flex flex-wrap gap-1.5 items-center" x-show="!state.contractor.weekClosed">
-                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="setPpc(item.workId,'done',null)">Selesai</button>
-                    <select class="field !py-1 !text-[10px] w-auto" :id="'ppc-'+item.workId">
+                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="setPpc(item.id,'done',null)">Selesai</button>
+                    <select class="field !py-1 !text-[10px] w-auto" :id="'ppc-'+item.id">
                       <option value="">Alasan gagal…</option>
                       <template x-for="r in PPC_REASONS" :key="r"><option :value="r" x-text="constraintLabel(r)"></option></template>
                     </select>
-                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-red-200 text-red-700" @click="setPpc(item.workId,'failed', (document.getElementById('ppc-'+item.workId)||{}).value)">Gagal</button>
+                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-red-200 text-red-700" @click="setPpc(item.id,'failed', (document.getElementById('ppc-'+item.id)||{}).value)">Gagal</button>
                   </div>
-                  <span class="text-[10px] font-semibold" x-show="state.contractor.weekClosed" x-text="ppcLabel(item.workId)"></span>
+                  <span class="text-[10px] font-semibold" x-show="state.contractor.weekClosed" x-text="ppcLabel(item.id)"></span>
                 </div>
               </template>
               <div class="flex flex-wrap gap-2 pt-1">
@@ -1052,18 +1082,17 @@
             </div>
           </div>
 
-          <!-- Gulir hanya setelah tutup minggu -->
           <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.weekClosed">
             <div>
               <h3 class="text-sm font-bold">Gulir jendela Look-ahead</h3>
-              <p class="text-[11px] text-ink-mute">Minggu sudah ditutup. Geser L1 ke absolut berikutnya.</p>
+              <p class="text-[11px] text-ink-mute">Minggu ditutup. Geser L1 ke absolut berikutnya.</p>
             </div>
             <button type="button" class="btn-primary text-sm" @click="rollLookahead()">Gulir ke minggu berikutnya →</button>
           </div>
         </div>
       </div>
-      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line">
-        <button @click="setStage('contractor-phase')" class="btn-ghost">← Phase Plan</button>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
+        <button @click="setStage('contractor-production')" class="btn-ghost">← Look-ahead</button>
       </div>
     </div>
   </section>
@@ -1074,7 +1103,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.11.0';
+const VER = '1.12.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -1765,7 +1794,7 @@ Alpine.data('app', () => ({
     });
   },
   get ppcDoneCount() {
-    const ids = new Set((this.state.contractor.wwp || []).map(x => x.workId));
+    const ids = new Set((this.state.contractor.wwp || []).map(x => x.id));
     return ((this.state.contractor.ppc || []).filter(p => ids.has(p.workId) && p.status === 'done')).length;
   },
   get ppcPercent() {
@@ -1836,6 +1865,7 @@ Alpine.data('app', () => ({
     if (s.startsWith('contractor') && !this.canAccessContractor()) return;
     if (s === 'contractor-pm') s = 'contractor-master';
     if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
+    if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     this.currentStage = s;
     this.state.currentStage = s;
     this.save();
@@ -2121,24 +2151,69 @@ Alpine.data('app', () => ({
     wwpByDay(day) {
     return ((this.state.contractor && this.state.contractor.wwp) || []).filter(x => x.day === day);
   },
+  _wwpSortKey(s) {
+    const parent = s.parentId || (s.id || '').split('_')[0];
+    const order = WORKS.findIndex(w => w.id === parent);
+    return (order < 0 ? 99 : order) * 100 + (Number(s.startWeek) || 0);
+  },
+  _makeWwpItem(s, day, zoneLabel, promoted) {
+    const parent = s.parentId || (s.id || '').split('_')[0];
+    const base = WORKS.find(w => w.id === parent) || s;
+    const zBase = (s.zoneLabel || s.zoneId || 'Z1').split('-')[0].toUpperCase();
+    return {
+      id: 'wwp' + Date.now() + Math.random().toString(36).slice(2, 6),
+      workId: s.id,
+      parentId: parent,
+      name: s.name || base.name,
+      team: s.team || base.team,
+      color: s.color || base.color,
+      zoneBase: zBase,
+      zoneLabel: zoneLabel || s.zoneLabel || zBase,
+      day,
+      promoted: !!promoted,
+    };
+  },
   buildWwp() {
     if (!this.state.contractor.pullLocked) return;
     const week = this.targetExecWeek;
     const days = WWP_DAYS.map(d => d.id);
-    const ready = this._allStickies().filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id));
-    const items = ready.map((s, i) => ({
-      workId: s.id,
-      day: days[i % days.length],
-      promoted: false,
-    }));
+    const ready = this._allStickies()
+      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id))
+      .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
+    const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i, days.length - 1)], s.zoneLabel, false));
     this.state.contractor.wwp = items;
     this.state.contractor.ppc = [];
     this.state.contractor.weekClosed = false;
     this.save();
   },
-  moveWwpDay(workId, day) {
+  moveWwpItem(itemId, day) {
     if (this.state.contractor.weekClosed) return;
-    this.state.contractor.wwp = (this.state.contractor.wwp || []).map(x => x.workId === workId ? { ...x, day } : x);
+    this.state.contractor.wwp = (this.state.contractor.wwp || []).map(x => x.id === itemId ? { ...x, day } : x);
+    this.save();
+  },
+  splitWwpItem(itemId) {
+    if (this.state.contractor.weekClosed) return;
+    const sel = document.getElementById('split-' + itemId);
+    const n = Math.max(1, Math.min(6, Number(sel && sel.value) || 1));
+    if (n === 1) return;
+    const list = [...(this.state.contractor.wwp || [])];
+    const idx = list.findIndex(x => x.id === itemId);
+    if (idx < 0) return;
+    const base = list[idx];
+    const days = WWP_DAYS.map(d => d.id);
+    const startDayIdx = Math.max(0, days.indexOf(base.day));
+    const created = [];
+    for (let i = 0; i < n; i++) {
+      const day = days[Math.min(startDayIdx + i, days.length - 1)];
+      created.push({
+        ...base,
+        id: 'wwp' + Date.now() + i + Math.random().toString(36).slice(2, 5),
+        day,
+        zoneLabel: base.zoneBase + '-' + (i + 1),
+      });
+    }
+    list.splice(idx, 1, ...created);
+    this.state.contractor.wwp = list;
     this.save();
   },
   promoteToWwp(workId) {
@@ -2148,15 +2223,17 @@ Alpine.data('app', () => ({
       return;
     }
     if ((this.state.contractor.wwp || []).some(x => x.workId === workId)) return;
+    const sticky = this._allStickies().find(s => s.id === workId);
+    if (!sticky) return;
     const days = WWP_DAYS.map(d => d.id);
     let best = days[0], bestN = 1e9;
     for (const d of days) {
       const n = this.wwpByDay(d).length;
       if (n < bestN) { bestN = n; best = d; }
     }
-    this.state.contractor.wwp = [...(this.state.contractor.wwp || []), { workId, day: best, promoted: true }];
+    this.state.contractor.wwp = [...(this.state.contractor.wwp || []), this._makeWwpItem(sticky, best, sticky.zoneLabel, true)];
     this.save();
-  },
+  },  
   setPpc(workId, status, reason) {
     if (this.state.contractor.weekClosed) return;
     if (status === 'failed' && !reason) {
@@ -2177,7 +2254,7 @@ Alpine.data('app', () => ({
   closeWeek() {
     const items = this.state.contractor.wwp || [];
     const ppc = this.state.contractor.ppc || [];
-    const missing = items.filter(i => !ppc.some(p => p.workId === i.workId));
+    const missing = items.filter(i => !ppc.some(p => p.workId === i.id));
     if (missing.length) {
       if (!confirm(missing.length + ' item belum dinilai selesai/gagal. Tutup tetap?')) return;
     }
