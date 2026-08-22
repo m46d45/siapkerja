@@ -1119,9 +1119,16 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Daily Huddle</p>
           <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span> · <span x-text="huddleDayLabel"></span></h2>
-          <p class="text-sm text-ink-soft mt-1">Max 15 menit per tim. Centang yang siap · masalah dicatat, tidak didiskusikan di sini.</p>
+          <p class="text-sm text-ink-soft mt-1">Max 15 menit. Centang yang siap · masalah dicatat, tidak didiskusikan di sini.</p>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek+' · '+(state.contractor.huddleDayIdx+1)+'/6'"></span>
+        <div class="text-right shrink-0">
+          <p class="text-[10px] text-ink-mute uppercase tracking-wider">Timer huddle</p>
+          <p class="text-2xl font-bold tabular-nums leading-none mt-0.5"
+            :class="huddleTimerLeft===0 ? 'text-red-700' : (huddleTimerLeft<120 ? 'text-terra' : 'text-ink')"
+            x-text="huddleTimerLabel"></p>
+          <p class="text-[10px] mt-1 font-medium" :class="huddleTimerLeft===0 ? 'text-red-700' : 'text-ink-mute'"
+            x-text="huddleTimerLeft===0 ? 'Waktu habis — parkir masalah' : ('Sesi M'+playWeek+' · '+(state.contractor.huddleDayIdx+1)+'/6')"></p>
+        </div>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.wwpLocked" class="rounded-xl border-2 border-dashed border-paper-line p-6 text-center text-sm text-ink-mute">
@@ -1363,11 +1370,40 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Progress</p>
           <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span></h2>
-          <p class="text-sm text-ink-soft mt-1">Laporan akumulatif ke Owner. PPC per minggu + top masalah.</p>
+          <p class="text-sm text-ink-soft mt-1">Laporan akumulatif ke Owner. Gantt, Kurva S, PPC.</p>
         </div>
         <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek"></span>
       </div>
       <div class="p-5 space-y-4 text-xs">
+        <div class="rounded-xl border border-forest/20 bg-forest-soft/25 p-4 space-y-2">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-forest">Laporan ke Owner</p>
+              <p class="text-sm font-bold text-ink mt-0.5">Ringkasan kemajuan · Sesi M<span x-text="playWeek"></span></p>
+            </div>
+            <button type="button" class="btn-ghost !text-[11px] !py-1.5 border border-forest/25" @click="copyOwnerReport()">Salin ringkasan</button>
+          </div>
+          <p class="text-[12px] text-ink-soft leading-relaxed" x-text="ownerReportText"></p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+            <div class="rounded-lg bg-paper-card border border-paper-line p-2 text-center">
+              <p class="text-[10px] text-ink-mute">Kontrak</p>
+              <p class="font-bold" x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.price)+' jt'"></p>
+            </div>
+            <div class="rounded-lg bg-paper-card border border-paper-line p-2 text-center">
+              <p class="text-[10px] text-ink-mute">Durasi</p>
+              <p class="font-bold" x-text="(state.negotiation.contract&&state.negotiation.contract.duration)+' mgg'"></p>
+            </div>
+            <div class="rounded-lg bg-paper-card border border-forest/20 p-2 text-center">
+              <p class="text-[10px] text-forest">Progres fisik</p>
+              <p class="font-bold text-forest" x-text="lockedPhysicalPct+'%'"></p>
+            </div>
+            <div class="rounded-lg bg-paper-card border border-paper-line p-2 text-center">
+              <p class="text-[10px] text-ink-mute">PPC</p>
+              <p class="font-bold" x-text="(((state.contractor.weeklyProgress||[]).slice(-1)[0]||{}).ppc || ppcPercent)+'%'"></p>
+            </div>
+          </div>
+        </div>
+
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
             <h3 class="text-sm font-bold">Gantt rencana vs aktual</h3>
@@ -1387,7 +1423,7 @@
                 <div class="flex items-center h-9 border-t border-paper-line/70">
                   <div class="gantt-label">
                     <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
-                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+(row.actStart!==row.actFinish ? ('–'+row.actFinish) : '')) : ' · belum aktual')"></p>
+                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual '+row.earnedWeeks+' mgg ('+row.actPct+'%)') : ' · belum aktual')"></p>
                   </div>
                   <div class="flex-1 relative h-9">
                     <div class="absolute inset-0 flex">
@@ -1432,8 +1468,8 @@
 
         <div class="grid grid-cols-3 gap-2">
           <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
-            <p class="text-[10px] text-forest">Progres fisik</p>
-            <p class="text-lg font-bold text-forest" x-text="physicalProgress.pct+'%'"></p>
+            <p class="text-[10px] text-forest">Progres fisik (baku)</p>
+            <p class="text-lg font-bold text-forest" x-text="lockedPhysicalPct+'%'"></p>
           </div>
           <div class="rounded-xl border border-terra/20 bg-terra-soft/30 p-3 text-center">
             <p class="text-[10px] text-terra">Rencana frozen M<span x-text="playWeek"></span></p>
@@ -1445,10 +1481,34 @@
           </div>
         </div>
 
+        <div class="rounded-xl border-2 border-dashed border-terra/35 bg-terra-soft/20 p-3.5 space-y-2"
+          x-show="!progressLockForWeek && (state.contractor.huddleComplete || (state.contractor.weeklyProgress||[]).length)"
+          x-init="if (progressDraft==null) progressDraft = suggestedWeekIncrement">
+          <p class="text-sm font-bold text-ink">Bakukan progres M<span x-text="playWeek"></span></p>
+          <p class="text-[11px] text-ink-soft leading-relaxed">PPC bukan progres Owner. Usulan dari sticky selesai:
+            <strong x-text="'+'+suggestedWeekIncrement+'%'"></strong>
+            <span x-show="physicalProgress.parts.filter(p=>p.week===playWeek).length"
+              x-text="' ('+physicalProgress.parts.filter(p=>p.week===playWeek).map(p=>p.name+' +'+p.pct+'%').join(' · ')+')'"></span>.
+            Boleh disesuaikan sebelum kunci.
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-[11px] text-ink-mute">+%</label>
+            <input type="number" min="0" max="100" step="0.1" class="field !py-1.5 !px-2 w-24 text-center" x-model.number="progressDraft">
+            <button type="button" class="btn-primary text-sm" @click="lockProgress()">Bakukan progres M<span x-text="playWeek"></span></button>
+          </div>
+          <p class="text-[11px] text-ink-mute">Kumulatif jika dibakukan: <span class="font-semibold text-ink" x-text="(lockedPhysicalPct + (Number(progressDraft)||suggestedWeekIncrement))+'%'"></span></p>
+        </div>
+        <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-[11px] text-forest"
+          x-show="progressLockForWeek">
+          M<span x-text="playWeek"></span> terkunci:
+          <strong x-text="'+'+(progressLockForWeek&&progressLockForWeek.increment)+'%'"></strong>
+          fisik. Kurva S memakai angka ini, bukan PPC.
+        </div>
+
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
             <h3 class="text-sm font-bold">Kurva S · frozen vs aktual</h3>
-            <p class="text-[11px] text-ink-mute">Terra = rencana kontrak · hijau putus-putus = progres fisik dari sticky selesai (bukan PPC)</p>
+            <p class="text-[11px] text-ink-mute">Terra = rencana kontrak · hijau putus-putus = progres fisik yang sudah dibakukan</p>
           </div>
           <div class="p-3">
             <div class="w-full" x-html="progressChartSvg"></div>
@@ -1857,6 +1917,7 @@ function emptyContractor() {
     weeklyProgress:[],
     learningNote:'',
     actualLog:[],
+    progressLocks:[],
   };
 }
 
@@ -1948,6 +2009,9 @@ Alpine.data('app', () => ({
   TEAMS,
   WWP_DAYS,
   PPC_REASONS,
+  huddleTimerLeft: 15 * 60,
+  _huddleTimerHandle: null,
+  progressDraft: null,
 
   init() {
     this.state = loadState();
@@ -1955,10 +2019,14 @@ Alpine.data('app', () => ({
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
+    if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
     this.currentStage = this.state.currentStage || 'owner';
     if (this.currentStage === 'contractor-pm') this.currentStage = 'contractor-master';
     this.recalcPlan();
     this._ensurePpcFromHuddle();
+    if (this.currentStage === 'contractor-huddle' && this.state.contractor.wwpLocked && !this.state.contractor.huddleComplete) {
+      this.startHuddleTimer();
+    }
   },
 
   get oeJt() { return budgetMid(this.state.owner.budgetLevel, this.state.owner.qualityLevel); },
@@ -2033,20 +2101,36 @@ Alpine.data('app', () => ({
     const weeks = Math.max(1, this.negoWeeks);
     const log = this._mergedActualLog();
     return this.ganttRows.map(row => {
-      const hits = log.filter(x => x.parentId === row.id && x.done);
-      if (!hits.length) {
-        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, actFinish: null };
+      const entries = log.filter(x => x.parentId === row.id);
+      const bySticky = {};
+      for (const e of entries) {
+        const sid = e.stickyId || (row.id + '_w' + e.week);
+        if (!bySticky[sid]) bySticky[sid] = { done: 0, n: 0, week: Number(e.week) || 0 };
+        bySticky[sid].n += 1;
+        if (e.done) bySticky[sid].done += 1;
+        bySticky[sid].week = Math.max(bySticky[sid].week, Number(e.week) || 0);
       }
-      const ws = hits.map(h => Number(h.week));
-      const actStart = Math.min(...ws);
-      const actFinish = Math.max(...ws);
+      let earnedWeeks = 0;
+      let actStart = Infinity;
+      for (const sid of Object.keys(bySticky)) {
+        const g = bySticky[sid];
+        const frac = g.n ? (g.done / g.n) : 0;
+        if (frac <= 0) continue;
+        earnedWeeks += frac;
+        actStart = Math.min(actStart, g.week);
+      }
+      if (!earnedWeeks) {
+        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, earnedWeeks: 0, actPct: 0 };
+      }
+      const planDur = Math.max(1, (Number(row.finishWeek) || 1) - (Number(row.startWeek) || 1) + 1);
       return {
         ...row,
         hasActual: true,
         actStart,
-        actFinish,
+        earnedWeeks: Math.round(earnedWeeks * 10) / 10,
+        actPct: Math.round(100 * earnedWeeks / planDur),
         actLeft: Math.max(0, (actStart - 1) / weeks * 100),
-        actWidth: Math.max(1.8, (actFinish - actStart + 1) / weeks * 100),
+        actWidth: Math.max(0.45, (earnedWeeks / weeks) * 100),
       };
     });
   },
@@ -2119,14 +2203,74 @@ Alpine.data('app', () => ({
     }
     const frozen = (this.negoBundle.curve || []).find(p => p.week === this.playWeek);
     const plannedNow = frozen ? Number(frozen.planned) : 0;
-    return { pct, plannedNow, parts, curve, maxW };
+    return { pct, plannedNow, parts, curve, maxW, inc };
+  },
+  get suggestedWeekIncrement() {
+    const w = this.playWeek;
+    return Math.round((this.physicalProgress.parts || []).filter(p => p.week === w).reduce((s, p) => s + p.pct, 0) * 10) / 10;
+  },
+  get progressLockForWeek() {
+    const w = this.playWeek;
+    return ((this.state.contractor && this.state.contractor.progressLocks) || []).find(x => Number(x.week) === w) || null;
+  },
+  get lockedPhysicalPct() {
+    const locks = ((this.state.contractor && this.state.contractor.progressLocks) || []).slice().sort((a, b) => a.week - b.week);
+    if (!locks.length) return 0;
+    return Math.round(locks.reduce((s, x) => s + (Number(x.increment) || 0), 0) * 10) / 10;
+  },
+  get lockedProgressCurve() {
+    const locks = ((this.state.contractor && this.state.contractor.progressLocks) || []).slice().sort((a, b) => a.week - b.week);
+    const maxJt = this.negoBundle.maxJt || this.oeJt;
+    let cum = 0;
+    return locks.map(l => {
+      cum += Number(l.increment) || 0;
+      return {
+        week: Number(l.week),
+        planned: Math.round(cum * 10) / 10,
+        cumJt: Math.round(maxJt * (cum / 100) * 10) / 10,
+      };
+    });
+  },
+  lockProgress() {
+    const week = this.playWeek;
+    const incRaw = this.progressDraft == null ? this.suggestedWeekIncrement : Number(this.progressDraft);
+    const inc = Number.isFinite(incRaw) ? Math.max(0, Math.round(incRaw * 10) / 10) : 0;
+    const locks = [...(this.state.contractor.progressLocks || [])].filter(x => Number(x.week) !== week);
+    locks.push({
+      week,
+      increment: inc,
+      parts: (this.physicalProgress.parts || []).filter(p => p.week === week),
+      suggested: this.suggestedWeekIncrement,
+    });
+    locks.sort((a, b) => a.week - b.week);
+    this.state.contractor.progressLocks = locks;
+    this.save();
+  },
+  get ownerReportText() {
+    const c = this.state.negotiation.contract || {};
+    const ppcRow = (this.state.contractor.weeklyProgress || []).slice(-1)[0];
+    const ppc = ppcRow ? ppcRow.ppc : this.ppcPercent;
+    const top = (this.problemFrequency || [])[0];
+    const topLab = top ? (this.constraintLabel(top.type) + ' (' + top.count + 'x)') : 'belum ada';
+    const fisik = this.lockedPhysicalPct;
+    const rencana = this.physicalProgress.plannedNow;
+    return 'Kontrak Rp ' + (c.price || this.oeJt) + ' jt · ' + (c.duration || this.negoWeeks) + ' minggu · quality ' + (c.quality || this.state.owner.qualityLevel)
+      + '. Progres fisik ' + fisik + '% (rencana frozen M' + this.playWeek + ' = ' + rencana + '%). PPC minggu ini ' + ppc + '%. Masalah terbanyak: ' + topLab + '.';
+  },
+  copyOwnerReport() {
+    const t = this.ownerReportText;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(() => alert('Ringkasan Owner disalin.')).catch(() => alert(t));
+    } else {
+      alert(t);
+    }
   },
   get progressChartSvg() {
     return makeChart(this.negoBundle.curve, this.negoBundle.maxJt, {
       color: '#C45C26',
       fillId: 'scFillProg',
       yMode: 'pct',
-      actual: this.physicalProgress.curve || [],
+      actual: this.lockedProgressCurve || [],
     }).markup;
   },
   get contractPlan() {
@@ -3019,6 +3163,31 @@ Alpine.data('app', () => ({
     this.state.contractor.extendNote = '';
     this.save();
     this.setStage('contractor-huddle');
+    this.startHuddleTimer();
+  },
+  get huddleTimerLabel() {
+    const s = Math.max(0, Number(this.huddleTimerLeft) || 0);
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+  },
+  startHuddleTimer() {
+    this.stopHuddleTimer();
+    this.huddleTimerLeft = 15 * 60;
+    this._huddleTimerHandle = setInterval(() => {
+      if (this.huddleTimerLeft <= 0) {
+        this.huddleTimerLeft = 0;
+        this.stopHuddleTimer();
+        return;
+      }
+      this.huddleTimerLeft -= 1;
+    }, 1000);
+  },
+  stopHuddleTimer() {
+    if (this._huddleTimerHandle) {
+      clearInterval(this._huddleTimerHandle);
+      this._huddleTimerHandle = null;
+    }
   },
   get huddleDayLabel() {
     const d = WWP_DAYS[this.state.contractor.huddleDayIdx || 0];
@@ -3092,6 +3261,7 @@ Alpine.data('app', () => ({
     this.state.contractor.huddleDayIdx = idx + 1;
     this.state.contractor.extendId = null;
     this.save();
+    this.startHuddleTimer();
   },
     completeHuddle() {
     const pending = this.huddleTodayItems.filter(it => !this.huddleStatus(it.id));
@@ -3100,6 +3270,7 @@ Alpine.data('app', () => ({
     }
     this.state.contractor.huddleComplete = true;
     this.applyHuddleToPpc();
+    this.stopHuddleTimer();
     this.setStage('contractor-learning');
   },
     applyHuddleToPpc() {
@@ -3210,6 +3381,10 @@ Alpine.data('app', () => ({
     if (!this.state.contractor.weekClosed) {
       alert('Tutup minggu (PPC) dulu sebelum gulir.');
       return;
+    }
+    const bak = ((this.state.contractor.progressLocks || []).some(x => Number(x.week) === this.playWeek));
+    if (!bak) {
+      if (!confirm('Progres fisik M' + this.playWeek + ' belum dibakukan ke Kurva S. Gulir tetap?')) return;
     }
     const promised = (this.state.contractor.makeReady || []).filter(x => x.status === 'promised');
     if (promised.length) {
