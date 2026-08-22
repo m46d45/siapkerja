@@ -2746,6 +2746,11 @@ Alpine.data('app', () => ({
     this.state.currentStage = s;
     if (s === 'contractor-learning') this._ensurePpcFromHuddle();
     this.save();
+    this.$nextTick(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
   },
   onQualityChange() {
     if (this.state.owner.qualityLevel === 'premium') this.state.owner.budgetLevel = 'premium';
