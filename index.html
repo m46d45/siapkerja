@@ -74,7 +74,7 @@
           <span x-show="!state.owner.locked||currentStage==='owner'">1</span>
           <span x-show="state.owner.locked&&currentStage!=='owner'">✓</span>
         </span>
-        <span class="text-[11px] font-semibold truncate hidden xs:inline sm:inline" :class="currentStage==='owner'?'text-terra':(state.owner.locked?'text-forest':'text-ink-mute')">Owner</span>
+        <span class="text-[11px] font-semibold truncate hidden xs:inline sm:inline" :class="currentStage==='owner'?'text-terra':(state.owner.locked?'text-forest':'text-ink-mute')">Pemilik</span>
       </button>
       <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.owner.locked?'bg-forest/40':'bg-paper-line'"></div>
       <button @click="canAccessDesigner()&&setStage('designer')" :disabled="!canAccessDesigner()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
@@ -118,7 +118,7 @@
       <option value="lookahead">Look-ahead minggu ini</option>
       <option value="phase">Phase Plan</option>
       <option value="contract">Kontrak (Master Plan)</option>
-      <option value="owner">Owner (semua)</option>
+      <option value="owner">Pemilik (semua)</option>
     </select>
     <span x-show="state.contractor.pullLocked" class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
       x-text="currentStage==='contractor-production' ? ('Sesi · M'+sessionWeek) : ('Sesi · M'+playWeek)"></span>
@@ -132,16 +132,16 @@
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 1 · Supporting</p>
-          <h2 class="text-xl font-bold text-ink">Set Project Constraints</h2>
-          <p class="text-sm text-ink-soft mt-1">Tentukan durasi, kualitas, biaya, dan prioritas Type 36. Prioritas ini jadi acuan nego nanti.</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 1 · Pemilik</p>
+          <h2 class="text-xl font-bold text-ink">Tetapkan nilai <span class="font-medium text-ink-soft">(value)</span></h2>
+          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Pemilik wajib menetapkan nilai yang ingin dicapai untuk rumah Type 36. <strong class="text-ink">Mutu bukan kompensasi</strong> — spek yang dipilih harus terpenuhi, tidak boleh diturunkan di meja nego. Fokus yang boleh dipilih: waktu atau biaya. Simulasi menampilkan keinginan pemilik yang berbeda-beda.</p>
         </div>
         <span x-show="state.owner.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
       <div class="p-5 space-y-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1.5">Durasi Desain</label>
+            <label class="block text-sm font-medium mb-1.5">Durasi desain</label>
             <select class="field" x-model.number="state.owner.designDuration" :disabled="state.owner.locked" @change="recalcPlan()">
               <option value="4">4 minggu</option>
               <option value="6">6 minggu</option>
@@ -149,7 +149,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">Durasi Konstruksi</label>
+            <label class="block text-sm font-medium mb-1.5">Durasi konstruksi</label>
             <select class="field" x-model.number="state.owner.constructionDuration" :disabled="state.owner.locked" @change="recalcPlan()">
               <option value="12">12 minggu</option>
               <option value="16">16 minggu</option>
@@ -157,51 +157,31 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">Quality Level</label>
+            <label class="block text-sm font-medium mb-1.5">Mutu <span class="font-normal text-ink-mute">(spek wajib)</span></label>
             <select class="field" x-model="state.owner.qualityLevel" :disabled="state.owner.locked" @change="onQualityChange()">
               <option value="standard">Standard</option>
               <option value="premium">Premium</option>
             </select>
+            <p class="text-[11px] text-ink-mute mt-1.5">Tidak boleh dikompensasi waktu nego. Ada pemilik yang 350 jt tetap Standard; ada yang ingin Premium.</p>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">Budget Level</label>
-            <select class="field" x-model="state.owner.budgetLevel" :disabled="state.owner.locked" @change="recalcPlan()">
-              <option value="hemat">Hemat</option>
-              <option value="standard">Standar</option>
-              <option value="premium">Premium</option>
-            </select>
-            <p class="text-[11px] text-ink-mute mt-1.5">Default mengikuti Quality.</p>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-medium mb-1.5">Prioritas Utama — acuan nego</label>
+            <label class="block text-sm font-medium mb-1.5">Fokus nego</label>
             <select class="field" x-model="state.owner.priority" :disabled="state.owner.locked">
-              <option value="time">Time — jangan molor</option>
-              <option value="cost">Cost — tekan harga, sisakan ruang VO</option>
-              <option value="quality">Quality — jangan turunkan spek</option>
+              <option value="time">Waktu — jangan molor</option>
+              <option value="cost">Biaya — tekan harga, sisakan ruang VO</option>
             </select>
+            <p class="text-[11px] text-ink-mute mt-1.5">Mutu bukan pilihan fokus. Nego nanti dibanding OE hasil desain, bukan budget.</p>
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="rounded-xl bg-terra-soft/50 border border-terra/15 p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-terra mb-1">Estimasi biaya Owner</p>
-            <p class="text-lg font-bold text-terra-dark" x-text="budgetEstimateLabel"></p>
-            <p class="text-[11px] text-clay mt-1">Illustratif Type 36 · jadi plafon OE</p>
-            <p x-show="budgetMismatch" class="mt-2 text-[11px] font-medium text-red-700 bg-red-50 rounded-lg px-2 py-1.5">⚠ Quality Premium + Budget Hemat</p>
-          </div>
-          <div class="rounded-xl bg-forest-soft/60 border border-forest/15 p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-forest mb-2">Timeline baseline</p>
-            <div class="grid grid-cols-2 gap-y-2 gap-x-3 text-sm">
-              <div><div class="text-[11px] text-ink-mute">Design</div><div class="font-semibold" x-text="'Mgg 1–'+state.owner.designDuration"></div></div>
-              <div><div class="text-[11px] text-ink-mute">Freeze</div><div class="font-semibold" x-text="'Mgg '+state.owner.designDuration"></div></div>
-              <div><div class="text-[11px] text-ink-mute">Mulai bangun</div><div class="font-semibold" x-text="'Mgg '+(state.owner.designDuration+1)"></div></div>
-              <div><div class="text-[11px] text-ink-mute">Handover</div><div class="font-semibold" x-text="'Mgg '+(state.owner.designDuration+state.owner.constructionDuration)"></div></div>
-            </div>
-          </div>
+        <div class="rounded-xl border border-paper-line bg-paper/50 px-4 py-3">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-mute">Budget pemilik</p>
+          <p class="text-lg font-bold text-ink mt-0.5">Rp 350 jt</p>
+          <p class="text-[11px] text-ink-soft mt-0.5">Desain + konstruksi. Bukan OE — OE baru keluar di tab Desainer.</p>
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
-        <button x-show="!state.owner.locked" @click="lockOwnerAndNext()" class="btn-primary flex-1 sm:flex-none">Kunci & lanjut ke Designer →</button>
-        <button x-show="state.owner.locked" @click="setStage('designer')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Designer →</button>
+        <button x-show="!state.owner.locked" @click="lockOwnerAndNext()" class="btn-primary flex-1 sm:flex-none">Kunci & lanjut ke Desainer →</button>
+        <button x-show="state.owner.locked" @click="setStage('designer')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Desainer →</button>
         <button x-show="state.owner.locked" @click="unlockOwner()" class="btn-danger">Unlock</button>
       </div>
     </div>
@@ -220,13 +200,13 @@
       </div>
       <div class="p-5 space-y-5">
         <div class="rounded-xl bg-paper border border-paper-line p-3.5">
-          <p class="text-[11px] font-semibold text-ink-mute uppercase tracking-wide mb-2">Constraint Owner</p>
+          <p class="text-[11px] font-semibold text-ink-mute uppercase tracking-wide mb-2">Keputusan pemilik</p>
           <div class="flex flex-wrap gap-2 text-xs">
-            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Design <strong x-text="state.owner.designDuration+' mgg'"></strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Desain <strong x-text="state.owner.designDuration+' mgg'"></strong></span>
             <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Bangun <strong x-text="state.owner.constructionDuration+' mgg'"></strong></span>
-            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Budget <strong x-text="budgetLevelLabel"></strong></span>
-            <span class="px-2.5 py-1 rounded-full bg-terra-soft text-terra-dark border border-terra/20">OE <strong x-text="budgetMidLabel"></strong></span>
-            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Fokus <strong class="uppercase" x-text="state.owner.priority"></strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Mutu <strong class="capitalize" x-text="state.owner.qualityLevel"></strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Budget <strong>Rp 350 jt</strong></span>
+            <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Fokus <strong x-text="state.owner.priority==='cost'?'Biaya':'Waktu'"></strong></span>
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1621,6 +1601,7 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm
 const SK = 'siapkerja_project_state';
 const VER = '1.17.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
+const OWNER_BUDGET_JT = 350;
 
 const WORKS = [
   { id:'site',    name:'Site clearing & layout',      pred:[],                    dur:1.0, weight:0.03, team:'Pondasi',   color:'#A0522D' },
@@ -2026,6 +2007,8 @@ Alpine.data('app', () => ({
   init() {
     this.state = loadState();
     if (!this.state.owner.budgetLevel) this.state.owner.budgetLevel = 'standard';
+    this.state.owner.budgetJt = OWNER_BUDGET_JT;
+    if (this.state.owner.priority === 'quality') this.state.owner.priority = 'time';
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
@@ -2040,7 +2023,8 @@ Alpine.data('app', () => ({
     }
   },
 
-  get oeJt() { return budgetMid(this.state.owner.budgetLevel, this.state.owner.qualityLevel); },
+  get oeJt() { return budgetMid('standard', this.state.owner.qualityLevel); },
+  get ownerBudgetJt() { return OWNER_BUDGET_JT; },
   get budgetLevelLabel() { return ({ hemat:'Hemat', standard:'Standar', premium:'Premium' })[this.state.owner.budgetLevel] || this.state.owner.budgetLevel; },
   get budgetEstimateLabel() {
     const b = BB[this.state.owner.budgetLevel] || BB.standard;
@@ -2752,8 +2736,6 @@ Alpine.data('app', () => ({
     });
   },
   onQualityChange() {
-    if (this.state.owner.qualityLevel === 'premium') this.state.owner.budgetLevel = 'premium';
-    else if (this.state.owner.budgetLevel === 'premium') this.state.owner.budgetLevel = 'standard';
     this.recalcPlan();
   },
   recalcPlan() {
@@ -3050,7 +3032,7 @@ Alpine.data('app', () => ({
       lookahead: 'Ulang Look-ahead minggu ini?\nPhase Plan tetap. Make-ready + WWP + huddle minggu ini dihapus. Minggu sebelumnya tetap.',
       phase: 'Kembali ke Phase Plan?\nLook-ahead dan semua produksi direset. Kontrak nego tetap.',
       contract: 'Kembali ke Master Plan?\nSemua LPS lapangan direset. Kontrak nego tetap.',
-      owner: 'Reset ke Owner?\nSemua progres (Owner → Kontraktor) hilang.',
+      owner: 'Reset ke Pemilik?\nSemua progres (Pemilik → Kontraktor) hilang.',
     };
     if (!msgs[target]) return;
     if (!confirm(msgs[target])) return;
