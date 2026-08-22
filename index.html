@@ -1430,6 +1430,37 @@
           </div>
         </div>
 
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">PPC per minggu</h3>
+            <p class="text-[11px] text-ink-mute">Keandalan janji · Y = 0–100% · X = M1 sampai akhir kontrak. Batang kosong = belum ada data.</p>
+          </div>
+          <div class="p-3 overflow-x-auto">
+            <div class="flex items-end gap-0.5 h-28 min-w-[520px]">
+              <div class="flex flex-col justify-between h-[88px] text-[9px] text-ink-mute pr-1 shrink-0">
+                <span>100</span>
+                <span>50</span>
+                <span>0</span>
+              </div>
+              <template x-for="b in ppcBars" :key="'pb'+b.week">
+                <div class="flex-1 min-w-[14px] max-w-[22px] flex flex-col items-center justify-end h-full">
+                  <span class="text-[8px] font-semibold leading-none mb-0.5" :class="b.hasData ? 'text-ink-soft' : 'text-transparent'" x-text="b.hasData ? (b.ppc+'%') : '–'"></span>
+                  <div class="w-full rounded-t border-t border-white/40"
+                    :class="b.hasData ? (b.ppc>=80 ? 'bg-forest' : (b.ppc>=50 ? 'bg-terra' : 'bg-amber-500')) : 'bg-paper-line/80'"
+                    :style="'height:' + (b.hasData ? Math.max(3, b.ppc * 0.88) : 3) + 'px'"></div>
+                  <span class="text-[8px] mt-1 tabular-nums" :class="b.isCurrent ? 'text-terra font-bold' : 'text-ink-mute'" x-text="b.week"></span>
+                </div>
+              </template>
+            </div>
+            <div class="flex flex-wrap gap-3 text-[10px] text-ink-mute mt-2">
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-forest"></span> ≥80%</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-terra"></span> 50–79%</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> <50%</span>
+              <span>Angka bawah = minggu kontrak</span>
+            </div>
+          </div>
+        </div>
+
         <div class="rounded-xl border border-paper-line p-3" x-show="problemFrequency.length">
           <h3 class="text-sm font-bold mb-2">Top klasifikasi masalah</h3>
           <template x-for="row in problemFrequency.slice(0,5)" :key="'tp'+row.type">
@@ -2225,7 +2256,23 @@ Alpine.data('app', () => ({
     return 'Dari registry: masalah terbanyak = ' + label + ' (' + top.count + 'x). Prioritaskan make-ready terkait ' + label + ' untuk L1/M' + week + ' sebelum susun WWP.';
   },
   get ppcBars() {
-    return (this.state.contractor.weeklyProgress || []).map(r => ({ week: r.week, ppc: r.ppc || 0 }));
+    const n = Math.max(1, this.negoWeeks);
+    const by = {};
+    for (const r of (this.state.contractor.weeklyProgress || [])) by[Number(r.week)] = r;
+    const cur = this.playWeek;
+    if (!by[cur] && ((this.state.contractor.ppc || []).length || this.state.contractor.huddleComplete)) {
+      by[cur] = { week: cur, ppc: this.ppcPercent };
+    }
+    return Array.from({ length: n }, (_, i) => {
+      const w = i + 1;
+      const row = by[w];
+      return {
+        week: w,
+        ppc: row ? Number(row.ppc) || 0 : 0,
+        hasData: !!row,
+        isCurrent: w === cur,
+      };
+    });
   },
   get sCurvePlanPoints() {
     const rows = this.state.contractor.weeklyProgress || [];
