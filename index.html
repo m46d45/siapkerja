@@ -1399,8 +1399,35 @@
           <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
         </div>
 
-        <div class="rounded-xl border border-dashed border-paper-line bg-paper/40 p-3 text-[11px] text-ink-mute">
-          Kurva S frozen + aktual dan batang PPC menyusul setelah Gantt ini dipakai.
+        <div class="grid grid-cols-3 gap-2">
+          <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
+            <p class="text-[10px] text-forest">Progres fisik</p>
+            <p class="text-lg font-bold text-forest" x-text="physicalProgress.pct+'%'"></p>
+          </div>
+          <div class="rounded-xl border border-terra/20 bg-terra-soft/30 p-3 text-center">
+            <p class="text-[10px] text-terra">Rencana frozen M<span x-text="playWeek"></span></p>
+            <p class="text-lg font-bold text-terra" x-text="physicalProgress.plannedNow+'%'"></p>
+          </div>
+          <div class="rounded-xl border border-paper-line bg-paper p-3 text-center">
+            <p class="text-[10px] text-ink-mute">PPC (keandalan)</p>
+            <p class="text-lg font-bold text-ink" x-text="(((state.contractor.weeklyProgress||[]).slice(-1)[0]||{}).ppc || ppcPercent)+'%'"></p>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Kurva S · frozen vs aktual</h3>
+            <p class="text-[11px] text-ink-mute">Terra = rencana kontrak · hijau putus-putus = progres fisik dari sticky selesai (bukan PPC)</p>
+          </div>
+          <div class="p-3">
+            <div class="w-full" x-html="progressChartSvg"></div>
+            <div class="flex flex-wrap gap-3 text-[10px] text-ink-mute mt-1">
+              <span>Terra = rencana frozen</span>
+              <span>Hijau putus-putus = aktual</span>
+            </div>
+            <p class="text-[11px] text-ink-soft mt-2 leading-relaxed" x-show="physicalProgress.parts.length"
+              x-text="'Konversi M'+playWeek+': '+(physicalProgress.parts.filter(p=>p.week===playWeek).map(p=>p.name+' +'+p.pct+'%').join(' · ') || '—')"></p>
+          </div>
         </div>
 
         <div class="rounded-xl border border-paper-line p-3" x-show="problemFrequency.length">
@@ -1557,6 +1584,7 @@ function makeChart(curve, maxJt, opts = {}) {
   const innerH = H - padT - padB;
   const n = Math.max(1, (curve || []).length);
   const ymax = Math.max(1, maxJt || 1);
+  const yMode = opts.yMode || 'rp';
   const xOf = (week) => padL + (week / n) * innerW;
   const yOf = (jt) => padT + (1 - jt / ymax) * innerH;
   const pts = [{ week: 0, planned: 0, cumJt: 0, x: xOf(0), y: yOf(0) }].concat(
@@ -1570,14 +1598,13 @@ function makeChart(curve, maxJt, opts = {}) {
   const line = smoothPath(pts);
   const area = line + ` L ${last.x} ${yOf(0)} L ${padL} ${yOf(0)} Z`;
   const yFracs = [0, 0.25, 0.5, 0.75, 1];
-  const step = n <= 12 ? 2 : 2;
   const xWeeks = [];
-  for (let w = 0; w <= n; w++) if (w === 0 || w === n || w % step === 0) xWeeks.push(w);
+  for (let w = 0; w <= n; w++) if (w === 0 || w === n || w % 2 === 0) xWeeks.push(w);
 
   let grid = '';
   for (const f of yFracs) {
     const y = yOf(ymax * f);
-    const label = Math.round(ymax * f);
+    const label = yMode === 'pct' ? (Math.round(f * 100) + '%') : String(Math.round(ymax * f));
     grid += `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="#E8E0D5" stroke-width="1"/>`;
     grid += `<line x1="${padL - 4}" x2="${padL}" y1="${y}" y2="${y}" stroke="#8B5E3C" stroke-width="1.4"/>`;
     grid += `<text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#44403C" font-family="ui-sans-serif,system-ui,sans-serif">${label}</text>`;
@@ -1591,20 +1618,40 @@ function makeChart(curve, maxJt, opts = {}) {
   let dots = '';
   for (const d of pts) {
     if (d.week === 0) continue;
-    dots += `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="3.1" fill="#9A4519" stroke="#FFFcf8" stroke-width="1.2"><title>Mgg ${d.week} · Rp ${d.cumJt} jt · ${d.planned}%</title></circle>`;
+    dots += `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="3.1" fill="#9A4519" stroke="#FFFcf8" stroke-width="1.2"><title>Mgg ${d.week} · rencana ${d.planned}%</title></circle>`;
   }
 
-  const markup = `<svg class="w-full" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Kurva S Rp versus minggu">
+  let actualMarkup = '';
+  const actual = opts.actual || [];
+  if (actual.length) {
+    const apts = [{ week: 0, cumJt: 0, x: xOf(0), y: yOf(0) }].concat(
+      actual.map((p) => ({
+        ...p,
+        x: xOf(p.week),
+        y: yOf(Number(p.cumJt) || 0),
+      }))
+    );
+    const aline = smoothPath(apts);
+    actualMarkup += `<path d="${aline}" fill="none" stroke="#15803D" stroke-width="2.6" stroke-dasharray="7 5" stroke-linecap="round" stroke-linejoin="round"></path>`;
+    for (const d of apts) {
+      if (!d.week) continue;
+      actualMarkup += `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="3.3" fill="#15803D" stroke="#FFFcf8" stroke-width="1.2"><title>Mgg ${d.week} · aktual ${d.planned}%</title></circle>`;
+    }
+  }
+
+  const yTitle = yMode === 'pct' ? 'Progres (%)' : 'Rp (juta)';
+  const markup = `<svg class="w-full" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Kurva S">
     <defs>
       <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
         <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
       </linearGradient>
     </defs>
-    <text x="10" y="16" font-size="11" fill="#8B5E3C" font-weight="700" font-family="ui-sans-serif,system-ui,sans-serif">Rp (juta)</text>
+    <text x="10" y="16" font-size="11" fill="#8B5E3C" font-weight="700" font-family="ui-sans-serif,system-ui,sans-serif">${yTitle}</text>
     ${grid}
     <path d="${area}" fill="url(#${fillId})"></path>
     <path d="${line}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    ${actualMarkup}
     <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${yOf(0)}" stroke="#8B5E3C" stroke-width="1.6"/>
     <line x1="${padL}" y1="${yOf(0)}" x2="${W - padR}" y2="${yOf(0)}" stroke="#8B5E3C" stroke-width="1.6"/>
     ${xt}
@@ -1888,20 +1935,7 @@ Alpine.data('app', () => ({
   },
   get progressGanttRows() {
     const weeks = Math.max(1, this.negoWeeks);
-    const log = [...(this.state.contractor.actualLog || [])];
-    const loggedWeeks = new Set(log.map(x => Number(x.week)));
-    const cur = this.targetExecWeek;
-    if (!loggedWeeks.has(cur)) {
-      const ppc = this.state.contractor.ppc || [];
-      for (const item of (this.state.contractor.wwp || [])) {
-        const p = ppc.find(x => x.workId === item.id);
-        log.push({
-          week: cur,
-          parentId: item.parentId,
-          done: !!(p && p.status === 'done'),
-        });
-      }
-    }
+    const log = this._mergedActualLog();
     return this.ganttRows.map(row => {
       const hits = log.filter(x => x.parentId === row.id && x.done);
       if (!hits.length) {
@@ -1919,6 +1953,85 @@ Alpine.data('app', () => ({
         actWidth: Math.max(1.8, (actFinish - actStart + 1) / weeks * 100),
       };
     });
+  },
+  _mergedActualLog() {
+    const log = [...((this.state.contractor && this.state.contractor.actualLog) || [])];
+    const loggedWeeks = new Set(log.map(x => Number(x.week)));
+    const cur = this.targetExecWeek;
+    if (!loggedWeeks.has(cur)) {
+      const ppc = (this.state.contractor && this.state.contractor.ppc) || [];
+      for (const item of ((this.state.contractor && this.state.contractor.wwp) || [])) {
+        const p = ppc.find(x => x.workId === item.id);
+        log.push({
+          week: cur,
+          parentId: item.parentId,
+          stickyId: item.workId,
+          done: !!(p && p.status === 'done'),
+        });
+      }
+    }
+    return log;
+  },
+  get physicalProgress() {
+    const planBy = {};
+    for (const ph of (this.forwardPhasesView || [])) {
+      for (const s of (ph.stickies || [])) {
+        const pid = s.parentId;
+        if (!planBy[pid]) planBy[pid] = [];
+        planBy[pid].push(s.id);
+      }
+    }
+    const weightBy = {};
+    for (const w of this.contractPlan) weightBy[w.id] = Number(w.weight) || 0;
+    const bySticky = {};
+    for (const e of this._mergedActualLog()) {
+      const sid = e.stickyId || (e.parentId + '_w' + e.week);
+      if (!bySticky[sid]) bySticky[sid] = { parentId: e.parentId, done: 0, n: 0, week: Number(e.week) || 0 };
+      bySticky[sid].n += 1;
+      if (e.done) bySticky[sid].done += 1;
+      bySticky[sid].week = Math.max(bySticky[sid].week, Number(e.week) || 0);
+    }
+    const inc = {};
+    let earned = 0;
+    const parts = [];
+    for (const sid of Object.keys(bySticky)) {
+      const g = bySticky[sid];
+      const plannedN = (planBy[g.parentId] || []).length || 1;
+      const w = weightBy[g.parentId] || 0;
+      const frac = g.n ? (g.done / g.n) : 0;
+      const piece = w / plannedN * frac;
+      if (piece <= 0) continue;
+      earned += piece;
+      inc[g.week] = (inc[g.week] || 0) + piece;
+      const wname = (this.contractPlan.find(x => x.id === g.parentId) || {}).name || g.parentId;
+      parts.push({ name: wname, week: g.week, pct: Math.round(piece * 1000) / 10 });
+    }
+    const pct = Math.round(earned * 1000) / 10;
+    const maxW = Object.keys(inc).length ? Math.max(...Object.keys(inc).map(Number)) : 0;
+    const maxJt = this.negoBundle.maxJt || this.oeJt;
+    const curve = [];
+    let cum = 0;
+    for (let w = 1; w <= Math.max(maxW, 1); w++) {
+      cum += (inc[w] || 0);
+      if (w <= maxW) {
+        curve.push({
+          week: w,
+          cumJt: Math.round(maxJt * cum * 10) / 10,
+          planned: Math.round(cum * 1000) / 10,
+        });
+      }
+    }
+    const frozen = (this.negoBundle.curve || []).find(p => p.week === this.playWeek);
+    const plannedNow = frozen ? Number(frozen.planned) : 0;
+    return { pct, plannedNow, parts, curve, maxW };
+  },
+  get progressChartSvg() {
+    return makeChart(this.negoBundle.curve, this.negoBundle.maxJt, {
+      color: '#C45C26',
+      fillId: 'scFillProg',
+      yMode: 'pct',
+      actual: this.physicalProgress.curve || [],
+    }).markup;
   },
   get contractPlan() {
     const c = this.state.negotiation.contract;
