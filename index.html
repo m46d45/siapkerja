@@ -929,10 +929,135 @@
             <p class="p-4 text-xs text-ink-mute" x-show="!selectedWorkConstraints.length">Tidak ada constraint pada pekerjaan ini — dianggap ready.</p>
           </div>
           <p class="text-xs text-ink-mute" x-show="!state.contractor.selectedLookWorkId">Ketuk sticky pekerjaan di jendela untuk analisis & removal constraint item itu.</p>
-          <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3">
+                    <!-- Laporan Make-Ready -->
+          <div class="rounded-xl border border-paper-line overflow-hidden">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Laporan Make-Ready</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5" x-text="'Target eksekusi: M'+targetExecWeek+(targetExecWeek===0?' (persiapan)':'')"></p>
+            </div>
+            <div class="p-4 space-y-2 text-xs">
+              <p class="text-ink-soft" x-show="targetExecWeek===0">M0: tidak ada kerja lapangan. Fokus hilangkan constraint untuk M1.</p>
+              <div class="grid grid-cols-3 gap-2" x-show="targetExecWeek>0">
+                <div class="rounded-lg border border-forest/20 bg-forest-soft/30 p-2.5">
+                  <p class="text-[10px] text-ink-mute">Siap (ready)</p>
+                  <p class="text-lg font-bold text-forest" x-text="makeReadyReport.ready"></p>
+                </div>
+                <div class="rounded-lg border border-terra/20 bg-terra-soft/30 p-2.5">
+                  <p class="text-[10px] text-ink-mute">Dijanjikan</p>
+                  <p class="text-lg font-bold text-terra" x-text="makeReadyReport.promised"></p>
+                </div>
+                <div class="rounded-lg border border-amber-200 bg-amber-50 p-2.5">
+                  <p class="text-[10px] text-ink-mute">Masih terbuka</p>
+                  <p class="text-lg font-bold text-amber-900" x-text="makeReadyReport.open"></p>
+                </div>
+              </div>
+              <p class="text-ink-soft leading-relaxed" x-text="makeReadyReport.summary"></p>
+              <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0 && !state.contractor.wwp.length" @click="buildWwp()">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
+              <p class="text-[11px] text-ink-mute" x-show="targetExecWeek>0 && makeReadyReport.open>0">Item dengan constraint terbuka tidak masuk WWP — masuk backlog.</p>
+            </div>
+          </div>
+
+          <!-- WWP -->
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.wwp.length">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
+              <div>
+                <h3 class="text-sm font-bold">Weekly Work Plan</h3>
+                <p class="text-[11px] text-ink-mute" x-text="'M'+targetExecWeek+' · harian · hanya yang ready'"></p>
+              </div>
+              <span class="text-[11px] text-ink-mute" x-text="state.contractor.wwp.length+' item'"></span>
+            </div>
+            <div class="p-3 overflow-x-auto">
+              <div class="grid grid-cols-6 gap-2 min-w-[640px]">
+                <template x-for="d in WWP_DAYS" :key="d.id">
+                  <div class="rounded-lg border border-paper-line bg-paper-card p-2">
+                    <p class="text-[10px] font-semibold uppercase text-ink-mute mb-1.5" x-text="d.label"></p>
+                    <div class="space-y-1.5">
+                      <template x-for="item in wwpByDay(d.id)" :key="item.workId">
+                        <div class="rounded border border-paper-line bg-paper px-1.5 py-1 text-[10px] leading-snug">
+                          <p class="font-semibold text-ink" x-text="workName(item.workId)"></p>
+                          <p class="text-ink-mute" x-text="item.promoted ? 'dipromosikan' : 'rencana'"></p>
+                          <select class="mt-1 w-full text-[10px] border border-paper-line rounded" :disabled="state.contractor.weekClosed" @change="moveWwpDay(item.workId, $event.target.value)">
+                            <template x-for="dd in WWP_DAYS" :key="dd.id+'m'+item.workId">
+                              <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
+                            </template>
+                          </select>
+                        </div>
+                      </template>
+                      <p class="text-[10px] text-ink-mute" x-show="!wwpByDay(d.id).length">—</p>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Backlog -->
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="targetExecWeek>0">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Backlog</h3>
+              <p class="text-[11px] text-ink-mute">Tahan (belum ready) · Workable (bisa dipromosikan ke WWP)</p>
+            </div>
+            <div class="p-3 grid sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <p class="text-[10px] font-semibold uppercase text-amber-900 mb-1.5">Tahan — belum ready</p>
+                <ul class="space-y-1">
+                  <template x-for="w in backlogHeld" :key="'h'+w.id">
+                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5" x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></li>
+                  </template>
+                  <li class="text-ink-mute" x-show="!backlogHeld.length">Kosong</li>
+                </ul>
+              </div>
+              <div>
+                <p class="text-[10px] font-semibold uppercase text-forest mb-1.5">Workable — bisa dipromosikan</p>
+                <ul class="space-y-1">
+                  <template x-for="w in backlogWorkable" :key="'w'+w.id">
+                    <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
+                      <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
+                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="state.contractor.wwp.length && !state.contractor.weekClosed" @click="promoteToWwp(w.id)">Promosikan</button>
+                    </li>
+                  </template>
+                  <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- PPC -->
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.wwp.length">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Tutup minggu · PPC</h3>
+              <p class="text-[11px] text-ink-mute">Selesai / gagal + alasan. Constraint lapangan dicatat di sini.</p>
+            </div>
+            <div class="p-3 space-y-2 text-xs">
+              <template x-for="item in state.contractor.wwp" :key="'ppc'+item.workId">
+                <div class="rounded-lg border border-paper-line bg-paper-card p-2.5 flex flex-wrap gap-2 items-center justify-between">
+                  <div>
+                    <p class="font-semibold" x-text="workName(item.workId)"></p>
+                    <p class="text-ink-mute" x-text="item.day.toUpperCase()+(item.promoted?' · promosi':'')"></p>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 items-center" x-show="!state.contractor.weekClosed">
+                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="setPpc(item.workId,'done',null)">Selesai</button>
+                    <select class="field !py-1 !text-[10px] w-auto" :id="'ppc-'+item.workId">
+                      <option value="">Alasan gagal…</option>
+                      <template x-for="r in PPC_REASONS" :key="r"><option :value="r" x-text="constraintLabel(r)"></option></template>
+                    </select>
+                    <button type="button" class="btn-ghost !text-[10px] !py-1 border border-red-200 text-red-700" @click="setPpc(item.workId,'failed', (document.getElementById('ppc-'+item.workId)||{}).value)">Gagal</button>
+                  </div>
+                  <span class="text-[10px] font-semibold" x-show="state.contractor.weekClosed" x-text="ppcLabel(item.workId)"></span>
+                </div>
+              </template>
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button type="button" class="btn-primary text-sm" x-show="!state.contractor.weekClosed" @click="closeWeek()">Kunci tutup minggu</button>
+                <p class="text-[11px] text-forest self-center" x-show="state.contractor.weekClosed" x-text="'PPC: '+ppcPercent+'% · '+ppcDoneCount+'/'+state.contractor.wwp.length+' selesai'"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gulir hanya setelah tutup minggu -->
+          <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.weekClosed">
             <div>
-              <h3 class="text-sm font-bold">Gulir jendela</h3>
-              <p class="text-[11px] text-ink-mute">Evaluasi komitmen L1, geser absolut: L1 mengunci ke minggu berikutnya.</p>
+              <h3 class="text-sm font-bold">Gulir jendela Look-ahead</h3>
+              <p class="text-[11px] text-ink-mute">Minggu sudah ditutup. Geser L1 ke absolut berikutnya.</p>
             </div>
             <button type="button" class="btn-primary text-sm" @click="rollLookahead()">Gulir ke minggu berikutnya →</button>
           </div>
@@ -950,7 +1075,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.10.0';
+const VER = '1.11.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 
 const WORKS = [
@@ -975,6 +1100,8 @@ const PHASES = [
   { id:'finishing', name:'Finishing',  works:['plaster','floor','paint','close'] },
 ];
 const TEAMS = ['Pondasi','Struktur','Dinding','Atap','MEP','Finishing'];
+const WWP_DAYS = [{id:'sen',label:'Sen'},{id:'sel',label:'Sel'},{id:'rab',label:'Rab'},{id:'kam',label:'Kam'},{id:'jum',label:'Jum'},{id:'sab',label:'Sab'}];
+const PPC_REASONS = ['material','labor','info','access','prereq','weather','lain'];
 const TEAM_PHASE = { Pondasi:'pondasi', Struktur:'struktur', Dinding:'struktur', Atap:'selubung', MEP:'selubung', Finishing:'finishing' };
 const FOCUS_PHASE = 'struktur';
 const WORK_ZONES = {
@@ -1003,6 +1130,7 @@ const ZONES = [
 const CONSTRAINT_LABEL = {
   info:'Gambar / info', material:'Material', labor:'Tukang',
   access:'Akses / ruang', prereq:'Pekerjaan sebelumnya', weather:'Cuaca',
+  lain:'Lainnya',
 };
 
 function budgetMid(level, quality) {
@@ -1220,6 +1348,10 @@ function emptyContractor() {
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
     milestonesLocked:false, phaseWindows:{},
     lookOffset:0, selectedLookRel:null, selectedLookWorkId:null,
+      makeReady:[],
+      wwp:[],
+      ppc:[],
+      weekClosed:false,
     makeReady:[],
   };
 }
@@ -1547,6 +1679,75 @@ Alpine.data('app', () => ({
   },
   get selectedSlotConstraintCount() {
     return (this.selectedWorkConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
+  },
+    get targetExecWeek() {
+    const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
+    return off === 0 ? 1 : off;
+  },
+  _allStickies() {
+    const all = [];
+    for (const ph of (this.forwardPhasesView || this.pullPhasesView || [])) {
+      for (const s of (ph.stickies || [])) all.push(s);
+    }
+    return all;
+  },
+  _isWorkReady(workId) {
+    const cons = ((this.state.contractor && this.state.contractor.constraints) || []).filter(c => c.workId === workId);
+    if (!cons.length) return true;
+    const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
+    return cons.every(c => mr.some(x => x.constraintId === c.id && x.status === 'done'));
+  },
+  _workOpenConstraintCount(workId) {
+    const cons = ((this.state.contractor && this.state.contractor.constraints) || []).filter(c => c.workId === workId);
+    const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
+    return cons.filter(c => !mr.some(x => x.constraintId === c.id && x.status === 'done')).length;
+  },
+  _workPromisedCount(workId) {
+    const cons = ((this.state.contractor && this.state.contractor.constraints) || []).filter(c => c.workId === workId);
+    const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
+    return cons.filter(c => mr.some(x => x.constraintId === c.id && x.status === 'promised')).length;
+  },
+  get makeReadyReport() {
+    const week = this.targetExecWeek;
+    const stickies = this._allStickies().filter(s => Number(s.startWeek) === week);
+    let ready=0, promised=0, open=0;
+    for (const s of stickies) {
+      const o = this._workOpenConstraintCount(s.id);
+      const p = this._workPromisedCount(s.id);
+      if (o === 0) ready++;
+      else if (p > 0) promised++;
+      else open++;
+    }
+    let summary = '';
+    if (!stickies.length) summary = 'Tidak ada pekerjaan di M' + week + '.';
+    else if (open === 0 && promised === 0) summary = 'M' + week + ' siap masuk WWP — semua ready.';
+    else if (open === 0) summary = 'M' + week + ' dapat masuk WWP; ' + promised + ' item mengandalkan komitmen make-ready.';
+    else summary = 'M' + week + ': ' + ready + ' ready, ' + promised + ' dijanjikan, ' + open + ' terbuka — item terbuka ke backlog.';
+    return { ready, promised, open, summary, total: stickies.length };
+  },
+  get backlogHeld() {
+    const week = this.targetExecWeek;
+    const inWwp = new Set((this.state.contractor.wwp || []).map(x => x.workId));
+    return this._allStickies().filter(s => Number(s.startWeek) === week && !inWwp.has(s.id) && !this._isWorkReady(s.id));
+  },
+  get backlogWorkable() {
+    const week = this.targetExecWeek;
+    const inWwp = new Set((this.state.contractor.wwp || []).map(x => x.workId));
+    return this._allStickies().filter(s => {
+      if (inWwp.has(s.id)) return false;
+      if (!this._isWorkReady(s.id)) return false;
+      const w = Number(s.startWeek);
+      return w >= week && w <= week + 3;
+    });
+  },
+  get ppcDoneCount() {
+    const ids = new Set((this.state.contractor.wwp || []).map(x => x.workId));
+    return ((this.state.contractor.ppc || []).filter(p => ids.has(p.workId) && p.status === 'done')).length;
+  },
+  get ppcPercent() {
+    const n = (this.state.contractor.wwp || []).length;
+    if (!n) return 0;
+    return Math.round(100 * this.ppcDoneCount / n);
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
@@ -1893,8 +2094,78 @@ Alpine.data('app', () => ({
     }
     this.save();
   },
-  rollLookahead() {
+    wwpByDay(day) {
+    return ((this.state.contractor && this.state.contractor.wwp) || []).filter(x => x.day === day);
+  },
+  buildWwp() {
     if (!this.state.contractor.pullLocked) return;
+    const week = this.targetExecWeek;
+    const days = WWP_DAYS.map(d => d.id);
+    const ready = this._allStickies().filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id));
+    const items = ready.map((s, i) => ({
+      workId: s.id,
+      day: days[i % days.length],
+      promoted: false,
+    }));
+    this.state.contractor.wwp = items;
+    this.state.contractor.ppc = [];
+    this.state.contractor.weekClosed = false;
+    this.save();
+  },
+  moveWwpDay(workId, day) {
+    if (this.state.contractor.weekClosed) return;
+    this.state.contractor.wwp = (this.state.contractor.wwp || []).map(x => x.workId === workId ? { ...x, day } : x);
+    this.save();
+  },
+  promoteToWwp(workId) {
+    if (this.state.contractor.weekClosed) return;
+    if (!this._isWorkReady(workId)) {
+      alert('Hanya pekerjaan ready yang boleh dipromosikan.');
+      return;
+    }
+    if ((this.state.contractor.wwp || []).some(x => x.workId === workId)) return;
+    const days = WWP_DAYS.map(d => d.id);
+    let best = days[0], bestN = 1e9;
+    for (const d of days) {
+      const n = this.wwpByDay(d).length;
+      if (n < bestN) { bestN = n; best = d; }
+    }
+    this.state.contractor.wwp = [...(this.state.contractor.wwp || []), { workId, day: best, promoted: true }];
+    this.save();
+  },
+  setPpc(workId, status, reason) {
+    if (this.state.contractor.weekClosed) return;
+    if (status === 'failed' && !reason) {
+      alert('Pilih alasan gagal (constraint lapangan / penyebab).');
+      return;
+    }
+    const list = [...(this.state.contractor.ppc || []).filter(p => p.workId !== workId)];
+    list.push({ workId, status, reason: reason || null });
+    this.state.contractor.ppc = list;
+    this.save();
+  },
+  ppcLabel(workId) {
+    const p = ((this.state.contractor && this.state.contractor.ppc) || []).find(x => x.workId === workId);
+    if (!p) return 'Belum dinilai';
+    if (p.status === 'done') return 'Selesai';
+    return 'Gagal' + (p.reason ? (' · ' + this.constraintLabel(p.reason)) : '');
+  },
+  closeWeek() {
+    const items = this.state.contractor.wwp || [];
+    const ppc = this.state.contractor.ppc || [];
+    const missing = items.filter(i => !ppc.some(p => p.workId === i.workId));
+    if (missing.length) {
+      if (!confirm(missing.length + ' item belum dinilai selesai/gagal. Tutup tetap?')) return;
+    }
+    this.state.contractor.weekClosed = true;
+    this.save();
+  },
+    rollLookahead() {
+    if (!this.state.contractor.pullLocked) return;
+    if (!this.state.contractor.weekClosed) {
+      alert('Tutup minggu (PPC) dulu sebelum gulir.');
+      return;
+    }
     const promised = (this.state.contractor.makeReady || []).filter(x => x.status === 'promised');
     if (promised.length) {
       if (!confirm(promised.length + ' komitmen masih dijanjikan. Gulir tetap?')) return;
@@ -1906,6 +2177,9 @@ Alpine.data('app', () => ({
     this.state.contractor.lookOffset = (Number(this.state.contractor.lookOffset) || 0) + 1;
     this.state.contractor.selectedLookRel = 'L1';
     this.state.contractor.selectedLookWorkId = null;
+    this.state.contractor.wwp = [];
+    this.state.contractor.ppc = [];
+    this.state.contractor.weekClosed = false;
     this.save();
     alert('Jendela digulir. L1 sekarang = M' + this.state.contractor.lookOffset);
   },
