@@ -1248,10 +1248,7 @@
               <p class="text-lg font-bold text-terra" x-text="ppcPercent+'%'"></p>
             </div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" class="btn-ghost !text-xs border border-paper-line" x-show="!state.contractor.weekClosed" @click="applyHuddleToPpc()">Isi PPC dari Huddle</button>
-            <p class="text-[11px] text-ink-mute self-center">Hijau huddle → selesai; masalah → gagal (boleh diubah).</p>
-          </div>
+          <p class="text-[11px] text-ink-mute">PPC dihitung otomatis dari Huddle (hijau = selesai, tidak tercapai = gagal). Boleh diubah per item.</p>
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line"><h3 class="text-sm font-bold">Penilaian PPC per item</h3></div>
             <div class="p-3 space-y-2 text-xs">
@@ -1804,6 +1801,7 @@ Alpine.data('app', () => ({
     this.currentStage = this.state.currentStage || 'owner';
     if (this.currentStage === 'contractor-pm') this.currentStage = 'contractor-master';
     this.recalcPlan();
+    this._ensurePpcFromHuddle();
   },
 
   get oeJt() { return budgetMid(this.state.owner.budgetLevel, this.state.owner.qualityLevel); },
@@ -2258,6 +2256,7 @@ Alpine.data('app', () => ({
         if (s === 'contractor-learning' && !this.state.contractor.huddleComplete) s = 'contractor-huddle';
     this.currentStage = s;
     this.state.currentStage = s;
+    if (s === 'contractor-learning') this._ensurePpcFromHuddle();
     this.save();
   },
   onQualityChange() {
@@ -2679,7 +2678,6 @@ Alpine.data('app', () => ({
       alert('Susun WWP dulu.');
       return;
     }
-    if (!confirm('Kunci WWP dan mulai Daily Huddle dari Senin?')) return;
     this.state.contractor.wwpLocked = true;
     this.state.contractor.huddleDayIdx = 0;
     this.state.contractor.huddleResults = {};
@@ -2769,9 +2767,8 @@ Alpine.data('app', () => ({
       if (!confirm(pending.length + ' item Sabtu belum dinilai. Selesai huddle tetap?')) return;
     }
     this.state.contractor.huddleComplete = true;
-    this.save();
+    this.applyHuddleToPpc();
     this.setStage('contractor-learning');
-    alert('Huddle selesai. Lanjut Learning (PPC + registry).');
   },
     applyHuddleToPpc() {
     if (this.state.contractor.weekClosed) return;
@@ -2780,16 +2777,23 @@ Alpine.data('app', () => ({
     const list = [];
     for (const item of items) {
       let everDone = false;
+      let failReason = 'lain';
       for (const d of WWP_DAYS) {
         const r = hr[d.id + ':' + item.id];
         if (r && r.status === 'done') everDone = true;
       }
       list.push(everDone
         ? { workId: item.id, status: 'done', reason: null }
-        : { workId: item.id, status: 'failed', reason: 'lain' });
+        : { workId: item.id, status: 'failed', reason: failReason });
     }
     this.state.contractor.ppc = list;
     this.save();
+  },
+  _ensurePpcFromHuddle() {
+    if (!this.state || !this.state.contractor) return;
+    if (!this.state.contractor.huddleComplete || this.state.contractor.weekClosed) return;
+    if ((this.state.contractor.ppc || []).length) return;
+    this.applyHuddleToPpc();
   },
   get problemFrequency() {
     const reg = this.state.contractor.problemRegistry || [];
