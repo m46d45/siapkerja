@@ -1441,6 +1441,34 @@
         <div x-show="!state.contractor.huddleComplete" class="rounded-xl border-2 border-dashed border-paper-line p-6 text-center text-sm text-ink-mute">Selesaikan Daily Huddle dulu.</div>
         <div x-show="state.contractor.huddleComplete" class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="playWeek"></span></h3>
+          <div class="rounded-xl border border-paper-line overflow-hidden">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Konfirmasi selesai per pecahan</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Centang selesai atau tidak selesai. Yang tidak selesai dibawa ke L1 minggu depan. Baru kunci evaluasi.</p>
+            </div>
+            <div class="p-3 space-y-2">
+              <template x-for="item in (state.contractor.wwp||[])" :key="'ppc'+item.id">
+                <div class="rounded-lg border border-paper-line p-2.5 text-xs flex flex-wrap items-center justify-between gap-2"
+                  :style="'border-left:4px solid '+(item.color||'#C45C26')">
+                  <div>
+                    <p class="font-semibold text-ink" x-text="item.name+' · '+prettyZone(item.zoneLabel)"></p>
+                    <p class="text-ink-mute" x-text="item.day"></p>
+                  </div>
+                  <div class="flex gap-1.5" x-show="!state.contractor.weekClosed">
+                    <button type="button" class="text-[11px] px-2 py-1 rounded font-semibold"
+                      :class="ppcStatus(item.id)==='done' ? 'bg-forest text-white' : 'bg-forest-soft text-forest'"
+                      @click="setPpcStatus(item.id,'done')">Selesai</button>
+                    <button type="button" class="text-[11px] px-2 py-1 rounded font-semibold"
+                      :class="ppcStatus(item.id)==='failed' ? 'bg-red-700 text-white' : 'bg-red-50 text-red-700'"
+                      @click="setPpcStatus(item.id,'failed')">Tidak selesai</button>
+                  </div>
+                  <span class="text-[10px] font-semibold" x-show="state.contractor.weekClosed"
+                    :class="ppcStatus(item.id)==='done'?'text-forest':'text-red-700'"
+                    x-text="ppcStatus(item.id)==='done'?'Selesai':'Tidak selesai'"></span>
+                </div>
+              </template>
+            </div>
+          </div>
           <div class="grid grid-cols-3 gap-2 text-xs">
             <div class="rounded-lg border border-paper-line bg-paper p-2.5 text-center">
               <p class="text-[10px] text-ink-mute">Direncanakan</p>
@@ -2786,8 +2814,13 @@ Alpine.data('app', () => ({
       const absLabel = 'M' + abs;
       let stickies = allStickies.filter(s => Number(s.startWeek) === abs);
       if (i === 1 && carry.length) {
-        const have = new Set(stickies.map(s => s.id));
-        for (const c of carry) if (!have.has(c.id)) { stickies = stickies.concat([c]); have.add(c.id); }
+        const haveZ = new Set(stickies.map(s => this.prettyZone(s.zoneLabel)));
+        for (const c of carry) {
+          const z = this.prettyZone(c.zoneLabel);
+          if (z && haveZ.has(z)) continue;
+          haveZ.add(z);
+          stickies = stickies.concat([{ ...c, id: c.cellId || (c.id + '|' + z) }]);
+        }
       }
       const stickyIds = new Set(stickies.map(s => s.id));
       const openConstraints = cons.filter(c => !resolved.has(c.id) && stickyIds.has(c.workId)).length;
@@ -2878,7 +2911,7 @@ Alpine.data('app', () => ({
         });
       }
     }
-    for (const a of (this.state.contractor.actualLog || []).filter(x => Number(x.week) === prev && !x.done)) {
+    for (const a of this._allExecCells().filter(x => Number(x.week) === prev && !x.done)) {
       push({
         id: findSticky(a.stickyId, a.name, a.zoneLabel) || a.stickyId,
         cellId: a.id,
@@ -2909,7 +2942,7 @@ Alpine.data('app', () => ({
   get zoneBoard() {
     const play = this.targetExecWeek;
     const wwp = this.state.contractor.wwp || [];
-    const log = this.state.contractor.actualLog || [];
+    const log = this._allExecCells();
     const rank = { done: 3, carry: 2, planned: 1, future: 0 };
     const cells = [];
     const idx = {};
@@ -4521,6 +4554,49 @@ Alpine.data('app', () => ({
     this.state.contractor.ppc = list;
     this.save();
   },
+  _allExecCells() {
+    const out = [];
+    const seen = new Set();
+    const add = (c) => {
+      const z = this.prettyZone(c.zoneLabel);
+      const k = z + '|' + Number(c.week);
+      if (!z || seen.has(k)) return;
+      seen.add(k);
+      out.push({ ...c, zoneLabel: z });
+    };
+    for (const a of ((this.state.contractor && this.state.contractor.actualLog) || [])) add(a);
+    for (const arch of ((this.state.contractor && this.state.contractor.execArchive) || [])) {
+      for (const it of (arch.wwp || [])) {
+        const p = (arch.ppc || []).find(x => x.workId === it.id);
+        add({
+          id: it.id,
+          week: arch.week,
+          parentId: it.parentId,
+          stickyId: it.workId,
+          name: it.name,
+          zoneLabel: it.zoneLabel,
+          done: !!(p && p.status === 'done'),
+          team: it.team,
+          color: it.color,
+        });
+      }
+    }
+    return out;
+  },
+  ppcStatus(id) {
+    const p = ((this.state.contractor && this.state.contractor.ppc) || []).find(x => x.workId === id);
+    return p ? p.status : null;
+  },
+  setPpcStatus(id, status) {
+    if (this.state.contractor.weekClosed) return;
+    const list = [...(this.state.contractor.ppc || [])];
+    const i = list.findIndex(x => x.workId === id);
+    const row = { workId: id, status, reason: status === 'failed' ? (i >= 0 && list[i].reason) || 'lain' : null };
+    if (i >= 0) list[i] = { ...list[i], ...row };
+    else list.push(row);
+    this.state.contractor.ppc = list;
+    this.save();
+  },
   _ensurePpcFromHuddle() {
     if (!this.state || !this.state.contractor) return;
     if (!this.state.contractor.huddleComplete || this.state.contractor.weekClosed) return;
@@ -4553,7 +4629,8 @@ Alpine.data('app', () => ({
     const ppc = this.state.contractor.ppc || [];
     const missing = items.filter(i => !ppc.some(p => p.workId === i.id));
     if (missing.length) {
-      if (!confirm(missing.length + ' item belum dinilai PPC. Kunci tetap?')) return;
+      alert('Centang selesai / tidak selesai untuk semua pecahan dulu (' + missing.length + ' belum).');
+      return;
     }
     const reg = [...(this.state.contractor.problemRegistry || [])];
     const week = this.targetExecWeek;
