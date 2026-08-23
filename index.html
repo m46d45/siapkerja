@@ -471,7 +471,8 @@
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('designer')" class="btn-ghost">← Desainer</button>
         <button x-show="!state.negotiation.deal" @click="signContract()" :disabled="!canSignContract" class="btn-primary flex-1 sm:flex-none disabled:opacity-40">Tanda tangan kontrak</button>
-        <button x-show="state.negotiation.deal" @click="setStage('contractor-master')" class="btn-primary flex-1 sm:flex-none">Masuk ke Master Plan →</button>
+        <span x-show="state.negotiation.deal" class="inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold bg-forest-soft text-forest border border-forest/20">Kontrak ditandatangani</span>
+        <button x-show="state.negotiation.deal" @click="setStage('contractor-master')" class="btn-primary flex-1 sm:flex-none">Eksekusi konstruksi →</button>
       </div>
     </div>
   </section>
