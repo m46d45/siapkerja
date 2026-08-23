@@ -132,8 +132,6 @@
     <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Daily Huddle</button>
         <button @click="state.contractor.huddleComplete&&setStage('contractor-learning')" :disabled="!state.contractor.huddleComplete" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-learning'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Learning</button>
     <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Laporan</button>
-    <span x-show="state.contractor.pullLocked" class="ml-auto shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
-      x-text="currentStage==='contractor-production' ? ('Sesi · M'+sessionWeek) : ('Sesi · M'+playWeek)"></span>
   </div>
 </div>
 
