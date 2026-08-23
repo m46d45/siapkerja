@@ -1114,7 +1114,8 @@
         </div>
 
         <div x-show="(state.contractor.wwp||[]).length" class="space-y-4">
-          <h3 class="text-sm font-bold">Sesi · M<span x-text="sessionWeek"></span></h3>
+          <h3 class="text-sm font-bold">Sesi · M<span x-text="playWeek"></span></h3>
+          <p class="text-[11px] text-ink-soft">Pecah ke hari: Z1 menjadi Z1-a-1, Z1-a-2… · Z2-a menjadi Z2-a-1, Z2-a-2… Sisa setelah Sabtu ke minggu depan.</p>
           <div class="overflow-x-auto">
             <div class="grid grid-cols-6 gap-2 min-w-[640px]">
               <template x-for="d in WWP_DAYS" :key="'w'+d.id">
@@ -1132,7 +1133,7 @@
                             <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
                           </template>
                         </select>
-                                                <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked && item.canSplit">
+                                                <div class="mt-1 flex gap-1" x-show="!state.contractor.weekClosed && !state.contractor.huddleComplete && item.canSplit">
                           <select class="text-[10px] border border-paper-line rounded flex-1" :id="'split-'+item.id">
                             <option value="1">1 hari</option>
                             <option value="2">2 hari</option>
@@ -1143,7 +1144,7 @@
                           </select>
                           <button type="button" class="text-[10px] px-1.5 py-0.5 rounded bg-terra text-white font-semibold" @click="splitWwpItem(item.id)">Pecah</button>
                         </div>
-                        <button type="button" class="mt-1 w-full text-[10px] py-0.5 rounded border border-paper-line text-ink-soft" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked && item.isLead" @click="unsplitWwpItem(item.id)">Ulang ke induk</button>
+                        <button type="button" class="mt-1 w-full text-[10px] py-0.5 rounded border border-paper-line text-ink-soft" x-show="!state.contractor.weekClosed && !state.contractor.huddleComplete && item.isLead" @click="unsplitWwpItem(item.id)">Ulang ke induk</button>
                       </div>
                     </template>
                     <p class="text-[10px] text-ink-mute" x-show="!wwpByDay(d.id).length">—</p>
@@ -4123,6 +4124,13 @@ Alpine.data('app', () => ({
         toWeek: this.playWeek + 1,
         source: 'split',
       }];
+    }
+    if (this.state.contractor.wwpLocked) {
+      this.state.contractor.wwpSnapshot = {
+        wwp: JSON.parse(JSON.stringify(this.state.contractor.wwp || [])),
+        weekRemainder: JSON.parse(JSON.stringify(this.state.contractor.weekRemainder || [])),
+        promoUsed: [...(this.state.contractor.promoUsed || [])],
+      };
     }
     this.save();
   },
