@@ -2102,6 +2102,7 @@ function emptyContractor() {
     weekRemainder:[],
     promoUsed:[],
     wwpSnapshot:null,
+    weekFailedTypes:[],
   };
 }
 
@@ -2216,7 +2217,7 @@ Alpine.data('app', () => ({
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     if (!this.state.contractor.stickyWeeks) this.state.contractor.stickyWeeks = {};
     if (!Array.isArray(this.state.contractor.weekRemainder)) this.state.contractor.weekRemainder = [];
-    if (!Array.isArray(this.state.contractor.promoUsed)) this.state.contractor.promoUsed = [];
+    if (!Array.isArray(this.state.contractor.weekFailedTypes)) this.state.contractor.weekFailedTypes = [];
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
     this.currentStage = this.state.currentStage || 'owner';
@@ -3473,6 +3474,7 @@ Alpine.data('app', () => ({
     const w = this.playWeek;
     this.state.contractor.promoUsed = (this.state.contractor.promoUsed || []).filter(x => typeof x !== 'string' && Number(x.week) !== w);
     this.state.contractor.weekRemainder = (this.state.contractor.weekRemainder || []).filter(r => Number(r.fromWeek) !== w);
+    this.state.contractor.weekFailedTypes = [];
     this.state.contractor.wwp = [];
     this.state.contractor.ppc = [];
     this.state.contractor.weekClosed = false;
@@ -3565,6 +3567,7 @@ Alpine.data('app', () => ({
       this.state.contractor.extendNote = '';
       this.state.contractor.extendDays = '1';
       this.state.contractor.extendType = 'material';
+      this.state.contractor.weekFailedTypes = [];
       this.state.contractor.ppc = [];
       this.state.contractor.weekClosed = false;
       this.state.contractor.learningNote = '';
@@ -3808,6 +3811,7 @@ Alpine.data('app', () => ({
     this.state.contractor.huddleComplete = false;
     this.state.contractor.extendId = null;
     this.state.contractor.extendNote = '';
+    this.state.contractor.weekFailedTypes = [];
     this.save();
     this.setStage('contractor-huddle');
   },
@@ -3881,22 +3885,37 @@ Alpine.data('app', () => ({
     }
     return false;
   },
+  _workType(item) {
+    if (!item) return '';
+    if (item.parentId && WORKS.some(w => w.id === item.parentId)) return item.parentId;
+    for (const key of [item.workId, item.id]) {
+      const t = String(key || '').split('_')[0];
+      if (WORKS.some(w => w.id === t)) return t;
+    }
+    const byName = WORKS.find(w => w.name === item.name);
+    return byName ? byName.id : '';
+  },
   huddleBlockReason(item) {
     if (!item) return '';
-    const pid0 = item.parentId || '';
+    const pid0 = this._workType(item);
     const w = WORKS.find(x => x.id === pid0);
     const preds = (w && w.pred) || item.pred || [];
     if (!preds.length) return '';
+    const failedTypes = new Set(this.state.contractor.weekFailedTypes || []);
     const wwp = this.state.contractor.wwp || [];
+    for (const it of wwp) {
+      if (this._itemHuddleFailed(it)) failedTypes.add(this._workType(it));
+    }
     const today = Number(this.state.contractor.huddleDayIdx) || 0;
     for (const pid of preds) {
       const predW = WORKS.find(x => x.id === pid);
-      const cands = wwp.filter(x => x.parentId === pid);
+      const name = (predW && predW.name) || pid;
+      if (failedTypes.has(pid)) return name + ' tidak bisa minggu ini (prasyarat)';
+      const cands = wwp.filter(x => this._workType(x) === pid);
       if (!cands.length) continue;
       const ov = cands.filter(x => this._zonesOverlap(item.zoneLabel, x.zoneLabel));
       const relevant = ov.length ? ov : cands;
       for (const c of relevant) {
-        const name = (predW && predW.name) || pid;
         const z = c.zoneLabel || '';
         const loc = name + (z ? (' · ' + z) : '');
         if (this._itemHuddleFailed(c)) return loc + ' tidak bisa minggu ini (prasyarat)';
@@ -3979,6 +3998,10 @@ Alpine.data('app', () => ({
     if (mode === 'fail') {
       hr[this._huddleKey(id)] = { status: 'failed', problem: note, type };
       this.state.contractor.huddleResults = hr;
+      const wt = this._workType(item);
+      if (wt && !(this.state.contractor.weekFailedTypes || []).includes(wt)) {
+        this.state.contractor.weekFailedTypes = [...(this.state.contractor.weekFailedTypes || []), wt];
+      }
       this.state.contractor.extendId = null;
       this.state.contractor.extendNote = '';
       this.save();
