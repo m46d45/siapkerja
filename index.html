@@ -864,7 +864,8 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead Plan</p>
-          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="sessionWeek"></span></h2>
+          <h2 class="text-xl font-bold text-ink">Perencanaan ke depan dan make-ready</h2>
+          <p class="text-sm text-ink-soft mt-2 leading-relaxed">Tahapan perencanaan ke depan ini biasanya 6 minggu ke depan, tetapi dalam kasus ini kita melihatnya hanya 4 minggu ke depan. Tujuannya adalah mengidentifikasi dan menghapus kendala atau constraint. Istilahnya constraint analysis yang bisa menghambat pekerjaan. Pada awal pekerjaan M0, maka yang dilakukan adalah perencanaan minggu 1, minggu 2, minggu 3, dan minggu 4 — atau jendela L1, L2, L3, dan L4 yang akan bergulir setiap minggunya. Secara prinsip, L1 adalah pekerjaan yang sudah pasti bisa dilaksanakan (SiapKerja!), tidak boleh lagi ada constraint. Sedangkan untuk L2, L3, dan L4 harus diupayakan constraint dihilangkan oleh masing-masing tim kerja.</p>
         </div>
       </div>
       <div class="p-5 space-y-4">
@@ -874,6 +875,7 @@
         </div>
 
         <div x-show="state.contractor.pullLocked" class="space-y-4">
+          <h3 class="text-sm font-bold">Sesi · M<span x-text="sessionWeek"></span></h3>
           <div class="rounded-xl border border-paper-line bg-paper-card p-3 space-y-2">
             <div class="flex gap-1 overflow-x-auto pb-1">
               <template x-for="m in timelineWeeks" :key="'tm'+m.n">
@@ -904,7 +906,7 @@
           </div>
 
           <div>
-            <h3 class="text-sm font-bold mb-2">Pekerjaan di jendela</h3>
+            <h3 class="text-sm font-bold mb-2">Detail pekerjaan per zonasi</h3>
             <div class="board-scroll">
               <template x-for="slot in lookSlots" :key="'col'+slot.rel">
                 <div class="phase-col">
@@ -913,7 +915,7 @@
                     <template x-for="w in slot.stickies" :key="w.id">
                       <button type="button" class="sticky-note" :style="'--c:'+w.color"
                         :class="state.contractor.selectedLookWorkId===w.id ? 'is-on' : ''"
-                        @click="state.contractor.selectedLookWorkId=w.id; save()">
+                        @click="selectLookWork(w.id)">
                         <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
                         <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
                         <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'" x-text="workConstraintCount(w.id)?(workConstraintCount(w.id)+' constraint'):'SiapKerja!'"></p>
@@ -926,7 +928,7 @@
             </div>
           </div>
 
-            <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.selectedLookWorkId">
+            <div class="rounded-xl border border-paper-line overflow-hidden" x-show="selectedWorkConstraints.length">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-start justify-between gap-2">
               <div>
                 <h3 class="text-sm font-bold">Constraint analysis & removal</h3>
@@ -934,34 +936,30 @@
               </div>
               <button type="button" class="text-[11px] text-ink-mute shrink-0" @click="state.contractor.selectedLookWorkId=null; save()">Tutup</button>
             </div>
-            <div class="p-3 space-y-2" x-show="selectedWorkConstraints.length">
+            <div class="px-4 pt-3" x-show="selectedLookIsL1">
+              <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">Pekerjaan ini di <strong>L1</strong> — prinsipnya tidak boleh ada constraint. Commit hilangkan sebelum masuk WWP.</p>
+            </div>
+            <div class="p-3 space-y-2">
               <template x-for="row in selectedWorkConstraints" :key="row.id">
                 <div class="rounded-lg border border-paper-line bg-paper-card p-3 text-xs space-y-2">
                   <div class="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p class="font-semibold text-ink" x-text="constraintLabel(row.type)"></p>
                       <p class="text-ink-soft mt-0.5" x-show="row.note" x-text="row.note"></p>
+                      <p class="text-[10px] text-ink-mute mt-1" x-text="(row.slotRel || '')+' · '+(row.absLabel || '')+' · '+(row.commitTeam || selectedLookTeam)"></p>
                     </div>
                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':'bg-amber-100 text-amber-900')" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':'Terbuka')"></span>
                   </div>
-                  <div class="flex flex-wrap gap-2 items-end" x-show="!row.commitStatus">
-                    <div>
-                      <label class="text-[10px] text-ink-mute block mb-0.5">Penanggung jawab (tim)</label>
-                      <select class="field !py-1.5 !text-xs w-auto" :id="'tm-'+row.id">
-                        <template x-for="t in TEAMS" :key="'ct'+t"><option :value="t" x-text="t"></option></template>
-                      </select>
-                    </div>
-                    <button type="button" class="btn-primary !text-xs !py-1.5" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
-                  </div>
-                  <div class="flex flex-wrap gap-2 items-center" x-show="row.commitStatus==='promised'">
-                    <span class="text-[10px] text-ink-mute" x-text="'Dijanjikan oleh '+row.commitTeam"></span>
+                  <button type="button" class="btn-primary !text-xs !py-1.5" x-show="!row.commitStatus" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
+                  <p class="text-[11px] text-ink-mute" x-show="row.commitStatus==='promised' && !row.canResolve" x-text="'Dijanjikan '+selectedLookTeam+' — dicek di Look-ahead berikutnya'"></p>
+                  <div class="flex flex-wrap gap-2 items-center" x-show="row.canResolve">
+                    <span class="text-[10px] text-ink-mute" x-text="'Janji sesi lalu · '+(row.commitTeam || '')"></span>
                     <button type="button" class="btn-ghost !text-xs !py-1.5 border border-forest/30 text-forest" @click="resolveMakeReady(row.id, true)">Sudah dilaksanakan</button>
                     <button type="button" class="btn-ghost !text-xs !py-1.5 border border-red-200 text-red-700" @click="resolveMakeReady(row.id, false)">Gagal</button>
                   </div>
                 </div>
               </template>
             </div>
-            <p class="p-4 text-xs text-ink-mute" x-show="!selectedWorkConstraints.length">Tidak ada constraint pada pekerjaan ini — SiapKerja!</p>
           </div>
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
@@ -2605,6 +2603,8 @@ Alpine.data('app', () => ({
         ...c,
         commitStatus: commit ? commit.status : null,
         commitTeam: commit ? commit.team : null,
+        commitAtOffset: commit ? Number(commit.atOffset) : null,
+        canResolve: !!(commit && commit.status === 'promised' && Number(commit.atOffset) < Number((this.state.contractor && this.state.contractor.lookOffset) || 0)),
         slotRel: slot ? slot.rel : null,
         absLabel: slot ? slot.absLabel : null,
       };
@@ -2629,7 +2629,24 @@ Alpine.data('app', () => ({
   get selectedLookWorkLabel() {
     const wid = this.state.contractor && this.state.contractor.selectedLookWorkId;
     if (!wid) return '';
-    return this.workName(wid);
+    const slot = (this.lookSlots || []).find(s => (s.stickies || []).some(x => x.id === wid));
+    const loc = slot ? (slot.rel + ' · ' + slot.absLabel) : '';
+    return [this.workName(wid), loc].filter(Boolean).join(' · ');
+  },
+  get selectedLookIsL1() {
+    const wid = this.state.contractor && this.state.contractor.selectedLookWorkId;
+    if (!wid) return false;
+    const slot = (this.lookSlots || []).find(s => (s.stickies || []).some(x => x.id === wid));
+    return !!(slot && slot.rel === 'L1');
+  },
+  get selectedLookTeam() {
+    const wid = this.state.contractor && this.state.contractor.selectedLookWorkId;
+    if (!wid) return '';
+    for (const slot of (this.lookSlots || [])) {
+      const s = (slot.stickies || []).find(x => x.id === wid);
+      if (s) return s.team || '';
+    }
+    return '';
   },
   get selectedSlotConstraintCount() {
     return (this.selectedWorkConstraints || []).filter(c => !c.commitStatus || c.commitStatus === 'promised').length;
@@ -3111,6 +3128,14 @@ Alpine.data('app', () => ({
     this.state.contractor.reviewed[id] = true;
     this.save();
   },
+  selectLookWork(id) {
+    if (!this.workConstraintCount(id)) {
+      this.state.contractor.selectedLookWorkId = null;
+    } else {
+      this.state.contractor.selectedLookWorkId = id;
+    }
+    this.save();
+  },
   _seedGivenConstraints() {
     const specs = LOD_GIVEN[this.lodKey] || [];
     const stickies = this._allStickies();
@@ -3381,8 +3406,7 @@ Alpine.data('app', () => ({
     }
   },
     promiseMakeReady(constraintId) {
-    const sel = document.getElementById('tm-' + constraintId);
-    const team = sel ? sel.value : 'Struktur';
+    const team = this.selectedLookTeam || 'Struktur';
     const list = [...(this.state.contractor.makeReady || [])];
     if (list.some(x => x.constraintId === constraintId && x.status === 'promised')) return;
     list.push({ id: 'mr' + Date.now(), constraintId, team, status: 'promised', atOffset: this.state.contractor.lookOffset || 0 });
