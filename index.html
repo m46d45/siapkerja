@@ -1204,9 +1204,19 @@
                     </div>
                   </div>
                   <div class="mt-2 space-y-1.5" x-show="state.contractor.extendId===item.id">
-                    <input class="field !text-xs !py-1.5" placeholder="Masalah / hambatan (wajib, untuk tindak lanjut)" x-model="state.contractor.extendNote">
+                    <select class="field !text-xs !py-1.5" x-model="state.contractor.extendDays">
+                      <option value="1">Perpanjang 1 hari</option>
+                      <option value="2">Perpanjang 2 hari</option>
+                      <option value="fail">Tidak bisa dilaksanakan minggu ini</option>
+                    </select>
+                    <select class="field !text-xs !py-1.5" x-model="state.contractor.extendType">
+                      <template x-for="r in PPC_REASONS" :key="'ex'+r">
+                        <option :value="r" x-text="constraintLabel(r)"></option>
+                      </template>
+                    </select>
+                    <input class="field !text-xs !py-1.5" placeholder="Catatan detail (wajib, masuk registry)" x-model="state.contractor.extendNote">
                     <div class="flex gap-2">
-                      <button type="button" class="btn-primary !text-xs !py-1.5" @click="extendHuddleItem(item.id)">Simpan & perpanjang</button>
+                      <button type="button" class="btn-primary !text-xs !py-1.5" @click="extendHuddleItem(item.id)">Simpan ke registry</button>
                       <button type="button" class="btn-ghost !text-xs !py-1.5" @click="state.contractor.extendId=null; state.contractor.extendNote=''">Batal</button>
                     </div>
                   </div>
@@ -2078,6 +2088,8 @@ function emptyContractor() {
     huddleComplete:false,
     extendId:null,
     extendNote:'',
+    extendDays:'1',
+    extendType:'material',
     problemRegistry:[],
     weeklyProgress:[],
     learningNote:'',
@@ -2085,6 +2097,7 @@ function emptyContractor() {
     progressLocks:[],
     weekRemainder:[],
     promoUsed:[],
+    wwpSnapshot:null,
   };
 }
 
@@ -3456,6 +3469,7 @@ Alpine.data('app', () => ({
     this.state.contractor.extendId = null;
     this.state.contractor.extendNote = '';
     this.state.contractor.learningNote = '';
+    this.state.contractor.wwpSnapshot = null;
     this.progressDraft = null;
     this.stopHuddleTimer();
     this._stripWeekLogs(this.playWeek);
@@ -3463,7 +3477,7 @@ Alpine.data('app', () => ({
   rewindTo(target) {
     if (!target) return;
     const msgs = {
-      huddle: 'Ulang Daily Huddle minggu ini?\nWWP tetap. Hasil huddle, PPC, dan bakukan minggu ini dihapus. Minggu sebelumnya tetap.',
+      huddle: 'Ulang Daily Huddle minggu ini?\nKembali ke WWP saat dikunci. Hasil huddle, promosi di huddle, PPC minggu ini dihapus.',
       wwp: 'Ulang WWP minggu ini?\nLook-ahead tetap. Pecah hari, huddle, PPC, dan bakukan minggu ini dihapus.',
       lookahead: 'Ulang Look-ahead minggu ini?\nPhase Plan tetap. Make-ready + WWP + huddle minggu ini dihapus. Minggu sebelumnya tetap.',
       phase: 'Kembali ke Phase Plan?\nLook-ahead dan semua produksi direset. Kontrak nego tetap.',
@@ -3521,7 +3535,12 @@ Alpine.data('app', () => ({
       return;
     }
     if (target === 'huddle') {
-      if (!(this.state.contractor.wwp || []).length) this.buildWwp();
+      const snap = this.state.contractor.wwpSnapshot;
+      if (snap) {
+        this.state.contractor.wwp = JSON.parse(JSON.stringify(snap.wwp || []));
+        this.state.contractor.weekRemainder = JSON.parse(JSON.stringify(snap.weekRemainder || []));
+        this.state.contractor.promoUsed = [...(snap.promoUsed || [])];
+      }
       this.state.contractor.wwpLocked = true;
       this.state.contractor.huddleDayIdx = 0;
       this.state.contractor.huddleResults = {};
@@ -3529,12 +3548,17 @@ Alpine.data('app', () => ({
       this.state.contractor.huddleComplete = false;
       this.state.contractor.extendId = null;
       this.state.contractor.extendNote = '';
+      this.state.contractor.extendDays = '1';
+      this.state.contractor.extendType = 'material';
       this.state.contractor.ppc = [];
       this.state.contractor.weekClosed = false;
       this.state.contractor.learningNote = '';
+      this.promoDraft = null;
       this.progressDraft = null;
       this._stripWeekLogs(this.playWeek);
+      this.resetHuddleTimer();
       this.setStage('contractor-huddle');
+      return;
     }
   },
     promiseMakeReady(constraintId) {
@@ -3753,6 +3777,11 @@ Alpine.data('app', () => ({
       alert('Susun WWP dulu.');
       return;
     }
+    this.state.contractor.wwpSnapshot = {
+      wwp: JSON.parse(JSON.stringify(this.state.contractor.wwp || [])),
+      weekRemainder: JSON.parse(JSON.stringify(this.state.contractor.weekRemainder || [])),
+      promoUsed: [...(this.state.contractor.promoUsed || [])],
+    };
     this.state.contractor.wwpLocked = true;
     this.state.contractor.huddleDayIdx = 0;
     this.state.contractor.huddleResults = {};
@@ -3824,25 +3853,37 @@ Alpine.data('app', () => ({
   openExtend(id) {
     this.state.contractor.extendId = id;
     this.state.contractor.extendNote = '';
+    this.state.contractor.extendDays = '1';
+    this.state.contractor.extendType = 'material';
+  },
+  _addRegistry(entry) {
+    const week = this.playWeek;
+    this.state.contractor.problemRegistry = [...(this.state.contractor.problemRegistry || []), {
+      id: 'pr' + Date.now() + Math.random().toString(36).slice(2, 5),
+      week,
+      ...entry,
+    }];
   },
   extendHuddleItem(id) {
     const note = (this.state.contractor.extendNote || '').trim();
+    const type = this.state.contractor.extendType || 'lain';
+    const mode = this.state.contractor.extendDays || '1';
     if (!note) {
-      alert('Catat masalah/hambatan (wajib). Disimpan untuk tindak lanjut.');
+      alert('Catat masalah/hambatan (wajib). Masuk registry.');
       return;
     }
     const days = WWP_DAYS.map(d => d.id);
     const idx = this.state.contractor.huddleDayIdx || 0;
-    const nextDay = days[Math.min(idx + 1, days.length - 1)];
-    const list = [...(this.state.contractor.wwp || [])];
-    const item = list.find(x => x.id === id);
+    const list0 = [...(this.state.contractor.wwp || [])];
+    const item = list0.find(x => x.id === id);
     if (!item) return;
-    // catat status HARI INI sebagai extended
     const hr = { ...(this.state.contractor.huddleResults || {}) };
-    hr[this._huddleKey(id)] = { status: 'extended', problem: note };
-    this.state.contractor.huddleResults = hr;
-    // pindah ke hari berikutnya — di sana belum ada status (harus dikonfirmasi lagi)
-    this.state.contractor.wwp = list.map(x => x.id === id ? { ...x, day: nextDay } : x);
+    this._addRegistry({
+      workId: id, name: item.name, zoneLabel: item.zoneLabel || '',
+      type, note, team: item.team || '',
+      dayLabel: (WWP_DAYS[idx] || {}).label || '',
+      source: 'huddle',
+    });
     this.state.contractor.followUps = [...(this.state.contractor.followUps || []), {
       id: 'fu' + Date.now(),
       workId: id,
@@ -3850,7 +3891,54 @@ Alpine.data('app', () => ({
       zoneLabel: item.zoneLabel,
       dayLabel: (WWP_DAYS[idx] || {}).label || '',
       problem: note,
+      type,
     }];
+    if (mode === 'fail') {
+      hr[this._huddleKey(id)] = { status: 'failed', problem: note, type };
+      this.state.contractor.huddleResults = hr;
+      this.state.contractor.extendId = null;
+      this.state.contractor.extendNote = '';
+      this.save();
+      return;
+    }
+    const n = Math.max(1, Math.min(2, Number(mode) || 1));
+    hr[this._huddleKey(id)] = { status: 'extended', problem: note, type };
+    this.state.contractor.huddleResults = hr;
+    const remainingDays = 5 - idx;
+    const fit = Math.max(0, Math.min(n, remainingDays));
+    const remain = n - fit;
+    let list = list0;
+    if (fit >= 1) {
+      const d1 = days[idx + 1];
+      list = list.map(x => x.id === id ? { ...x, day: d1 } : x);
+    }
+    if (fit >= 2) {
+      const base = list.find(x => x.id === id) || item;
+      list = [...list, {
+        ...base,
+        id: 'wwp' + Date.now() + Math.random().toString(36).slice(2, 5),
+        day: days[idx + 2],
+        canSplit: false,
+        isLead: false,
+      }];
+    }
+    this.state.contractor.wwp = list;
+    if (remain > 0) {
+      const prefix = item.origZoneLabel || item.zoneLabel || 'Z';
+      this.state.contractor.weekRemainder = [...(this.state.contractor.weekRemainder || []), {
+        id: 'rem' + Date.now(),
+        stickyId: item.workId,
+        parentId: item.parentId,
+        name: item.name,
+        team: item.team,
+        color: item.color,
+        zoneBase: prefix,
+        nextIndex: 1,
+        days: remain,
+        fromWeek: this.playWeek,
+        toWeek: this.playWeek + 1,
+      }];
+    }
     this.state.contractor.extendId = null;
     this.state.contractor.extendNote = '';
     this.save();
@@ -3888,6 +3976,7 @@ Alpine.data('app', () => ({
       for (const d of WWP_DAYS) {
         const r = hr[d.id + ':' + item.id];
         if (r && r.status === 'done') everDone = true;
+        if (r && (r.status === 'failed' || r.status === 'extended') && r.type) failReason = r.type;
       }
       list.push(everDone
         ? { workId: item.id, status: 'done', reason: null }
@@ -3923,21 +4012,17 @@ Alpine.data('app', () => ({
     }
     const reg = [...(this.state.contractor.problemRegistry || [])];
     const week = this.targetExecWeek;
+    const have = new Set(reg.filter(r => Number(r.week) === week).map(r => r.workId));
     for (const p of ppc) {
       if (p.status !== 'failed') continue;
+      if (have.has(p.workId)) continue;
       const item = items.find(x => x.id === p.workId) || {};
       reg.push({
         id: 'pr' + Date.now() + Math.random().toString(36).slice(2, 5),
         week, workId: p.workId, name: item.name || '', zoneLabel: item.zoneLabel || '',
         type: p.reason || 'lain', note: '', team: item.team || '',
       });
-    }
-    for (const f of (this.state.contractor.followUps || [])) {
-      reg.push({
-        id: 'pr' + Date.now() + Math.random().toString(36).slice(2, 5),
-        week, workId: f.workId, name: f.name || '', zoneLabel: f.zoneLabel || '',
-        type: 'lain', note: (f.dayLabel || '') + ': ' + (f.problem || ''), team: '',
-      });
+      have.add(p.workId);
     }
     this.state.contractor.problemRegistry = reg;
     const done = ppc.filter(p => p.status === 'done').length;
