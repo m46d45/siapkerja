@@ -687,7 +687,7 @@
                       :disabled="!ph.isFocus || state.contractor.pullLocked"
                       @click="ph.isFocus && selectWork(w.id)">
                       <p class="font-semibold leading-snug text-ink" :class="ph.isFocus ? 'text-[12px]' : 'text-[10px]'" x-text="w.name"></p>
-                      <p class="text-ink-soft mt-0.5" :class="ph.isFocus ? 'text-[10px]' : 'text-[9px]'" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + (ph.isFocus ? (w.team + ' · M'+w.startWeek) : ('M'+w.startWeek))"></p>
+                      <p class="text-ink-soft mt-0.5" :class="ph.isFocus ? 'text-[10px]' : 'text-[9px]'" x-text="(w.zoneLabel ? (prettyZone(w.zoneLabel)+' · ') : '') + (ph.isFocus ? (w.team + ' · M'+w.startWeek) : ('M'+w.startWeek))"></p>
                       <p class="text-[10px] mt-1" x-show="ph.isFocus" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
                         x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(state.contractor.reviewed[w.id]?'ditinjau':'ketuk')"></p>
                     </button>
@@ -710,7 +710,7 @@
             <div>
               <p class="text-[10px] uppercase tracking-wide text-ink-mute">Handoff</p>
               <h3 class="text-sm font-bold" x-text="selectedWorkObj ? selectedWorkObj.name : 'Ketuk sticky Struktur'"></h3>
-              <p class="text-[11px] text-ink-soft" x-show="selectedWorkObj" x-text="selectedWorkObj && ((selectedWorkObj.zoneLabel ? (selectedWorkObj.zoneLabel+' · ') : '') + selectedWorkObj.team)"></p>
+              <p class="text-[11px] text-ink-soft" x-show="selectedWorkObj" x-text="selectedWorkObj && ((selectedWorkObj.zoneLabel ? (prettyZone(selectedWorkObj.zoneLabel)+' · ') : '') + selectedWorkObj.team)"></p>
             </div>
             <button type="button" class="text-[11px] text-ink-mute" x-show="selectedWorkObj" @click="state.contractor.selectedWork=null">Tutup</button>
           </div>
@@ -834,7 +834,7 @@
                 <template x-for="w in ph.stickies" :key="'f'+w.id">
                   <div class="sticky-note" :class="ph.isFocus ? '' : 'is-given'" :style="'--c:'+w.color">
                     <p class="font-semibold leading-snug text-ink" :class="ph.isFocus ? 'text-[12px]' : 'text-[10px]'" x-text="w.name"></p>
-                    <p class="text-ink-soft mt-0.5" :class="ph.isFocus ? 'text-[10px]' : 'text-[9px]'" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + 'M'+w.startWeek"></p>
+                    <p class="text-ink-soft mt-0.5" :class="ph.isFocus ? 'text-[10px]' : 'text-[9px]'" x-text="(w.zoneLabel ? (prettyZone(w.zoneLabel)+' · ') : '') + 'M'+w.startWeek"></p>
                   </div>
                 </template>
               </div>
@@ -927,7 +927,7 @@
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="carryInItems.length">
             <p class="font-semibold text-amber-900">Dibawa ke L1 dari M<span x-text="targetExecWeek-1"></span></p>
             <template x-for="c in carryInItems" :key="'ci'+c.id">
-              <p class="text-amber-900" x-text="c.name+(c.zoneLabel?(' · '+c.zoneLabel):'')+' — '+(c.carryNote||'')"></p>
+              <p class="text-amber-900" x-text="c.name+(c.zoneLabel?(' · '+prettyZone(c.zoneLabel)):'')+' — '+(c.carryNote||'')"></p>
             </template>
           </div>
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="registryInsight">
@@ -1153,7 +1153,7 @@
                 <p class="text-[10px] font-semibold uppercase text-amber-900 mb-1.5">Tahan — belum SiapKerja!</p>
                 <ul class="space-y-1">
                   <template x-for="w in backlogHeld" :key="'h'+w.id">
-                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5" x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></li>
+                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5" x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogHeld.length">Kosong</li>
                 </ul>
@@ -1163,7 +1163,7 @@
                 <ul class="space-y-1">
                   <template x-for="w in backlogWorkable" :key="'w'+w.id">
                     <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
-                      <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
+                      <span x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></span>
                       <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked" @click="openPromo(w.id)">Promosikan</button>
                     </li>
                   </template>
@@ -1174,7 +1174,7 @@
             <div class="px-4 pb-3">
               <template x-if="promoDraft && currentStage==='contractor-wwp' && promoPlan">
               <div class="rounded-lg border border-terra/30 bg-terra-soft/20 p-3 space-y-2" x-show="promoPlan">
-                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+promoPlan.sticky.zoneLabel):''))"></p>
+                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+prettyZone(promoPlan.sticky.zoneLabel)):''))"></p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] text-ink-mute block mb-0.5">Mulai hari</label>
@@ -1207,7 +1207,7 @@
             <p class="font-semibold text-amber-950">Sisa ke minggu depan</p>
             <ul class="space-y-1">
               <template x-for="r in (state.contractor.weekRemainder||[])" :key="r.id">
-                <li class="text-amber-900" x-text="r.name+' · '+r.zoneBase+'-'+r.nextIndex+' · '+r.days+' hari → M'+r.toWeek"></li>
+                <li class="text-amber-900" x-text="r.name+' · '+prettyZone((r.zoneBase||'')+'-'+(r.nextIndex||1))+' · '+r.days+' hari → M'+r.toWeek"></li>
               </template>
             </ul>
           </div>
@@ -1342,7 +1342,7 @@
               <template x-for="w in backlogWorkable" :key="'hw'+w.id">
                 <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
                   <div class="min-w-0">
-                    <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
+                    <span x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></span>
                     <p class="text-[10px] text-red-700 mt-0.5" x-show="promoBlockedReason(w)" x-text="promoBlockedReason(w)"></p>
                   </div>
                   <button type="button" class="btn-primary !text-[10px] !py-1 disabled:opacity-40" x-show="!state.contractor.huddleComplete" :disabled="!!promoBlockedReason(w)" @click="openPromo(w.id)">Promosikan</button>
@@ -1353,7 +1353,7 @@
             <div class="px-3 pb-3">
               <template x-if="promoDraft && currentStage==='contractor-huddle' && promoPlan">
               <div class="rounded-lg border border-terra/30 bg-terra-soft/20 p-3 space-y-2" x-show="promoPlan">
-                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+promoPlan.sticky.zoneLabel):''))"></p>
+                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+prettyZone(promoPlan.sticky.zoneLabel)):''))"></p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] text-ink-mute block mb-0.5">Mulai hari</label>
@@ -1386,7 +1386,7 @@
             <p class="font-semibold text-amber-950">Sisa ke minggu depan</p>
             <ul class="space-y-1">
               <template x-for="r in (state.contractor.weekRemainder||[])" :key="'hr'+r.id">
-                <li class="text-amber-900" x-text="r.name+' · '+r.zoneBase+'-'+r.nextIndex+' · '+r.days+' hari → M'+r.toWeek"></li>
+                <li class="text-amber-900" x-text="r.name+' · '+prettyZone((r.zoneBase||'')+'-'+(r.nextIndex||1))+' · '+r.days+' hari → M'+r.toWeek"></li>
               </template>
             </ul>
           </div>
@@ -1399,7 +1399,7 @@
             <ul class="divide-y divide-paper-line text-xs">
               <template x-for="f in state.contractor.followUps" :key="f.id">
                 <li class="px-4 py-2.5">
-                  <p class="font-medium" x-text="f.name+(f.zoneLabel?(' · '+f.zoneLabel):'')"></p>
+                  <p class="font-medium" x-text="f.name+(f.zoneLabel?(' · '+prettyZone(f.zoneLabel)):'')"></p>
                   <p class="text-ink-soft" x-text="f.dayLabel+' · '+f.problem"></p>
                 </li>
               </template>
@@ -1494,7 +1494,7 @@
               <ul class="max-h-40 overflow-y-auto divide-y divide-paper-line border border-paper-line rounded-lg" x-show="(state.contractor.problemRegistry||[]).length">
                 <template x-for="e in state.contractor.problemRegistry.slice().reverse()" :key="e.id">
                   <li class="px-3 py-2">
-                    <p class="font-medium" x-text="'M'+e.week+' · '+(e.name||'')+(e.zoneLabel?(' · '+e.zoneLabel):'')"></p>
+                    <p class="font-medium" x-text="'M'+e.week+' · '+(e.name||'')+(e.zoneLabel?(' · '+prettyZone(e.zoneLabel)):'')"></p>
                     <p class="text-ink-soft" x-text="constraintLabel(e.type)+(e.note?(' · '+e.note):'')"></p>
                   </li>
                 </template>
@@ -2792,7 +2792,7 @@ Alpine.data('app', () => ({
         name: row.name || s.name,
         team: row.team || s.team,
         color: row.color || s.color,
-        zoneLabel: row.zoneLabel || s.zoneLabel,
+        zoneLabel: this.prettyZone(row.zoneLabel || s.zoneLabel),
         startWeek: week,
         carry: true,
         carryFrom: prev,
@@ -3029,7 +3029,7 @@ Alpine.data('app', () => ({
       if (sticky) { slot = s; break; }
     }
     const bits = [];
-    if (sticky) bits.push(sticky.name + (sticky.zoneLabel ? (' · ' + sticky.zoneLabel) : ''));
+    if (sticky) bits.push(sticky.name + (sticky.zoneLabel ? (' · ' + this.prettyZone(sticky.zoneLabel)) : ''));
     if (slot) bits.push(slot.rel + ' · ' + slot.absLabel);
     return bits.join(' · ');
   },
@@ -3557,7 +3557,7 @@ Alpine.data('app', () => ({
     if (w) return w.name;
     for (const ph of (this.pullPhasesView || this.forwardPhasesView || [])) {
       const s = (ph.stickies || []).find(x => x.id === id);
-      if (s) return s.name + (s.zoneLabel ? (' · ' + s.zoneLabel) : '') + ' · M' + s.startWeek;
+      if (s) return s.name + (s.zoneLabel ? (' · ' + this.prettyZone(s.zoneLabel)) : '') + ' · M' + s.startWeek;
     }
     const cons = ((this.state.contractor && this.state.contractor.constraints) || []).find(x => x.workId === id);
     if (cons && cons.workLabel) return cons.workLabel;
@@ -3734,7 +3734,7 @@ Alpine.data('app', () => ({
     const seeded = picks.slice(0, 8).map((s, i) => ({
       id: 'seed' + Date.now() + i,
       workId: s.id,
-      workLabel: s.name + ' · ' + s.zoneLabel + ' · M' + s.startWeek,
+      workLabel: s.name + ' · ' + this.prettyZone(s.zoneLabel) + ' · M' + s.startWeek,
       type: types[i % types.length],
       note: notes[i % notes.length],
       seeded: true,
@@ -4439,7 +4439,7 @@ Alpine.data('app', () => ({
     const week = row && row.week;
     const fromReg = (this.state.contractor.problemRegistry || [])
       .filter(e => Number(e.week) === Number(week))
-      .map(e => this.constraintLabel(e.type) + ': ' + (e.name || '') + (e.zoneLabel ? (' ' + e.zoneLabel) : '') + (e.note ? (' — ' + e.note) : ''))
+      .map(e => this.constraintLabel(e.type) + ': ' + (e.name || '') + (e.zoneLabel ? (' ' + this.prettyZone(e.zoneLabel)) : '') + (e.note ? (' — ' + e.note) : ''))
       .filter(Boolean);
     if (fromReg.length) return fromReg.join('; ');
     return (row && row.note) || '—';
