@@ -2956,31 +2956,6 @@ Alpine.data('app', () => ({
     }
     return { rows, fill, denah: houseSvg(true, null, fill) };
   },
-    const rows = WORKS.map(w => {
-      const list = cells.filter(c => c.parentId === w.id)
-        .sort((a, b) => (Number(a.week) - Number(b.week)) || String(a.zoneLabel).localeCompare(String(b.zoneLabel)));
-      if (!list.length) return null;
-      return {
-        id: w.id, name: w.name, team: w.team, color: w.color, cells: list,
-        done: list.filter(c => c.status === 'done').length,
-        total: list.length,
-        carryN: list.filter(c => c.status === 'carry').length,
-      };
-    }).filter(Boolean);
-    const fill = {};
-    for (const z of ZONES) {
-      const zc = cells.filter(c => c.zoneRoot === z.id);
-      if (!zc.length) { fill[z.id] = { pct: 0, status: 'empty' }; continue; }
-      const done = zc.filter(c => c.status === 'done').length;
-      const pct = done / zc.length;
-      let status = 'future';
-      if (zc.some(c => c.status === 'carry')) status = 'carry';
-      else if (pct >= 1) status = 'done';
-      else if (zc.some(c => c.status === 'planned') || pct > 0) status = 'planned';
-      fill[z.id] = { pct, status };
-    }
-    return { rows, fill, denah: houseSvg(true, null, fill) };
-  },
   get lookConstraints() {
     const cons = (this.state.contractor && this.state.contractor.constraints) || [];
     const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
