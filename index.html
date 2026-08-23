@@ -659,7 +659,7 @@
           <div class="mb-2">
             <div class="flex items-end justify-between gap-2">
               <h3 class="text-sm font-bold">Pull Planning per Milestone</h3>
-              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
+              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+reviewedFocusTotal+' sticky Struktur ditinjau'"></span>
             </div>
             <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff terhadap tim yang lain. Untuk simulasi ini, perencanaan dilakukan untuk milestone Struktur. Milestone lain sudah ditetapkan beserta constraint-nya, tergantung kualitas hasil desain.</p>
           </div>
@@ -2874,9 +2874,16 @@ Alpine.data('app', () => ({
     if (!n) return 0;
     return Math.round(100 * this.ppcDoneCount / n);
   },
+  get focusStickies() {
+    const ph = (this.pullPhasesView || []).find(p => p.isFocus);
+    return (ph && ph.stickies) || [];
+  },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
-    return this.contractPlan.filter(w => r[w.id]).length;
+    return this.focusStickies.filter(s => r[s.id]).length;
+  },
+  get reviewedFocusTotal() {
+    return this.focusStickies.length;
   },
   get selectedWorkObj() {
     const id = this.state.contractor && this.state.contractor.selectedWork;
