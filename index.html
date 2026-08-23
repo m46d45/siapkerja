@@ -2981,10 +2981,18 @@ Alpine.data('app', () => ({
     });
   },
   get promoBlockedIds() {
-    const used = new Set(this.state.contractor.promoUsed || []);
+    const used = this._promoUsedIdSet();
     for (const r of (this.state.contractor.weekRemainder || [])) used.add(r.stickyId);
     for (const x of (this.state.contractor.wwp || [])) used.add(x.workId);
     return used;
+  },
+  _promoUsedIdSet() {
+    const s = new Set();
+    for (const x of (this.state.contractor.promoUsed || [])) {
+      if (!x) continue;
+      s.add(typeof x === 'string' ? x : x.id);
+    }
+    return s;
   },
   get promoDayChoices() {
     const min = this.currentStage === 'contractor-huddle' ? (Number(this.state.contractor.huddleDayIdx) || 0) : 0;
@@ -3458,6 +3466,9 @@ Alpine.data('app', () => ({
     this.state.contractor.problemRegistry = (this.state.contractor.problemRegistry || []).filter(r => Number(r.week) !== w);
   },
   _resetWeekOps() {
+    const w = this.playWeek;
+    this.state.contractor.promoUsed = (this.state.contractor.promoUsed || []).filter(x => typeof x !== 'string' && Number(x.week) !== w);
+    this.state.contractor.weekRemainder = (this.state.contractor.weekRemainder || []).filter(r => Number(r.fromWeek) !== w);
     this.state.contractor.wwp = [];
     this.state.contractor.ppc = [];
     this.state.contractor.weekClosed = false;
@@ -3614,7 +3625,7 @@ Alpine.data('app', () => ({
     const days = WWP_DAYS.map(d => d.id);
     const remainders = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) === week);
     const remIds = new Set(remainders.map(r => r.stickyId));
-    const used = new Set(this.state.contractor.promoUsed || []);
+    const used = this._promoUsedIdSet();
     const ready = this._allStickies()
       .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !remIds.has(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
@@ -3677,7 +3688,7 @@ Alpine.data('app', () => ({
         toWeek: this.playWeek + 1,
       }];
     } else if (Number(p.sticky.startWeek) > this.playWeek) {
-      this.state.contractor.promoUsed = [...(this.state.contractor.promoUsed || []), p.sticky.id];
+      this.state.contractor.promoUsed = [...(this.state.contractor.promoUsed || []), { id: p.sticky.id, week: this.playWeek }];
     }
     this.promoDraft = null;
     this.save();
