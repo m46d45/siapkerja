@@ -1397,16 +1397,17 @@
           </div>
           <div>
             <label class="text-[11px] font-semibold text-ink-mute">Pembelajaran minggu ini</label>
-            <textarea class="field mt-1 text-xs" rows="2" x-model="state.contractor.learningNote" :disabled="state.contractor.weekClosed" placeholder="1–3 poin…"></textarea>
+            <p class="text-[11px] text-ink-soft mt-0.5">Catatan 1–3 poin: apa yang dipelajari dari PPC dan alasan variansi (pola yang berulang, komitmen yang gagal, yang akan diubah minggu depan).</p>
+            <textarea class="field mt-1 text-xs" rows="2" x-model="state.contractor.learningNote" :disabled="state.contractor.weekClosed" placeholder="Contoh: prasyarat zona sering terlewat; Site harus hijau dulu sebelum Galian…"></textarea>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="button" class="btn-primary text-sm" x-show="!state.contractor.weekClosed" @click="lockLearning()">Kunci Learning minggu ini →</button>
-            <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed" @click="rollLookahead()">Gulir Look-ahead →</button>
-            <button type="button" class="btn-ghost text-sm" x-show="state.contractor.weekClosed" @click="setStage('contractor-progress')">Lihat Progress →</button>
+            <button type="button" class="btn-primary text-sm" x-show="!state.contractor.weekClosed" @click="lockLearning()">Kunci evaluasi minggu ini →</button>
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed" @click="rollLookahead()">Look-ahead Plan 4 minggu ke depan</button>
+            <button type="button" class="btn-ghost text-sm" x-show="state.contractor.weekClosed" @click="setStage('contractor-progress')">Lihat Laporan Proyek</button>
           </div>
         </div>
       </div>
-      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line"><button @click="setStage('contractor-huddle')" class="btn-ghost">← Huddle</button></div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line"><button @click="setStage('contractor-huddle')" class="btn-ghost">Balik ke Daily Huddle</button></div>
     </div>
   </section>
 
