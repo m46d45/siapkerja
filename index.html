@@ -3011,21 +3011,22 @@ Alpine.data('app', () => ({
     for (const a of log) {
       const w = Number(a.week);
       if (w === play && wwp.length) continue;
+      const pid = this._workType(a) || a.parentId;
       add({
         id: a.id,
         workId: a.stickyId,
-        parentId: a.parentId,
+        parentId: pid,
         name: a.name,
         zoneLabel: a.zoneLabel || '',
         zoneRoot: this._zoneRoot(a.zoneLabel),
         week: w,
         status: a.done ? 'done' : 'carry',
-        color: ((WORKS.find(x => x.id === a.parentId) || {}).color),
+        color: ((WORKS.find(x => x.id === pid) || {}).color),
       });
     }
     for (const s of this._allStickies()) {
       const w = Number(s.startWeek);
-      const childed = cells.some(c => c.parentId === s.parentId && Number(c.week) === w && this._zoneMatches(s.zoneLabel, c.zoneLabel));
+      const childed = cells.some(c => c.parentId === s.parentId && this._zoneMatches(s.zoneLabel, c.zoneLabel) && this.prettyZone(c.zoneLabel) !== this.prettyZone(s.zoneLabel));
       if (childed) continue;
       let status = 'future';
       if (w < play) status = 'carry';
@@ -3574,7 +3575,10 @@ Alpine.data('app', () => ({
     if (s.startsWith('contractor') && !this.canAccessContractor()) return;
     if (s === 'contractor-pm') s = 'contractor-master';
     if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
-    if (s === 'contractor-production' && this.state.contractor.pullLocked) this._seedGivenConstraints();
+    if (s === 'contractor-production' && this.state.contractor.pullLocked) {
+      this._hydrateFromArchive();
+      this._seedGivenConstraints();
+    }
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !((this.state.contractor.wwp || []).length)) this.buildWwp();
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
@@ -4587,6 +4591,39 @@ Alpine.data('app', () => ({
     this.state.contractor.ppc = list;
     this.save();
   },
+  _hydrateFromArchive() {
+    const c = this.state.contractor;
+    if (!c) return;
+    const arch = c.execArchive || [];
+    if (!arch.length) return;
+    if (!(c.actualLog || []).length) {
+      const log = [];
+      for (const a of arch) {
+        for (const it of (a.wwp || [])) {
+          const p = (a.ppc || []).find(x => x.workId === it.id);
+          log.push({
+            id: it.id,
+            week: a.week,
+            parentId: this._workType(it) || it.parentId,
+            stickyId: it.workId,
+            name: it.name,
+            zoneLabel: it.zoneLabel,
+            done: !!(p && p.status === 'done'),
+          });
+        }
+      }
+      c.actualLog = log;
+    }
+    const week = this.targetExecWeek;
+    const prev = week - 1;
+    const hasRem = (c.weekRemainder || []).some(x => Number(x.toWeek) === week);
+    if (!hasRem) {
+      const a = arch.find(x => Number(x.week) === prev);
+      if (a && (a.remainder || []).length) {
+        c.weekRemainder = [...(c.weekRemainder || []), ...a.remainder];
+      }
+    }
+  },
   _allExecCells() {
     const out = [];
     const seen = new Set();
@@ -4595,7 +4632,7 @@ Alpine.data('app', () => ({
       const k = z + '|' + Number(c.week);
       if (!z || seen.has(k)) return;
       seen.add(k);
-      out.push({ ...c, zoneLabel: z });
+      out.push({ ...c, zoneLabel: z, parentId: this._workType(c) || c.parentId });
     };
     for (const a of ((this.state.contractor && this.state.contractor.actualLog) || [])) add(a);
     for (const arch of ((this.state.contractor && this.state.contractor.execArchive) || [])) {
