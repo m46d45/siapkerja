@@ -959,7 +959,7 @@
                         <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
                         <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (prettyZone(w.zoneLabel)+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
                         <p class="text-[10px] text-amber-800 mt-0.5" x-show="w.carry" x-text="w.carryNote"></p>
-                        <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'" x-text="workConstraintCount(w.id)?(workConstraintCount(w.id)+' constraint'):'SiapKerja!'"></p>
+                        <p class="text-[10px] mt-1" :class="_workOpenConstraintCount(w.id)?'text-amber-800':'text-forest'" x-text="_workOpenConstraintCount(w.id)?(_workOpenConstraintCount(w.id)+' constraint'):'SiapKerja!'"></p>
                       </button>
                     </template>
                     <p class="text-[10px] text-ink-mute" x-show="!slot.stickies.length">Tidak ada pekerjaan di minggu ini.</p>
@@ -3576,7 +3576,7 @@ Alpine.data('app', () => ({
     this.save();
   },
   selectLookWork(id) {
-    if (!this.workConstraintCount(id)) {
+    if (!this._workOpenConstraintCount(id)) {
       this.state.contractor.selectedLookWorkId = null;
     } else {
       this.state.contractor.selectedLookWorkId = id;
@@ -3817,19 +3817,26 @@ Alpine.data('app', () => ({
         milestonesLocked: keep.milestonesLocked,
         phaseWindows: keep.phaseWindows || {},
         commitments: keep.commitments || {},
-        constraints: keep.constraints || [],
         reviewed: keep.reviewed || {},
         pullLocked: false,
       });
+      this._seedGivenConstraints();
       this.progressDraft = null;
       this.save();
       this.setStage('contractor-phase');
       return;
     }
     if (target === 'lookahead') {
-      const off = this.state.contractor.lookOffset || 0;
       this._resetWeekOps();
-      this.state.contractor.makeReady = (this.state.contractor.makeReady || []).filter(x => Number(x.atOffset) !== Number(off));
+      this._seedGivenConstraints();
+      const off = Number(this.state.contractor.lookOffset) || 0;
+      const l1 = off + 1;
+      const futureWork = new Set(this._allStickies().filter(s => Number(s.startWeek) >= l1).map(s => s.id));
+      const futureCons = new Set((this.state.contractor.constraints || []).filter(c => futureWork.has(c.workId)).map(c => c.id));
+      this.state.contractor.makeReady = (this.state.contractor.makeReady || []).filter(x => {
+        if (futureCons.has(x.constraintId)) return false;
+        return Number(x.atOffset) < off;
+      });
       this.state.contractor.selectedLookRel = 'L1';
       this.state.contractor.selectedLookWorkId = null;
       this.save();
@@ -3889,11 +3896,14 @@ Alpine.data('app', () => ({
   },
   resolveMakeReady(constraintId, ok) {
     this.state.contractor.makeReady = (this.state.contractor.makeReady || []).map(x => {
-      if (x.constraintId === constraintId && x.status === 'promised') return { ...x, status: ok ? 'done' : 'failed' };
+      if (x.constraintId === constraintId && (x.status === 'promised' || x.status === 'failed')) return { ...x, status: ok ? 'done' : 'failed' };
       return x;
     });
     if (ok) {
-      this.state.contractor.constraints = (this.state.contractor.constraints || []).filter(c => c.id !== constraintId);
+      const hit = (this.state.contractor.constraints || []).find(c => c.id === constraintId);
+      if (hit && !hit.given) {
+        this.state.contractor.constraints = (this.state.contractor.constraints || []).filter(c => c.id !== constraintId);
+      }
     }
     this.save();
   },
