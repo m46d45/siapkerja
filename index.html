@@ -65,13 +65,22 @@
         <p class="text-[10px] sm:text-[11px] text-ink-mute mt-0.5 leading-snug">Pembelajaran the Last Planner System (LPS) dengan simulasi</p>
       </div>
     </div>
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center gap-1.5 shrink-0">
       <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
         Muat sesi
         <input type="file" accept=".json" class="hidden" @change="importJSON($event)">
       </label>
-      <button @click="rewindTo('owner')" class="px-2.5 py-1.5 text-xs font-medium text-red-700 rounded-lg">Reset semua</button>
+      <select class="text-[11px] font-semibold px-2 py-1.5 rounded-full border border-paper-line bg-paper text-ink-soft max-w-[9.5rem]"
+        @change="rewindTo($event.target.value); $event.target.selectedIndex=0">
+        <option value="">Ulang dari…</option>
+        <option value="huddle">Daily Huddle minggu ini</option>
+        <option value="wwp">Weekly Work Plan minggu ini</option>
+        <option value="lookahead">Look-ahead Plan minggu ini</option>
+        <option value="phase">Phase Plan</option>
+        <option value="contract">Kontrak (Master Plan)</option>
+        <option value="owner">Pemilik (semua)</option>
+      </select>
     </div>
   </div>
   <div class="max-w-3xl mx-auto px-4 pb-3">
@@ -117,17 +126,7 @@
     <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Daily Huddle</button>
         <button @click="state.contractor.huddleComplete&&setStage('contractor-learning')" :disabled="!state.contractor.huddleComplete" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-learning'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Learning</button>
     <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Laporan</button>
-    <select class="ml-auto shrink-0 text-[11px] font-semibold px-2 py-1.5 rounded-full border border-paper-line bg-paper text-ink-soft"
-      @change="rewindTo($event.target.value); $event.target.selectedIndex=0">
-      <option value="">Ulang dari…</option>
-      <option value="huddle">Daily Huddle minggu ini</option>
-      <option value="wwp">Weekly Work Plan minggu ini</option>
-      <option value="lookahead">Look-ahead Plan minggu ini</option>
-      <option value="phase">Phase Plan</option>
-      <option value="contract">Kontrak (Master Plan)</option>
-      <option value="owner">Pemilik (semua)</option>
-    </select>
-    <span x-show="state.contractor.pullLocked" class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
+    <span x-show="state.contractor.pullLocked" class="ml-auto shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20 whitespace-nowrap"
       x-text="currentStage==='contractor-production' ? ('Sesi · M'+sessionWeek) : ('Sesi · M'+playWeek)"></span>
   </div>
 </div>
