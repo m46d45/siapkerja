@@ -890,6 +890,12 @@
             </div>
           </div>
 
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="carryInItems.length">
+            <p class="font-semibold text-amber-900">Dibawa ke L1 dari M<span x-text="targetExecWeek-1"></span></p>
+            <template x-for="c in carryInItems" :key="'ci'+c.id">
+              <p class="text-amber-900" x-text="c.name+(c.zoneLabel?(' · '+c.zoneLabel):'')+' — '+(c.carryNote||'')"></p>
+            </template>
+          </div>
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="registryInsight">
             <p class="text-amber-900 leading-relaxed" x-text="registryInsight"></p>
           </div>
@@ -918,6 +924,7 @@
                         @click="selectLookWork(w.id)">
                         <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
                         <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
+                        <p class="text-[10px] text-amber-800 mt-0.5" x-show="w.carry" x-text="w.carryNote"></p>
                         <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'" x-text="workConstraintCount(w.id)?(workConstraintCount(w.id)+' constraint'):'SiapKerja!'"></p>
                       </button>
                     </template>
@@ -960,13 +967,13 @@
                       </div>
                       <p class="text-[10px] text-ink-mute mt-1" x-text="(row.slotRel || '')+' · '+(row.absLabel || '')"></p>
                     </div>
-                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':'bg-amber-100 text-amber-900')" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':'Terbuka')"></span>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':(row.commitStatus==='failed'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-900'))" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':(row.commitStatus==='failed'?'Gagal':'Terbuka'))"></span>
                   </div>
-                  <p class="inline-flex items-center gap-1.5 text-[11px] font-semibold" x-show="!row.commitStatus">
+                  <p class="inline-flex items-center gap-1.5 text-[11px] font-semibold" x-show="!row.commitStatus || row.commitStatus==='failed'">
                     <span class="w-2.5 h-2.5 rounded-full" :style="'background:'+row.teamColor"></span>
                     <span x-text="'Yang commit · '+row.team"></span>
                   </p>
-                  <button type="button" class="btn-primary !text-xs !py-1.5" x-show="!row.commitStatus" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
+                  <button type="button" class="btn-primary !text-xs !py-1.5" x-show="!row.commitStatus || row.commitStatus==='failed'" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
                   <p class="text-[11px] text-ink-mute" x-show="row.commitStatus==='promised' && !row.canResolve" x-text="'Dijanjikan '+selectedLookTeam+' — dicek di Look-ahead berikutnya'"></p>
                   <div class="flex flex-wrap gap-2 items-center" x-show="row.canResolve">
                     <span class="text-[10px] text-ink-mute" x-text="'Janji sesi lalu · '+(row.commitTeam || '')"></span>
@@ -2615,16 +2622,68 @@ Alpine.data('app', () => ({
     const cons = (this.state.contractor && this.state.contractor.constraints) || [];
     const mr = (this.state.contractor && this.state.contractor.makeReady) || [];
     const resolved = new Set(mr.filter(x => x.status === 'done').map(x => x.constraintId));
+    const carry = this._carryStickies();
     return [1,2,3,4].map(i => {
-      // L1 = M(off+1): awal L1=M1; setelah gulir offset=1 → L1=M2
       const abs = off + i;
-      const isPrep = false;
       const absLabel = 'M' + abs;
-      const stickies = allStickies.filter(s => Number(s.startWeek) === abs);
+      let stickies = allStickies.filter(s => Number(s.startWeek) === abs);
+      if (i === 1 && carry.length) {
+        const have = new Set(stickies.map(s => s.id));
+        for (const c of carry) if (!have.has(c.id)) { stickies = stickies.concat([c]); have.add(c.id); }
+      }
       const stickyIds = new Set(stickies.map(s => s.id));
       const openConstraints = cons.filter(c => !resolved.has(c.id) && stickyIds.has(c.workId)).length;
-      return { rel: 'L' + i, abs, absLabel, isPrep, stickies, workCount: stickies.length, openConstraints };
+      return { rel: 'L' + i, abs, absLabel, isPrep: false, stickies, workCount: stickies.length, openConstraints };
     });
+  },
+  _carryStickies() {
+    const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
+    const week = off + 1;
+    const prev = week - 1;
+    if (prev < 1) return [];
+    const out = [];
+    const seen = new Set();
+    for (const r of (this.state.contractor.weekRemainder || []).filter(x => Number(x.toWeek) === week)) {
+      if (!r.stickyId || seen.has(r.stickyId)) continue;
+      seen.add(r.stickyId);
+      const s = this._allStickies().find(x => x.id === r.stickyId) || {};
+      out.push({
+        ...s,
+        id: r.stickyId,
+        parentId: r.parentId || s.parentId,
+        name: r.name || s.name,
+        team: r.team || s.team,
+        color: r.color || s.color,
+        zoneLabel: r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : (s.zoneLabel || ''),
+        startWeek: week,
+        carry: true,
+        carryFrom: prev,
+        carryNote: 'Sisa ' + (r.days || 1) + ' hari dari M' + prev,
+      });
+    }
+    for (const a of (this.state.contractor.actualLog || []).filter(x => Number(x.week) === prev && !x.done)) {
+      const sid = a.stickyId;
+      if (!sid || seen.has(sid)) continue;
+      seen.add(sid);
+      const s = this._allStickies().find(x => x.id === sid) || {};
+      out.push({
+        ...s,
+        id: sid,
+        parentId: a.parentId || s.parentId,
+        name: a.name || s.name,
+        team: s.team,
+        color: s.color,
+        zoneLabel: a.zoneLabel || s.zoneLabel,
+        startWeek: week,
+        carry: true,
+        carryFrom: prev,
+        carryNote: 'Tidak selesai M' + prev,
+      });
+    }
+    return out;
+  },
+  get carryInItems() {
+    return this._carryStickies();
   },
   get lookConstraints() {
     const cons = (this.state.contractor && this.state.contractor.constraints) || [];
@@ -2642,7 +2701,7 @@ Alpine.data('app', () => ({
         commitStatus: commit ? commit.status : null,
         commitTeam: commit ? commit.team : null,
         commitAtOffset: commit ? Number(commit.atOffset) : null,
-        canResolve: !!(commit && commit.status === 'promised' && Number(commit.atOffset) < Number((this.state.contractor && this.state.contractor.lookOffset) || 0)),
+        canResolve: !!(commit && (commit.status === 'promised' || commit.status === 'failed') && Number(commit.atOffset) < Number((this.state.contractor && this.state.contractor.lookOffset) || 0)),
         slotRel: slot ? slot.rel : null,
         absLabel: slot ? slot.absLabel : null,
       };
@@ -3545,9 +3604,16 @@ Alpine.data('app', () => ({
     promiseMakeReady(constraintId) {
     const team = this.selectedLookTeam || 'Struktur';
     const list = [...(this.state.contractor.makeReady || [])];
-    if (list.some(x => x.constraintId === constraintId && x.status === 'promised')) return;
-    list.push({ id: 'mr' + Date.now(), constraintId, team, status: 'promised', atOffset: this.state.contractor.lookOffset || 0 });
-    this.state.contractor.makeReady = list;
+    const existing = list.find(x => x.constraintId === constraintId);
+    if (existing && (existing.status === 'promised' || existing.status === 'done')) return;
+    if (existing && existing.status === 'failed') {
+      this.state.contractor.makeReady = list.map(x =>
+        x.constraintId === constraintId ? { ...x, status: 'promised', team, atOffset: this.state.contractor.lookOffset || 0 } : x
+      );
+    } else {
+      list.push({ id: 'mr' + Date.now(), constraintId, team, status: 'promised', atOffset: this.state.contractor.lookOffset || 0 });
+      this.state.contractor.makeReady = list;
+    }
     this.save();
   },
   resolveMakeReady(constraintId, ok) {
@@ -4176,12 +4242,8 @@ Alpine.data('app', () => ({
     }
     const promised = (this.state.contractor.makeReady || []).filter(x => x.status === 'promised');
     if (promised.length) {
-      if (!confirm(promised.length + ' komitmen masih dijanjikan. Gulir tetap?')) return;
+      if (!confirm(promised.length + ' komitmen make-ready belum dicek (sudah/gagal). Gulir tetap? Akan dicek di Look-ahead berikutnya.')) return;
     }
-    this.state.contractor.makeReady = (this.state.contractor.makeReady || []).map(x => {
-      if (x.status === 'promised' && x.atOffset === (this.state.contractor.lookOffset || 0)) return { ...x, status: 'failed' };
-      return x;
-    });
     this.state.contractor.lookOffset = (Number(this.state.contractor.lookOffset) || 0) + 1;
     this.state.contractor.selectedLookRel = 'L1';
     this.state.contractor.selectedLookWorkId = null;
