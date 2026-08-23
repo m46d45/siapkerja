@@ -986,7 +986,7 @@
               <button type="button" class="text-[11px] text-ink-mute shrink-0" @click="state.contractor.selectedLookWorkId=null; save()">Tutup</button>
             </div>
             <div class="px-4 pt-3" x-show="selectedLookIsL1">
-              <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">Pekerjaan ini di <strong>L1</strong> — prinsipnya tidak boleh ada constraint. Commit hilangkan sebelum masuk WWP.</p>
+              <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">Pekerjaan ini di <strong>L1</strong> — tidak boleh ada constraint. Hilangkan sekarang, atau nyatakan tidak bisa (tidak masuk WWP).</p>
             </div>
             <div class="p-3 space-y-2">
               <template x-for="row in selectedWorkConstraints" :key="row.id">
@@ -1005,13 +1005,17 @@
                       </div>
                       <p class="text-[10px] text-ink-mute mt-1" x-text="(row.slotRel || '')+' · '+(row.absLabel || '')"></p>
                     </div>
-                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':(row.commitStatus==='failed'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-900'))" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':(row.commitStatus==='failed'?'Gagal':'Terbuka'))"></span>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':(row.commitStatus==='failed'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-900'))" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':(row.commitStatus==='failed'?'Tidak bisa':'Terbuka'))"></span>
                   </div>
                   <p class="inline-flex items-center gap-1.5 text-[11px] font-semibold" x-show="!row.commitStatus || row.commitStatus==='failed'">
                     <span class="w-2.5 h-2.5 rounded-full" :style="'background:'+row.teamColor"></span>
                     <span x-text="'Yang commit · '+row.team"></span>
                   </p>
-                  <button type="button" class="btn-primary !text-xs !py-1.5" x-show="!row.commitStatus || row.commitStatus==='failed'" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
+                  <div class="flex flex-wrap gap-2" x-show="!row.commitStatus || row.commitStatus==='failed'">
+                    <button type="button" class="btn-ghost !text-xs !py-1.5 border border-forest/30 text-forest" @click="clearConstraintNow(row.id)">Dihilangkan</button>
+                    <button type="button" class="btn-primary !text-xs !py-1.5" @click="promiseMakeReady(row.id)">Commit hilangkan</button>
+                    <button type="button" class="btn-ghost !text-xs !py-1.5 border border-red-200 text-red-700" @click="cannotRemoveConstraint(row.id)">Tidak bisa dihilangkan</button>
+                  </div>
                   <p class="text-[11px] text-ink-mute" x-show="row.commitStatus==='promised' && !row.canResolve" x-text="'Dijanjikan '+selectedLookTeam+' — dicek di Look-ahead berikutnya'"></p>
                   <div class="flex flex-wrap gap-2 items-center" x-show="row.canResolve">
                     <span class="text-[10px] text-ink-mute" x-text="'Janji sesi lalu · '+(row.commitTeam || '')"></span>
@@ -3482,6 +3486,7 @@ Alpine.data('app', () => ({
     if (s.startsWith('contractor') && !this.canAccessContractor()) return;
     if (s === 'contractor-pm') s = 'contractor-master';
     if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
+    if (s === 'contractor-production' && this.state.contractor.pullLocked) this._seedGivenConstraints();
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !((this.state.contractor.wwp || []).length)) this.buildWwp();
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
@@ -3622,18 +3627,20 @@ Alpine.data('app', () => ({
     const strukturWorks = new Set(((PHASES.find(p => p.id === FOCUS_PHASE) || {}).works) || []);
     const extra = [];
     for (const spec of specs) {
-      const t = stickies.find(s => s.parentId === spec.workId);
       const w = WORKS.find(x => x.id === spec.workId);
-      extra.push({
-        id: 'g' + spec.workId,
-        workId: t ? t.id : spec.workId,
-        parentId: spec.workId,
-        type: spec.type,
-        note: spec.note,
-        given: true,
-        editable: strukturWorks.has(spec.workId),
-        workLabel: w ? w.name : spec.workId,
-      });
+      const targets = stickies.filter(s => s.parentId === spec.workId && Number(s.startWeek) >= 2);
+      for (const t of targets) {
+        extra.push({
+          id: 'g' + spec.workId + '_' + t.id,
+          workId: t.id,
+          parentId: spec.workId,
+          type: spec.type,
+          note: spec.note,
+          given: true,
+          editable: strukturWorks.has(spec.workId),
+          workLabel: (w ? w.name : spec.workId) + ' · ' + this.prettyZone(t.zoneLabel) + ' · M' + t.startWeek,
+        });
+      }
     }
     const keep = (this.state.contractor.constraints || []).filter(c => !c.given);
     this.state.contractor.constraints = keep.concat(extra);
@@ -3912,7 +3919,25 @@ Alpine.data('app', () => ({
       return;
     }
   },
-    promiseMakeReady(constraintId) {
+  _upsertMakeReady(constraintId, status) {
+    const team = this.selectedLookTeam || 'Struktur';
+    const off = this.state.contractor.lookOffset || 0;
+    const list = [...(this.state.contractor.makeReady || [])];
+    const i = list.findIndex(x => x.constraintId === constraintId);
+    const row = { id: (i >= 0 && list[i].id) || ('mr' + Date.now()), constraintId, team, status, atOffset: off };
+    if (i >= 0) list[i] = { ...list[i], ...row };
+    else list.push(row);
+    this.state.contractor.makeReady = list;
+  },
+  clearConstraintNow(constraintId) {
+    this._upsertMakeReady(constraintId, 'done');
+    this.save();
+  },
+  cannotRemoveConstraint(constraintId) {
+    this._upsertMakeReady(constraintId, 'failed');
+    this.save();
+  },
+  promiseMakeReady(constraintId) {
     const team = this.selectedLookTeam || 'Struktur';
     const list = [...(this.state.contractor.makeReady || [])];
     const existing = list.find(x => x.constraintId === constraintId);
