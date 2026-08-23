@@ -1197,9 +1197,10 @@
                       <p class="text-ink-soft mt-0.5" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
                       <p class="text-[10px] font-semibold text-forest mt-1" x-show="huddleStatus(item.id)==='done'">✓ Selesai hari ini</p>
                       <p class="text-[10px] font-semibold text-amber-800 mt-1" x-show="huddleStatus(item.id)==='extended'">→ Diperpanjang + masalah dicatat</p>
+                      <p class="text-[10px] text-red-700 mt-1" x-show="!huddleStatus(item.id) && huddleBlockReason(item)" x-text="'Terkunci: '+huddleBlockReason(item)"></p>
                     </div>
                     <div class="flex flex-wrap gap-1.5" x-show="!huddleStatus(item.id) && !state.contractor.huddleComplete">
-                      <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest" @click="markHuddleDone(item.id)">Centang hijau</button>
+                      <button type="button" class="btn-ghost !text-[10px] !py-1 border border-forest/30 text-forest disabled:opacity-40" :disabled="!!huddleBlockReason(item)" @click="markHuddleDone(item.id)">Centang hijau</button>
                       <button type="button" class="btn-ghost !text-[10px] !py-1 border border-amber-300 text-amber-900" @click="openExtend(item.id)">Perpanjang</button>
                     </div>
                   </div>
@@ -1234,8 +1235,11 @@
             <ul class="p-3 space-y-1 text-xs">
               <template x-for="w in backlogWorkable" :key="'hw'+w.id">
                 <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
-                  <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
-                  <button type="button" class="btn-primary !text-[10px] !py-1" x-show="!state.contractor.huddleComplete" @click="openPromo(w.id)">Promosikan</button>
+                  <div class="min-w-0">
+                    <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
+                    <p class="text-[10px] text-red-700 mt-0.5" x-show="promoBlockedReason(w)" x-text="promoBlockedReason(w)"></p>
+                  </div>
+                  <button type="button" class="btn-primary !text-[10px] !py-1 disabled:opacity-40" x-show="!state.contractor.huddleComplete" :disabled="!!promoBlockedReason(w)" @click="openPromo(w.id)">Promosikan</button>
                 </li>
               </template>
               <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
@@ -3656,6 +3660,8 @@ Alpine.data('app', () => ({
   openPromo(workId) {
     if (this.state.contractor.weekClosed) return;
     if (!this._isWorkReady(workId)) return;
+    const sticky = this._allStickies().find(s => s.id === workId);
+    if (sticky && this.promoBlockedReason(sticky)) return;
     const min = this.currentStage === 'contractor-huddle' ? (Number(this.state.contractor.huddleDayIdx) || 0) : 0;
     this.promoDraft = { workId, startDay: WWP_DAYS[min].id, days: 1 };
   },
@@ -3664,6 +3670,8 @@ Alpine.data('app', () => ({
     const p = this.promoPlan;
     if (!p || !p.fit) return;
     if ((this.state.contractor.wwp || []).some(x => x.workId === p.sticky.id)) return;
+    const why = this.promoBlockedReason(p.sticky);
+    if (why) return;
     const list = [...(this.state.contractor.wwp || [])];
     p.placed.forEach((pl, i) => {
       const it = this._makeWwpItem(p.sticky, pl.day, pl.zone, true);
@@ -3849,12 +3857,74 @@ Alpine.data('app', () => ({
     const r = (this.state.contractor.huddleResults || {})[this._huddleKey(id)];
     return r ? r.status : null;
   },
+  _zoneKey(label) {
+    return String(label || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  },
+  _zonesOverlap(a, b) {
+    const na = this._zoneKey(a), nb = this._zoneKey(b);
+    if (!na || !nb) return false;
+    return na === nb || na.startsWith(nb + '-') || nb.startsWith(na + '-');
+  },
+  _itemHuddleDone(item) {
+    const hr = this.state.contractor.huddleResults || {};
+    for (const d of WWP_DAYS) {
+      const r = hr[d.id + ':' + item.id];
+      if (r && r.status === 'done') return true;
+    }
+    return false;
+  },
+  _itemHuddleFailed(item) {
+    const hr = this.state.contractor.huddleResults || {};
+    for (const d of WWP_DAYS) {
+      const r = hr[d.id + ':' + item.id];
+      if (r && r.status === 'failed') return true;
+    }
+    return false;
+  },
+  huddleBlockReason(item) {
+    if (!item) return '';
+    const pid0 = item.parentId || '';
+    const w = WORKS.find(x => x.id === pid0);
+    const preds = (w && w.pred) || item.pred || [];
+    if (!preds.length) return '';
+    const wwp = this.state.contractor.wwp || [];
+    const today = Number(this.state.contractor.huddleDayIdx) || 0;
+    for (const pid of preds) {
+      const predW = WORKS.find(x => x.id === pid);
+      const cands = wwp.filter(x => x.parentId === pid);
+      if (!cands.length) continue;
+      const ov = cands.filter(x => this._zonesOverlap(item.zoneLabel, x.zoneLabel));
+      const relevant = ov.length ? ov : cands;
+      for (const c of relevant) {
+        const name = (predW && predW.name) || pid;
+        const z = c.zoneLabel || '';
+        const loc = name + (z ? (' · ' + z) : '');
+        if (this._itemHuddleFailed(c)) return loc + ' tidak bisa minggu ini (prasyarat)';
+        if (this._itemHuddleDone(c)) continue;
+        const cidx = WWP_DAYS.findIndex(d => d.id === c.day);
+        if (cidx < 0 || cidx <= today) return 'Menunggu ' + loc + ' selesai (prasyarat / zona)';
+        return 'Menunggu ' + loc + ' (' + ((WWP_DAYS[cidx] || {}).label || '') + ')';
+      }
+    }
+    return '';
+  },
+  promoBlockedReason(sticky) {
+    if (!sticky) return '';
+    const day = (WWP_DAYS[this.state.contractor.huddleDayIdx || 0] || {}).id || 'sen';
+    return this.huddleBlockReason({
+      parentId: sticky.parentId,
+      zoneLabel: sticky.zoneLabel,
+      pred: sticky.pred,
+      day,
+    });
+  },
   wasCarriedOver(id) {
-    // ada follow-up sebelumnya untuk kartu ini → datang dari perpanjangan
     return ((this.state.contractor.followUps || []).some(f => f.workId === id));
   },
   markHuddleDone(id) {
     if (this.state.contractor.huddleComplete) return;
+    const item = (this.state.contractor.wwp || []).find(x => x.id === id);
+    if (item && this.huddleBlockReason(item)) return;
     const hr = { ...(this.state.contractor.huddleResults || {}) };
     hr[this._huddleKey(id)] = { status: 'done' };
     this.state.contractor.huddleResults = hr;
@@ -3864,8 +3934,10 @@ Alpine.data('app', () => ({
   openExtend(id) {
     this.state.contractor.extendId = id;
     this.state.contractor.extendNote = '';
-    this.state.contractor.extendDays = '1';
-    this.state.contractor.extendType = 'material';
+    const item = (this.state.contractor.wwp || []).find(x => x.id === id);
+    const blocked = item && this.huddleBlockReason(item);
+    this.state.contractor.extendDays = blocked ? 'fail' : '1';
+    this.state.contractor.extendType = blocked ? 'prereq' : 'material';
   },
   _addRegistry(entry) {
     const week = this.playWeek;
