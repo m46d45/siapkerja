@@ -1533,18 +1533,11 @@
           x-show="!progressLockForWeek && (state.contractor.huddleComplete || (state.contractor.weeklyProgress||[]).length)"
           x-init="if (progressDraft==null) progressDraft = suggestedWeekIncrement">
           <p class="text-sm font-bold text-ink">Bakukan progres M<span x-text="playWeek"></span></p>
-          <p class="text-[11px] text-ink-soft leading-relaxed">PPC bukan progres Owner. Usulan dari sticky selesai:
-            <strong x-text="'+'+suggestedWeekIncrement+'%'"></strong>
-            <span x-show="physicalProgress.parts.filter(p=>p.week===playWeek).length"
-              x-text="' ('+physicalProgress.parts.filter(p=>p.week===playWeek).map(p=>p.name+' +'+p.pct+'%').join(' · ')+')'"></span>.
-            Boleh disesuaikan sebelum kunci.
-          </p>
           <div class="flex flex-wrap items-center gap-2">
-            <label class="text-[11px] text-ink-mute">+%</label>
             <input type="number" min="0" max="100" step="0.1" class="field !py-1.5 !px-2 w-24 text-center" x-model.number="progressDraft">
+            <span class="text-sm text-ink-mute">%</span>
             <button type="button" class="btn-primary text-sm" @click="lockProgress()">Bakukan progres M<span x-text="playWeek"></span></button>
           </div>
-          <p class="text-[11px] text-ink-mute">Kumulatif jika dibakukan: <span class="font-semibold text-ink" x-text="(lockedPhysicalPct + (Number(progressDraft)||suggestedWeekIncrement))+'%'"></span></p>
         </div>
         <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-[11px] text-forest"
           x-show="progressLockForWeek">
