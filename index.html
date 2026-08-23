@@ -551,24 +551,22 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Phase Plan</p>
-          <h2 class="text-xl font-bold text-ink">Collaborative Pull Planning</h2>
-          <p class="text-sm text-ink-soft mt-1">Zonasi denah, kaitkan milestone ke jadwal, semua tim commit. Baru lalu look-ahead.</p>
+          <h2 class="text-xl font-bold text-ink">Perencanaan tarik dan kolaboratif</h2>
+          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Kegiatan perencanaan fase ini dilakukan sebelum pelaksanaan, secara kolaboratif dengan para last planner — subkon atau tim kerja yang akan melaksanakan pekerjaan. Kontraktor sudah menetapkan siapa tim tersebut. Phase planning membagi proyek menjadi fase-fase kecil dengan memperhatikan milestone, bahkan fase itu sendiri bisa menjadi milestone. Fase berkaitan dengan tim kerja dan disiplin; kadang juga perlu zonasi pekerjaan. Tim leader berkomitmen, termasuk hubungan antar-tim dan kualitas yang harus disediakan oleh tim sebelumnya di lokasi yang sama (tarik).</p>
         </div>
         <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
       <div class="p-5 space-y-5">
-        <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
-          <strong class="text-ink">Dari denah, bukan dari Gantt saja.</strong>
-          Master Plan memberi minggu. Gambar desain (tanpa zona) jadi papan. Di sini baru dipecah zona kerja per ruang, lalu ditarik mundur dari serah terima.
-        </div>
-
         <div class="rounded-xl border border-paper-line p-4">
           <div class="flex items-start justify-between gap-3 mb-2">
             <div>
               <h3 class="text-sm font-bold">Denah + zonasi konstruksi</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5" x-text="state.contractor.zonesLocked ? '7 zona ditetapkan (2 kamar terpisah). Acuan sticky pull plan.' : 'Masih denah desain. Tetapkan zonasi sebelum commit.'"></p>
+              <p class="text-[11px] text-ink-mute mt-0.5" x-text="state.contractor.zonesLocked ? '7 zona ditetapkan (2 kamar terpisah). Acuan sticky pull plan.' : (state.contractor.zonesPreview ? 'Usulan zona tampil di denah. Tetapkan jika sudah sesuai.' : 'Masih denah desain. Usulkan zonasi dulu.')"></p>
             </div>
             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.zonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.zonesLocked ? 'Zona locked' : 'Belum zonasi'"></span>
+          </div>
+          <div class="mb-3" x-show="!state.contractor.zonesLocked && !state.contractor.pullLocked && !state.contractor.zonesPreview">
+            <button type="button" class="btn-primary text-sm" @click="previewZones()">Usulkan zonasi</button>
           </div>
           <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="phaseDrawingSvg"></div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3" x-show="state.contractor.zonesLocked || state.contractor.zonesPreview">
@@ -580,9 +578,8 @@
               </button>
             </template>
           </div>
-          <div class="mt-3 flex flex-wrap gap-2" x-show="!state.contractor.zonesLocked && !state.contractor.pullLocked">
-            <button type="button" class="btn-ghost text-sm" x-show="!state.contractor.zonesPreview" @click="previewZones()">Usulkan zonasi</button>
-            <button type="button" class="btn-primary text-sm" x-show="state.contractor.zonesPreview" @click="lockZones()">Tetapkan zonasi</button>
+          <div class="mt-3" x-show="state.contractor.zonesPreview && !state.contractor.zonesLocked && !state.contractor.pullLocked">
+            <button type="button" class="btn-primary text-sm" @click="lockZones()">Tetapkan zonasi</button>
           </div>
         </div>
 
