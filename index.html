@@ -557,37 +557,28 @@
         <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
       <div class="p-5 space-y-5">
-        <div class="rounded-xl border border-paper-line p-4">
-          <div class="flex items-start justify-between gap-3 mb-2">
-            <div>
-              <h3 class="text-sm font-bold">Denah + zonasi konstruksi</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5" x-text="state.contractor.zonesLocked ? '7 zona ditetapkan (2 kamar terpisah). Acuan sticky pull plan.' : (state.contractor.zonesPreview ? 'Usulan zona tampil di denah. Tetapkan jika sudah sesuai.' : 'Masih denah desain. Usulkan zonasi dulu.')"></p>
-            </div>
-            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.zonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.zonesLocked ? 'Zona locked' : 'Belum zonasi'"></span>
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Tim kerja (last planner)</h3>
+            <p class="text-[11px] text-ink-mute mt-0.5">Kontraktor sudah menunjuk 6 tim. Mereka yang berkolaborasi di phase plan — warna sticky = warna tim.</p>
           </div>
-          <div class="mb-3" x-show="!state.contractor.zonesLocked && !state.contractor.pullLocked && !state.contractor.zonesPreview">
-            <button type="button" class="btn-primary text-sm" @click="previewZones()">Usulkan zonasi</button>
-          </div>
-          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="phaseDrawingSvg"></div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3" x-show="state.contractor.zonesLocked || state.contractor.zonesPreview">
-            <template x-for="z in ZONES" :key="z.id">
-              <button type="button" class="text-left rounded-lg border px-2.5 py-2" :class="state.contractor.selectedZone===z.id ? 'border-terra bg-terra-soft/40' : 'border-paper-line bg-paper-card'" @click="state.contractor.selectedZone=z.id">
-                <span class="inline-block w-2 h-2 rounded-full mr-1" :style="'background:'+z.color"></span>
-                <span class="text-[11px] font-semibold" x-text="z.name"></span>
-                <p class="text-[10px] text-ink-mute mt-0.5" x-text="z.hint"></p>
-              </button>
+          <div class="p-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <template x-for="t in TEAM_META" :key="'tm0'+t.id">
+              <div class="rounded-lg border border-paper-line bg-paper-card px-2.5 py-2">
+                <p class="text-xs font-semibold flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="'background:'+t.color"></span>
+                  <span x-text="t.id"></span>
+                </p>
+                <p class="text-[10px] text-ink-mute mt-0.5" x-text="t.phase+' · '+t.role"></p>
+              </div>
             </template>
           </div>
-          <div class="mt-3" x-show="state.contractor.zonesPreview && !state.contractor.zonesLocked && !state.contractor.pullLocked">
-            <button type="button" class="btn-primary text-sm" @click="lockZones()">Tetapkan zonasi</button>
-          </div>
         </div>
-
                 <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
             <div>
               <h3 class="text-sm font-bold">Milestone & Jendela Waktu</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5">Default dari Gantt kontrak. Konfirmasi / sesuaikan dulu sebelum commit.</p>
+              <p class="text-[11px] text-ink-mute mt-0.5">Dari Master Plan (kontrak). Konfirmasi jendela waktu dulu — ini belum pull.</p>
             </div>
             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.milestonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.milestonesLocked ? 'Terkunci' : 'Belum dikunci'"></span>
           </div>
@@ -620,38 +611,41 @@
               </template>
             </div>
             <div class="mt-3 flex flex-wrap gap-2" x-show="!state.contractor.pullLocked">
-              <button type="button" class="btn-primary text-sm" x-show="!state.contractor.milestonesLocked" @click="lockMilestones()" :disabled="!state.contractor.zonesLocked">Kunci jendela milestone</button>
+              <button type="button" class="btn-primary text-sm" x-show="!state.contractor.milestonesLocked" @click="lockMilestones()">Kunci jendela milestone</button>
               <button type="button" class="btn-danger text-sm" x-show="state.contractor.milestonesLocked" @click="unlockMilestones()">Unlock jendela</button>
-              <p class="text-[11px] text-ink-mute self-center" x-show="!state.contractor.zonesLocked">Tetapkan zonasi dulu.</p>
+              
             </div>
           </div>
         </div>
 
-        <div class="rounded-xl border border-paper-line overflow-hidden">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between">
-            <h3 class="text-sm font-bold">Komitmen tim (collaborative)</h3>
-            <span class="text-[11px] text-ink-mute" x-text="committedCount+'/'+TEAMS.length+' commit'"></span>
+        <div class="rounded-xl border border-paper-line p-4">
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <h3 class="text-sm font-bold">Denah + zonasi konstruksi</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5" x-text="state.contractor.zonesLocked ? '7 zona ditetapkan (2 kamar terpisah). Acuan sticky pull plan.' : (state.contractor.zonesPreview ? 'Usulan zona tampil di denah. Tetapkan jika sudah sesuai.' : 'Masih denah desain. Usulkan zonasi dulu.')"></p>
+            </div>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.zonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.zonesLocked ? 'Zona locked' : 'Belum zonasi'"></span>
           </div>
-          <ul class="divide-y divide-paper-line">
-            <template x-for="t in teamCommitRows" :key="'tm'+t.id">
-              <li class="px-4 py-2.5 flex items-center justify-between gap-2 text-xs">
-                <div>
-                  <p class="font-medium" x-text="t.id"></p>
-                  <p class="text-ink-mute" x-text="t.phaseName+' · M'+t.startWeek+'–'+t.finishWeek"></p>
-                </div>
-                <button type="button" class="px-3 py-1.5 rounded-full text-[11px] font-semibold"
-                  :class="t.committed ? 'bg-forest-soft text-forest' : 'bg-paper border border-paper-line text-ink-soft'"
-                  :disabled="state.contractor.pullLocked || !state.contractor.zonesLocked || !state.contractor.milestonesLocked"
-                  @click="toggleCommit(t.id)"
-                  x-text="t.committed ? 'Committed' : 'Commit'"></button>
-              </li>
+          <p class="text-[11px] text-ink-mute mb-3" x-show="!state.contractor.milestonesLocked">Kunci jendela milestone dulu, baru usulkan zonasi.</p>
+          <div class="mb-3" x-show="state.contractor.milestonesLocked && !state.contractor.zonesLocked && !state.contractor.pullLocked && !state.contractor.zonesPreview">
+            <button type="button" class="btn-primary text-sm" @click="previewZones()">Usulkan zonasi</button>
+          </div>
+          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="phaseDrawingSvg"></div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3" x-show="state.contractor.zonesLocked || state.contractor.zonesPreview">
+            <template x-for="z in ZONES" :key="z.id">
+              <button type="button" class="text-left rounded-lg border px-2.5 py-2" :class="state.contractor.selectedZone===z.id ? 'border-terra bg-terra-soft/40' : 'border-paper-line bg-paper-card'" @click="state.contractor.selectedZone=z.id">
+                <span class="inline-block w-2 h-2 rounded-full mr-1" :style="'background:'+z.color"></span>
+                <span class="text-[11px] font-semibold" x-text="z.name"></span>
+                <p class="text-[10px] text-ink-mute mt-0.5" x-text="z.hint"></p>
+              </button>
             </template>
-          </ul>
-          <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="!state.contractor.zonesLocked">Tetapkan zonasi dulu, baru tim bisa commit.</p>
-       <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="state.contractor.zonesLocked && !state.contractor.milestonesLocked">Kunci jendela waktu milestone dulu, baru tim bisa commit.</p>
+          </div>
+          <div class="mt-3" x-show="state.contractor.zonesPreview && !state.contractor.zonesLocked && !state.contractor.pullLocked">
+            <button type="button" class="btn-primary text-sm" @click="lockZones()">Tetapkan zonasi</button>
+          </div>
         </div>
 
-                <div>
+        <div x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
           <div class="flex items-end justify-between gap-2 mb-2">
             <div>
               <h3 class="text-sm font-bold">Papan Pull Plan</h3>
@@ -702,6 +696,28 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
+            <span class="text-[11px] text-ink-mute" x-text="committedCount+'/'+TEAMS.length+' commit'"></span>
+          </div>
+          <ul class="divide-y divide-paper-line">
+            <template x-for="t in teamCommitRows" :key="'tm'+t.id">
+              <li class="px-4 py-2.5 flex items-center justify-between gap-2 text-xs">
+                <div>
+                  <p class="font-medium" x-text="t.id"></p>
+                  <p class="text-ink-mute" x-text="t.phaseName+' · M'+t.startWeek+'–'+t.finishWeek"></p>
+                </div>
+                <button type="button" class="px-3 py-1.5 rounded-full text-[11px] font-semibold"
+                  :class="t.committed ? 'bg-forest-soft text-forest' : 'bg-paper border border-paper-line text-ink-soft'"
+                  :disabled="state.contractor.pullLocked || !state.contractor.zonesLocked || !state.contractor.milestonesLocked"
+                  @click="toggleCommit(t.id)"
+                  x-text="t.committed ? 'Committed' : 'Commit'"></button>
+              </li>
+            </template>
+          </ul>
+          <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="!state.contractor.milestonesLocked">Kunci milestone dulu.</p>
+          <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="state.contractor.milestonesLocked && !state.contractor.zonesLocked">Tetapkan zonasi dulu, baru tim commit pada papan pull.</p>
         </div>
 
         <div x-show="selectedWorkObj" class="rounded-xl border border-paper-line bg-paper-card p-4 space-y-3">
@@ -1643,6 +1659,14 @@ const TEAMS = ['Pondasi','Struktur','Dinding','Atap','MEP','Finishing'];
 const WWP_DAYS = [{id:'sen',label:'Sen'},{id:'sel',label:'Sel'},{id:'rab',label:'Rab'},{id:'kam',label:'Kam'},{id:'jum',label:'Jum'},{id:'sab',label:'Sab'}];
 const PPC_REASONS = ['material','labor','info','access','prereq','weather','lain'];
 const TEAM_PHASE = { Pondasi:'pondasi', Struktur:'struktur', Dinding:'struktur', Atap:'selubung', MEP:'selubung', Finishing:'finishing' };
+const TEAM_META = [
+  { id:'Pondasi',   color:'#A0522D', phase:'Pondasi',    role:'Site, galian, sloof' },
+  { id:'Struktur',  color:'#1E40AF', phase:'Struktur',   role:'Kolom & balok' },
+  { id:'Dinding',   color:'#EA580C', phase:'Struktur',   role:'Pasangan dinding' },
+  { id:'Atap',      color:'#15803D', phase:'Atap & MEP', role:'Rangka, penutup, kusen' },
+  { id:'MEP',       color:'#7C3AED', phase:'Atap & MEP', role:'MEP rough-in' },
+  { id:'Finishing', color:'#CA8A04', phase:'Finishing',  role:'Plester, lantai, cat, serah terima' },
+];
 const FOCUS_PHASE = 'struktur';
 const WORK_ZONES = {
   struct: ['z3','z4','z5','z6'],
@@ -2075,6 +2099,7 @@ Alpine.data('app', () => ({
   currentStage: 'owner',
   ZONES,
   TEAMS,
+  TEAM_META,
   WWP_DAYS,
   PPC_REASONS,
   huddleTimerLeft: 15 * 60,
@@ -3074,10 +3099,6 @@ Alpine.data('app', () => ({
     this.save();
   },
   lockMilestones() {
-    if (!this.state.contractor.zonesLocked) {
-      alert('Tetapkan zonasi denah dulu.');
-      return;
-    }
     const wins = { ...(this.state.contractor.phaseWindows || {}) };
     for (const ph of this.phasesView) {
       if (!wins[ph.id]) wins[ph.id] = { startWeek: ph.derivedStart, finishWeek: ph.derivedFinish };
