@@ -1720,67 +1720,6 @@
           </div>
         </div>
 
-        <div class="rounded-xl border border-paper-line overflow-hidden">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
-            <h3 class="text-sm font-bold">Gantt rencana vs aktual</h3>
-          </div>
-          <div class="p-3 overflow-x-auto">
-            <div class="min-w-[560px]">
-              <div class="flex items-end mb-1">
-                <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
-                <div class="flex-1 flex">
-                  <template x-for="w in ganttWeekNums" :key="'pgw'+w">
-                    <div class="flex-1 text-center text-[9px] tabular-nums" :class="w===playWeek ? 'text-terra font-bold' : 'text-ink-mute'" x-text="w"></div>
-                  </template>
-                </div>
-              </div>
-              <template x-for="row in progressGanttRows" :key="'pgr'+row.id">
-                <div class="flex items-center h-9 border-t border-paper-line/70">
-                  <div class="gantt-label">
-                    <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
-                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+'–'+row.actEnd+' ('+row.calWeeks+' mgg)') : ' · belum aktual')"></p>
-                  </div>
-                  <div class="flex-1 relative h-9">
-                    <div class="absolute inset-0 flex">
-                      <template x-for="w in ganttWeekNums" :key="'pgc'+row.id+w">
-                        <div class="flex-1 border-l border-paper-line/60" :class="w===playWeek ? 'bg-terra-soft/30' : ''"></div>
-                      </template>
-                    </div>
-                    <div class="gantt-bar-plan" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"></div>
-                    <div class="gantt-bar-act" x-show="row.hasActual" :style="'left:'+row.actLeft+'%;width:'+row.actWidth+'%;background:'+row.color"></div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left min-w-[480px]">
-            <thead>
-              <tr class="border-b border-paper-line text-ink-mute">
-                <th class="py-2 pr-2 font-semibold">Minggu</th>
-                <th class="py-2 pr-2 font-semibold">Rencana</th>
-                <th class="py-2 pr-2 font-semibold">Selesai</th>
-                <th class="py-2 pr-2 font-semibold">PPC</th>
-                <th class="py-2 font-semibold">Catatan</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="row in state.contractor.weeklyProgress" :key="'wp'+row.week">
-                <tr class="border-b border-paper-line/80">
-                  <td class="py-2 pr-2 font-semibold" x-text="'M'+row.week"></td>
-                  <td class="py-2 pr-2" x-text="row.planned"></td>
-                  <td class="py-2 pr-2" x-text="row.done"></td>
-                  <td class="py-2 pr-2 font-semibold" x-text="row.ppc+'%'"></td>
-                  <td class="py-2 text-ink-soft" x-text="ppcWeekNote(row)"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-          <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
-        </div>
-
         <div class="grid grid-cols-3 gap-2">
           <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
             <p class="text-[10px] text-forest">Progres fisik</p>
@@ -1830,6 +1769,41 @@
                 <svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" stroke="#15803D" stroke-width="2.6" stroke-dasharray="7 5" stroke-linecap="round"/></svg>
                 Aktual
               </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-paper-line overflow-hidden">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Gantt rencana vs aktual</h3>
+          </div>
+          <div class="p-3 overflow-x-auto">
+            <div class="min-w-[560px]">
+              <div class="flex items-end mb-1">
+                <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
+                <div class="flex-1 flex">
+                  <template x-for="w in ganttWeekNums" :key="'pgw'+w">
+                    <div class="flex-1 text-center text-[9px] tabular-nums" :class="w===playWeek ? 'text-terra font-bold' : 'text-ink-mute'" x-text="w"></div>
+                  </template>
+                </div>
+              </div>
+              <template x-for="row in progressGanttRows" :key="'pgr'+row.id">
+                <div class="flex items-center h-9 border-t border-paper-line/70">
+                  <div class="gantt-label">
+                    <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
+                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+'–'+row.actEnd+' ('+row.calWeeks+' mgg)') : ' · belum aktual')"></p>
+                  </div>
+                  <div class="flex-1 relative h-9">
+                    <div class="absolute inset-0 flex">
+                      <template x-for="w in ganttWeekNums" :key="'pgc'+row.id+w">
+                        <div class="flex-1 border-l border-paper-line/60" :class="w===playWeek ? 'bg-terra-soft/30' : ''"></div>
+                      </template>
+                    </div>
+                    <div class="gantt-bar-plan" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"></div>
+                    <div class="gantt-bar-act" x-show="row.hasActual" :style="'left:'+row.actLeft+'%;width:'+row.actWidth+'%;background:'+row.color"></div>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
