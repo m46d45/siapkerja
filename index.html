@@ -706,10 +706,60 @@
           </div>
         </div>
 
+        <div x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked" class="rounded-xl border border-paper-line bg-paper-card p-4 space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-ink-mute">Handoff</p>
+              <h3 class="text-sm font-bold" x-text="selectedWorkObj ? selectedWorkObj.name : 'Ketuk sticky Struktur'"></h3>
+              <p class="text-[11px] text-ink-soft" x-show="selectedWorkObj" x-text="selectedWorkObj && ((selectedWorkObj.zoneLabel ? (selectedWorkObj.zoneLabel+' · ') : '') + selectedWorkObj.team)"></p>
+            </div>
+            <button type="button" class="text-[11px] text-ink-mute" x-show="selectedWorkObj" @click="state.contractor.selectedWork=null">Tutup</button>
+          </div>
+          <p class="text-xs text-ink-mute" x-show="!selectedWorkObj">Pilih kartu di kolom Struktur untuk mengatur minggu dan melihat handoff.</p>
+          <div x-show="selectedWorkObj" class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium mb-1">Tempatkan di minggu milestone Struktur</label>
+              <select class="field" :value="selectedWorkObj && selectedWorkObj.startWeek" @change="setStickyWeek(selectedWorkObj.id, $event.target.value)" :disabled="state.contractor.pullLocked">
+                <template x-for="wk in focusMilestoneWeeks" :key="'sw'+wk">
+                  <option :value="wk" x-text="'M'+wk"></option>
+                </template>
+              </select>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div class="rounded-lg bg-paper border border-paper-line p-2.5">
+                <p class="text-[10px] uppercase text-ink-mute mb-1">Butuh dari (tarik)</p>
+                <p class="text-ink-soft" x-text="handoffPredsLabel"></p>
+              </div>
+              <div class="rounded-lg bg-paper border border-paper-line p-2.5">
+                <p class="text-[10px] uppercase text-ink-mute mb-1">Menyerahkan ke</p>
+                <p class="text-ink-soft" x-text="handoffSuccsLabel"></p>
+              </div>
+            </div>
+            <div x-show="!state.contractor.pullLocked" class="space-y-2">
+              <p class="text-xs font-medium">Catat constraint</p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <select class="field" x-model="state.contractor.draftType">
+                  <option value="info">Gambar / info</option>
+                  <option value="material">Material</option>
+                  <option value="labor">Tukang</option>
+                  <option value="access">Akses / ruang</option>
+                  <option value="prereq">Pekerjaan sebelumnya</option>
+                  <option value="weather">Cuaca</option>
+                </select>
+                <input class="field sm:col-span-2" placeholder="Catatan singkat (opsional)" x-model="state.contractor.draftNote">
+              </div>
+              <button type="button" class="btn-ghost text-sm" @click="addConstraint()">Tambah constraint</button>
+            </div>
+          </div>
+        </div>
+
         <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between">
-            <h3 class="text-sm font-bold">Komitmen tim (collaborative)</h3>
-            <span class="text-[11px] text-ink-mute" x-text="committedCount+'/'+TEAMS.length+' commit'"></span>
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold">Komitmen tim (collaborative)</h3>
+              <p class="text-[11px] text-ink-mute" x-text="committedCount+'/'+TEAMS.length+' commit'"></p>
+            </div>
+            <button type="button" class="btn-primary !text-xs !py-1.5" x-show="!state.contractor.pullLocked && !allTeamsCommitted" @click="commitAllTeams()">Commit semua tim</button>
           </div>
           <ul class="divide-y divide-paper-line">
             <template x-for="t in teamCommitRows" :key="'tm'+t.id">
@@ -730,59 +780,30 @@
           <p class="px-4 py-2 text-[11px] text-ink-mute" x-show="state.contractor.milestonesLocked && !state.contractor.zonesLocked">Tetapkan zonasi dulu, baru tim commit pada papan pull.</p>
         </div>
 
-        <div x-show="selectedWorkObj" class="rounded-xl border border-paper-line bg-paper-card p-4 space-y-3">
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <p class="text-[10px] uppercase tracking-wide text-ink-mute">Handoff</p>
-              <h3 class="text-sm font-bold" x-text="selectedWorkObj && selectedWorkObj.name"></h3>
-              <p class="text-[11px] text-ink-soft" x-text="selectedWorkObj && (selectedWorkObj.team+' · Rp '+selectedWorkObj.costJt+' jt')"></p>
-            </div>
-            <button type="button" class="text-[11px] text-ink-mute" @click="state.contractor.selectedWork=null">Tutup</button>
+        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="allTeamsCommitted">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Constraint per milestone</h3>
+            <p class="text-[11px] text-ink-mute mt-0.5">Given dari kualitas hasil desain, plus yang dicatat di Struktur. Urutan awal → akhir.</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div class="rounded-lg bg-paper border border-paper-line p-2.5">
-              <p class="text-[10px] uppercase text-ink-mute mb-1">Butuh dari (tarik)</p>
-              <p class="text-ink-soft" x-text="handoffPredsLabel"></p>
-            </div>
-            <div class="rounded-lg bg-paper border border-paper-line p-2.5">
-              <p class="text-[10px] uppercase text-ink-mute mb-1">Menyerahkan ke</p>
-              <p class="text-ink-soft" x-text="handoffSuccsLabel"></p>
-            </div>
-          </div>
-          <div x-show="!state.contractor.pullLocked" class="space-y-2">
-            <p class="text-xs font-medium">Catat constraint</p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <select class="field" x-model="state.contractor.draftType">
-                <option value="info">Gambar / info</option>
-                <option value="material">Material</option>
-                <option value="labor">Tukang</option>
-                <option value="access">Akses / ruang</option>
-                <option value="prereq">Pekerjaan sebelumnya</option>
-                <option value="weather">Cuaca</option>
-              </select>
-              <input class="field sm:col-span-2" placeholder="Catatan singkat (opsional)" x-model="state.contractor.draftNote">
-            </div>
-            <button type="button" class="btn-ghost text-sm" @click="addConstraint()">Tambah constraint</button>
-          </div>
-        </div>
-
-        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between">
-            <h3 class="text-sm font-bold">Log constraint</h3>
-            <span class="text-[11px] text-ink-mute" x-text="(state.contractor.constraints||[]).length+' item · ke Make-Ready'"></span>
-          </div>
-          <div x-show="!(state.contractor.constraints||[]).length" class="p-4 text-xs text-ink-mute">Belum ada. Ketuk sticky, catat yang menghalangi.</div>
-          <ul class="divide-y divide-paper-line">
-            <template x-for="c in (state.contractor.constraints||[])" :key="c.id">
-              <li class="px-4 py-2.5 flex items-start justify-between gap-2 text-xs">
-                <div>
-                  <p class="font-medium" x-text="workName(c.workId)"></p>
-                  <p class="text-ink-soft" x-text="constraintLabel(c.type)+(c.note?(' — '+c.note):'')"></p>
-                </div>
-                <button type="button" class="text-red-700 shrink-0" x-show="!state.contractor.pullLocked" @click="removeConstraint(c.id)">Hapus</button>
-              </li>
+          <div class="divide-y divide-paper-line">
+            <template x-for="ph in constraintsByMilestone" :key="'cm'+ph.id">
+              <div class="px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-soft" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                <p class="text-[11px] text-ink-mute mt-1" x-show="!ph.items.length">Tidak ada constraint.</p>
+                <ul class="mt-1.5 space-y-1.5" x-show="ph.items.length">
+                  <template x-for="c in ph.items" :key="c.id">
+                    <li class="text-xs flex items-start justify-between gap-2">
+                      <div>
+                        <p class="font-medium" x-text="workName(c.workId)"></p>
+                        <p class="text-ink-soft" x-text="constraintLabel(c.type)+(c.note?(' — '+c.note):'')+(c.given?' · given':'')"></p>
+                      </div>
+                      <button type="button" class="text-red-700 shrink-0" x-show="!state.contractor.pullLocked && !c.given" @click="removeConstraint(c.id)">Hapus</button>
+                    </li>
+                  </template>
+                </ul>
+              </div>
             </template>
-          </ul>
+          </div>
         </div>
       </div>
             <div x-show="state.contractor.pullLocked" class="p-5 border-t border-paper-line space-y-3">
@@ -2002,7 +2023,7 @@ function emptyContractor() {
     pullLocked:false, selectedWork:null, constraints:[], reviewed:{},
     draftType:'material', draftNote:'',
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
-    milestonesLocked:false, phaseWindows:{}, selectedMilestone:'pondasi',
+    milestonesLocked:false, phaseWindows:{}, selectedMilestone:'pondasi', stickyWeeks:{},
     lookOffset:0, selectedLookRel:null, selectedLookWorkId:null,
     makeReady:[],
     wwp:[],
@@ -2130,6 +2151,7 @@ Alpine.data('app', () => ({
     }
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
+    if (!this.state.contractor.stickyWeeks) this.state.contractor.stickyWeeks = {};
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
     this.currentStage = this.state.currentStage || 'owner';
@@ -2494,6 +2516,42 @@ Alpine.data('app', () => ({
     const w = Math.max(1, Math.min(n, Math.ceil(t * n)));
     this.setMilestoneWeek(phId, w);
   },
+  _makeStickies(ph) {
+    const ov = (this.state.contractor && this.state.contractor.stickyWeeks) || {};
+    const p0 = Number(ph.startWeek) || 1;
+    const p1 = Number(ph.finishWeek) || p0;
+    const isFocus = ph.id === FOCUS_PHASE;
+    const stickies = [];
+    for (const w of (ph.works || [])) {
+      const zones = WORK_ZONES[w.id] || ['z3'];
+      const { start, finish } = this._weeksInPhase(ph, w);
+      const weeks = [];
+      for (let m = start; m <= finish; m++) weeks.push(m);
+      weeks.forEach((wk, wi) => {
+        const zid = zones[wi % zones.length];
+        const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
+        const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
+        const id = w.id + '_' + zid + '_' + sameZoneIdx;
+        let week = Number(ov[id]) || wk;
+        week = Math.max(p0, Math.min(p1, week));
+        stickies.push({
+          id,
+          parentId: w.id,
+          name: w.name,
+          team: w.team,
+          color: w.color,
+          startWeek: week,
+          finishWeek: week,
+          zoneId: zid,
+          zoneLabel,
+          costJt: w.costJt,
+          isFocus,
+          pred: w.pred || [],
+        });
+      });
+    }
+    return stickies;
+  },
   _weeksInPhase(ph, w) {
     const p0 = Number(ph.startWeek) || 1;
     const p1 = Number(ph.finishWeek) || p0;
@@ -2514,68 +2572,16 @@ Alpine.data('app', () => ({
     return { start, finish };
   },
   get pullPhasesView() {
-    // Semua fase: sticky = pekerjaan × minggu × zona, minggu dari jendela milestone. Struktur = latihan; lain = given.
     return this.phasesView.slice().reverse().map(ph => {
       const isFocus = ph.id === FOCUS_PHASE;
-      const stickies = [];
-      for (const w of (ph.works || [])) {
-        const zones = WORK_ZONES[w.id] || ['z3'];
-        const { start, finish } = this._weeksInPhase(ph, w);
-        const weeks = [];
-        for (let m = start; m <= finish; m++) weeks.push(m);
-        weeks.forEach((wk, wi) => {
-          const zid = zones[wi % zones.length];
-          const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
-          const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
-          stickies.push({
-            id: w.id + '_w' + wk + '_' + zid,
-            parentId: w.id,
-            name: w.name,
-            team: w.team,
-            color: w.color,
-            startWeek: wk,
-            finishWeek: wk,
-            zoneId: zid,
-            zoneLabel,
-            costJt: w.costJt,
-            isFocus,
-            pred: w.pred || [],
-          });
-        });
-      }
-      stickies.sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
+      const stickies = this._makeStickies(ph).sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
   },
     get forwardPhasesView() {
-    // Setelah dikunci: urutan maju (awal → akhir), kebalikan papan pull.
     return this.phasesView.map(ph => {
       const isFocus = ph.id === FOCUS_PHASE;
-      const stickies = [];
-      for (const w of (ph.works || [])) {
-        const zones = WORK_ZONES[w.id] || ['z3'];
-        const { start, finish } = this._weeksInPhase(ph, w);
-        const weeks = [];
-        for (let m = start; m <= finish; m++) weeks.push(m);
-        weeks.forEach((wk, wi) => {
-          const zid = zones[wi % zones.length];
-          const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
-          const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
-          stickies.push({
-            id: w.id + '_w' + wk + '_' + zid,
-            parentId: w.id,
-            name: w.name,
-            team: w.team,
-            color: w.color,
-            startWeek: wk,
-            finishWeek: wk,
-            zoneId: zid,
-            zoneLabel,
-            isFocus,
-          });
-        });
-      }
-      stickies.sort((a, b) => (a.startWeek - b.startWeek) || a.name.localeCompare(b.name));
+      const stickies = this._makeStickies(ph).sort((a, b) => (a.startWeek - b.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
   },
@@ -2899,15 +2905,45 @@ Alpine.data('app', () => ({
   get handoffPredsLabel() {
     const w = this.selectedWorkObj;
     if (!w) return '—';
-    if (!w.pred.length) return 'Titik awal (tidak ada pendahulu)';
-    return w.pred.map(id => this.workName(id)).join(', ');
+    const pred = w.pred || [];
+    if (!pred.length) return 'Titik awal (tidak ada pendahulu)';
+    return pred.map(id => this.workName(id)).join(', ');
   },
   get handoffSuccsLabel() {
     const w = this.selectedWorkObj;
     if (!w) return '—';
-    const succs = this.contractPlan.filter(p => (p.pred || []).includes(w.id));
+    const pid = w.parentId || w.id;
+    const succs = this.contractPlan.filter(p => (p.pred || []).includes(pid));
     if (!succs.length) return 'Milestone serah terima';
     return succs.map(p => p.name).join(', ');
+  },
+  get focusMilestoneWeeks() {
+    const ph = (this.phasesView || []).find(p => p.id === FOCUS_PHASE);
+    const a = Number(ph && ph.startWeek) || 1;
+    const b = Number(ph && ph.finishWeek) || a;
+    const weeks = [];
+    for (let i = a; i <= b; i++) weeks.push(i);
+    return weeks;
+  },
+  get allTeamsCommitted() {
+    return this.committedCount >= TEAMS.length;
+  },
+  get constraintsByMilestone() {
+    const cons = this.state.contractor.constraints || [];
+    const bySticky = {};
+    for (const ph of (this.forwardPhasesView || [])) {
+      for (const s of (ph.stickies || [])) bySticky[s.id] = ph.id;
+    }
+    return (this.phasesView || []).map(ph => {
+      const workIds = new Set((ph.works || []).map(w => w.id));
+      const items = cons.filter(c => {
+        const pid = bySticky[c.workId];
+        if (pid) return pid === ph.id;
+        const raw = String(c.workId || '');
+        return [...workIds].some(id => raw === id || raw.startsWith(id + '_'));
+      });
+      return { id: ph.id, name: ph.name, startWeek: ph.startWeek, finishWeek: ph.finishWeek, items };
+    });
   },
   get designDrawingSvg() { return houseSvg(false, null); },
   get elevationSvg() { return houseElevationSvg(); },
@@ -3168,6 +3204,24 @@ Alpine.data('app', () => ({
     const c = this.state.contractor.commitments || {};
     c[id] = !c[id];
     this.state.contractor.commitments = c;
+    this.save();
+  },
+  commitAllTeams() {
+    if (this.state.contractor.pullLocked || !this.state.contractor.zonesLocked || !this.state.contractor.milestonesLocked) return;
+    const c = { ...(this.state.contractor.commitments || {}) };
+    TEAMS.forEach(t => { c[t] = true; });
+    this.state.contractor.commitments = c;
+    this.save();
+  },
+  setStickyWeek(id, week) {
+    if (this.state.contractor.pullLocked || !id) return;
+    const weeks = this.focusMilestoneWeeks;
+    const a = weeks[0] || 1;
+    const b = weeks[weeks.length - 1] || a;
+    const n = Math.max(a, Math.min(b, Number(week) || a));
+    const ov = { ...(this.state.contractor.stickyWeeks || {}) };
+    ov[id] = n;
+    this.state.contractor.stickyWeeks = ov;
     this.save();
   },
   setMilestoneWeek(phId, week) {
