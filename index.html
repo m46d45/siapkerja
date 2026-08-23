@@ -2654,7 +2654,7 @@ Alpine.data('app', () => ({
     const cells = this._zoneCells();
     if (cells.some(c => c.status === 'carry')) return false;
     const pct = Number(this.physicalProgress && this.physicalProgress.pct) || 0;
-    return pct >= 99.5 || (cells.length > 0 && cells.every(c => c.status === 'done'));
+    return pct >= 99.5;
   },
   get projectCloseStats() {
     const contractWeeks = Number((this.state.negotiation.contract || {}).duration) || this.negoWeeks || 10;
@@ -2696,37 +2696,41 @@ Alpine.data('app', () => ({
     const plan = this.contractPlan || [];
     const totalCost = plan.reduce((s, w) => s + (Number(w.costJt) || 0), 0) || this.oeJt || 1;
     const cells = this._zoneCells();
+    const stickies = this._allStickies();
     const inc = {};
     const parts = [];
     let earnedCost = 0;
     for (const w of WORKS) {
       const row = plan.find(x => x.id === w.id);
       const cost = Number((row && row.costJt) || (totalCost * (Number(w.weight) || 0)) || 0);
-      const mine = cells.filter(c => c.parentId === w.id);
-      const planned = Math.max(mine.length, (WORK_ZONES[w.id] || []).length, 1);
-      const doneCells = mine.filter(c => c.status === 'done');
-      const frac = Math.min(1, doneCells.length / planned);
-      earnedCost += cost * frac;
-      const piece = cost / planned;
-      for (const c of doneCells) {
-        const wk = Number(c.week) || 0;
-        if (!wk) continue;
-        inc[wk] = (inc[wk] || 0) + piece;
-        parts.push({ name: w.name, week: wk, pct: Math.round(piece / totalCost * 1000) / 10 });
+      const mineS = stickies.filter(s => s.parentId === w.id);
+      const plannedN = Math.max(mineS.length, 1);
+      const piece = cost / plannedN;
+      let doneN = 0;
+      for (const s of mineS) {
+        const related = cells.filter(c => c.parentId === w.id && this._zoneMatches(s.zoneLabel, c.zoneLabel));
+        if (!related.length) continue;
+        const doneC = related.filter(c => c.status === 'done');
+        const fracS = doneC.length / related.length;
+        if (fracS <= 0) continue;
+        doneN += fracS;
+        const wk = Math.max(Number(s.startWeek) || 0, ...doneC.map(c => Number(c.week) || 0));
+        if (wk) {
+          inc[wk] = (inc[wk] || 0) + piece * fracS;
+          parts.push({ name: w.name, week: wk, pct: Math.round(piece * fracS / totalCost * 1000) / 10 });
+        }
       }
+      const frac = mineS.length ? Math.min(1, doneN / mineS.length) : 0;
+      earnedCost += cost * frac;
     }
     const pct = Math.min(100, Math.round(earnedCost / totalCost * 1000) / 10);
-    const maxW = Math.max(this.playWeek || 1, ...Object.keys(inc).map(Number), 1);
+    const maxW = Math.max(this.playWeek || 1, this.negoWeeks || 1, ...Object.keys(inc).map(Number), 1);
     const curve = [];
     let cumCost = 0;
     for (let week = 1; week <= maxW; week++) {
       cumCost += inc[week] || 0;
       const p = Math.min(100, Math.round(cumCost / totalCost * 1000) / 10);
-      curve.push({
-        week,
-        planned: p,
-        cumJt: Math.round(cumCost * 10) / 10,
-      });
+      curve.push({ week, planned: p, cumJt: Math.round(cumCost * 10) / 10 });
     }
     if (curve.length) {
       curve[curve.length - 1].planned = pct;
@@ -2755,7 +2759,6 @@ Alpine.data('app', () => ({
     return Math.round(slice * 10) / 10;
   },
   get displayedPhysicalPct() {
-    if (this.projectComplete) return 100;
     const live = Number(this.physicalProgress && this.physicalProgress.pct) || 0;
     return Math.min(100, Math.max(0, Math.round(live * 10) / 10));
   },
@@ -2803,7 +2806,7 @@ Alpine.data('app', () => ({
     const ppc = ppcRow ? ppcRow.ppc : this.ppcPercent;
     const top = (this.problemFrequency || [])[0];
     const topLab = top ? (this.constraintLabel(top.type) + ' (' + top.count + 'x)') : 'belum ada';
-    const fisik = this.projectComplete ? 100 : this.displayedPhysicalPct;
+    const fisik = this.displayedPhysicalPct;
     const rencana = this.physicalProgress.plannedNow;
     const st = this.projectCloseStats;
     let t = 'Kontrak Rp ' + (c.price || this.oeJt) + ' jt · ' + (c.duration || this.negoWeeks) + ' minggu · quality ' + (c.quality || this.state.owner.qualityLevel)
