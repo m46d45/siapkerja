@@ -1122,10 +1122,10 @@
         <div class="text-right shrink-0">
           <p class="text-[10px] text-ink-mute uppercase tracking-wider">Timer huddle</p>
           <p class="text-2xl font-bold tabular-nums leading-none mt-0.5"
-            :class="huddleTimerLeft===0 ? 'text-red-700' : (huddleTimerLeft<120 ? 'text-terra' : 'text-ink')"
+            :class="huddleTimerLeft===0 ? 'text-red-700' : (huddleTimerLeft<120 && huddleTimerOn ? 'text-terra' : 'text-ink')"
             x-text="huddleTimerLabel"></p>
-          <p class="text-[10px] mt-1 font-medium" :class="huddleTimerLeft===0 ? 'text-red-700' : 'text-ink-mute'"
-            x-text="huddleTimerLeft===0 ? 'Waktu habis — parkir masalah' : ('Sesi M'+playWeek+' · '+(state.contractor.huddleDayIdx+1)+'/6')"></p>
+          <button type="button" class="btn-primary !text-[11px] !py-1 !px-2.5 mt-2" x-show="!huddleTimerOn" @click="startHuddleTimer()">Mulai timer</button>
+          <p class="text-[10px] mt-1 font-medium text-red-700" x-show="huddleTimerLeft===0">Waktu habis — parkir masalah</p>
         </div>
       </div>
       <div class="p-5 space-y-4">
@@ -2105,6 +2105,7 @@ Alpine.data('app', () => ({
   WWP_DAYS,
   PPC_REASONS,
   huddleTimerLeft: 15 * 60,
+  huddleTimerOn: false,
   _huddleTimerHandle: null,
   progressDraft: null,
 
@@ -2130,9 +2131,6 @@ Alpine.data('app', () => ({
     this.recalcPlan();
     this._ensurePpcFromHuddle();
     this._syncDesignFreeze();
-    if (this.currentStage === 'contractor-huddle' && this.state.contractor.wwpLocked && !this.state.contractor.huddleComplete) {
-      this.startHuddleTimer();
-    }
   },
 
   get oeJt() {
@@ -3422,7 +3420,6 @@ Alpine.data('app', () => ({
       this.progressDraft = null;
       this._stripWeekLogs(this.playWeek);
       this.setStage('contractor-huddle');
-      this.startHuddleTimer();
     }
   },
     promiseMakeReady(constraintId) {
@@ -3593,7 +3590,6 @@ Alpine.data('app', () => ({
     this.state.contractor.extendNote = '';
     this.save();
     this.setStage('contractor-huddle');
-    this.startHuddleTimer();
   },
   get huddleTimerLabel() {
     const s = Math.max(0, Number(this.huddleTimerLeft) || 0);
@@ -3604,6 +3600,7 @@ Alpine.data('app', () => ({
   startHuddleTimer() {
     this.stopHuddleTimer();
     this.huddleTimerLeft = 15 * 60;
+    this.huddleTimerOn = true;
     this._huddleTimerHandle = setInterval(() => {
       if (this.huddleTimerLeft <= 0) {
         this.huddleTimerLeft = 0;
@@ -3618,6 +3615,11 @@ Alpine.data('app', () => ({
       clearInterval(this._huddleTimerHandle);
       this._huddleTimerHandle = null;
     }
+    this.huddleTimerOn = false;
+  },
+  resetHuddleTimer() {
+    this.stopHuddleTimer();
+    this.huddleTimerLeft = 15 * 60;
   },
   get huddleDayLabel() {
     const d = WWP_DAYS[this.state.contractor.huddleDayIdx || 0];
@@ -3691,7 +3693,7 @@ Alpine.data('app', () => ({
     this.state.contractor.huddleDayIdx = idx + 1;
     this.state.contractor.extendId = null;
     this.save();
-    this.startHuddleTimer();
+    this.resetHuddleTimer();
   },
     completeHuddle() {
     const pending = this.huddleTodayItems.filter(it => !this.huddleStatus(it.id));
