@@ -240,19 +240,17 @@
         <p class="text-[11px] text-ink-soft leading-relaxed" x-text="lodConstraintHint"></p>
 
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
-          <h3 class="text-sm font-bold mb-2">Axonometri Type 36</h3>
-          <p class="text-[11px] text-ink-mute mb-2">Dari timur laut: depan (pintu Tamu) di kanan · sisi timur (KM + dapur) di kiri.</p>
+          <h3 class="text-sm font-bold mb-2">Gambar 3D Rumah Tipe 36</h3>
           <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="elevationSvg"></div>
         </div>
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
-          <h3 class="text-sm font-bold mb-2">Denah Type 36</h3>
+          <h3 class="text-sm font-bold mb-2">Denah Rumah Tipe 36</h3>
           <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="designDrawingSvg"></div>
         </div>
 
         <div class="rounded-xl border border-paper-line overflow-hidden">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
-            <h3 class="text-sm font-bold">OE konstruksi per pekerjaan</h3>
-            <span class="text-[11px] text-ink-mute">Given · acuan nego</span>
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Perkiraan Biaya Konstruksi (Owner's Estimate - OE)</h3>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs min-w-[520px]">
@@ -294,7 +292,7 @@
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('owner')" class="btn-ghost">← Pemilik</button>
-        <button x-show="!state.designer.locked" @click="handoffToNego()" class="btn-primary flex-1 sm:flex-none">Rilis OE & buka Negosiasi →</button>
+        <button x-show="!state.designer.locked" @click="handoffToNego()" class="btn-primary flex-1 sm:flex-none">Tetapkan desain & undang kontraktor →</button>
         <button x-show="state.designer.locked" @click="setStage('negotiation')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Negosiasi →</button>
       </div>
     </div>
@@ -1973,13 +1971,6 @@ function houseElevationSvg() {
   out += poly([[x0, H, z0], [x0, H, z1], [rx0, py, cz]], '#8B5E3C');
   out += poly([[x1, H, z0], [x1, H, z1], [rx1, py, cz]], '#8B5E3C');
   out += poly([[x0, H, z0], [x1, H, z0], [rx1, py, cz], [rx0, py, cz]], '#A0522D');
-  const tDoor = iso(31, 50, -3);
-  const tKm = iso(W + 4, 38, 13);
-  const tDap = iso(W + 4, 32, 49);
-  out += `<text x="${tDoor[0].toFixed(1)}" y="${tDoor[1].toFixed(1)}" text-anchor="middle" font-size="10" fill="#44403C" font-family="${ff}">Pintu depan</text>`;
-  out += `<text x="${tKm[0].toFixed(1)}" y="${tKm[1].toFixed(1)}" text-anchor="start" font-size="9" fill="#44403C" font-family="${ff}">KM</text>`;
-  out += `<text x="${tDap[0].toFixed(1)}" y="${tDap[1].toFixed(1)}" text-anchor="start" font-size="9" fill="#44403C" font-family="${ff}">Dapur</text>`;
-  out += `<text x="200" y="${VB_H - 8}" text-anchor="middle" font-size="10" fill="#78716C" font-family="${ff}">View timur laut · atap limasan + overstek</text>`;
   return out + `</svg>`;
 }
 
