@@ -933,6 +933,10 @@
               <div>
                 <h3 class="text-sm font-bold">Constraint analysis & removal</h3>
                 <p class="text-[11px] text-ink-mute mt-0.5" x-text="selectedLookWorkLabel"></p>
+                <p class="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold" x-show="selectedLookTeam">
+                  <span class="w-2.5 h-2.5 rounded-full" :style="'background:'+teamColor(selectedLookTeam)"></span>
+                  <span x-text="'Last planner · '+selectedLookTeam"></span>
+                </p>
               </div>
               <button type="button" class="text-[11px] text-ink-mute shrink-0" @click="state.contractor.selectedLookWorkId=null; save()">Tutup</button>
             </div>
@@ -946,7 +950,19 @@
                     <div>
                       <p class="font-semibold text-ink" x-text="constraintLabel(row.type)"></p>
                       <p class="text-ink-soft mt-0.5" x-show="row.note" x-text="row.note"></p>
-                      <p class="text-[10px] text-ink-mute mt-1" x-text="(row.slotRel || '')+' · '+(row.absLabel || '')+' · '+(row.commitTeam || selectedLookTeam)"></p>
+                      <p class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold">
+                        <span class="w-2.5 h-2.5 rounded-full" :style="'background:'+row.teamColor"></span>
+                        <span x-text="'PJ · '+row.team"></span>
+                      </p>
+                      <div class="mt-1 flex flex-wrap gap-1.5" x-show="row.type==='prereq' && row.predTeams && row.predTeams.length">
+                        <template x-for="pt in row.predTeams" :key="'pt'+row.id+pt.id">
+                          <span class="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full border border-paper-line bg-paper">
+                            <span class="w-2 h-2 rounded-full" :style="'background:'+pt.color"></span>
+                            <span x-text="'Last planner sebelumnya · '+pt.id"></span>
+                          </span>
+                        </template>
+                      </div>
+                      <p class="text-[10px] text-ink-mute mt-1" x-text="(row.slotRel || '')+' · '+(row.absLabel || '')"></p>
                     </div>
                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="row.commitStatus==='done'?'bg-forest-soft text-forest':(row.commitStatus==='promised'?'bg-terra-soft text-terra':'bg-amber-100 text-amber-900')" x-text="row.commitStatus==='done'?'Selesai':(row.commitStatus==='promised'?'Dijanjikan':'Terbuka')"></span>
                   </div>
@@ -2624,14 +2640,46 @@ Alpine.data('app', () => ({
   get selectedWorkConstraints() {
     const wid = this.state.contractor && this.state.contractor.selectedLookWorkId;
     if (!wid) return [];
-    return (this.lookConstraints || []).filter(c => c.workId === wid);
+    let sticky = null;
+    for (const slot of (this.lookSlots || [])) {
+      sticky = (slot.stickies || []).find(x => x.id === wid);
+      if (sticky) break;
+    }
+    const team = (sticky && sticky.team) || this.selectedLookTeam;
+    const teamColor = this.teamColor(team);
+    const parent = WORKS.find(w => w.id === ((sticky && sticky.parentId) || ''));
+    const predTeams = [];
+    const seen = {};
+    for (const pid of ((parent && parent.pred) || [])) {
+      const pw = WORKS.find(w => w.id === pid);
+      if (!pw || seen[pw.team]) continue;
+      seen[pw.team] = true;
+      predTeams.push({ id: pw.team, name: pw.name, color: this.teamColor(pw.team) });
+    }
+    return (this.lookConstraints || []).filter(c => c.workId === wid).map(c => ({
+      ...c,
+      team,
+      teamColor,
+      predTeams,
+    }));
+  },
+  teamColor(id) {
+    const m = TEAM_META.find(t => t.id === id);
+    return (m && m.color) || '#C45C26';
   },
   get selectedLookWorkLabel() {
     const wid = this.state.contractor && this.state.contractor.selectedLookWorkId;
     if (!wid) return '';
-    const slot = (this.lookSlots || []).find(s => (s.stickies || []).some(x => x.id === wid));
-    const loc = slot ? (slot.rel + ' · ' + slot.absLabel) : '';
-    return [this.workName(wid), loc].filter(Boolean).join(' · ');
+    let sticky = null;
+    let slot = null;
+    for (const s of (this.lookSlots || [])) {
+      sticky = (s.stickies || []).find(x => x.id === wid);
+      if (sticky) { slot = s; break; }
+    }
+    const bits = [];
+    if (sticky) bits.push(sticky.name + (sticky.zoneLabel ? (' · ' + sticky.zoneLabel) : ''));
+    if (slot) bits.push(slot.rel + ' · ' + slot.absLabel);
+    return bits.join(' · ');
   },
   get selectedLookIsL1() {
     const wid = this.state.contractor && this.state.contractor.selectedLookWorkId;
