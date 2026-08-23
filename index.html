@@ -1091,13 +1091,52 @@
                   <template x-for="w in backlogWorkable" :key="'w'+w.id">
                     <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
                       <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
-                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked" @click="promoteToWwp(w.id)">Promosikan</button>
+                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked" @click="openPromo(w.id)">Promosikan</button>
                     </li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
                 </ul>
               </div>
             </div>
+            <div class="px-4 pb-3">
+              <template x-if="promoDraft && currentStage==='contractor-wwp' && promoPlan">
+              <div class="rounded-lg border border-terra/30 bg-terra-soft/20 p-3 space-y-2" x-show="promoPlan">
+                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+promoPlan.sticky.zoneLabel):''))"></p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-ink-mute block mb-0.5">Mulai hari</label>
+                    <select class="field !text-xs !py-1.5" x-model="promoDraft.startDay">
+                      <template x-for="d in promoDayChoices" :key="'pdw'+d.id"><option :value="d.id" x-text="d.label"></option></template>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-ink-mute block mb-0.5">Lama (hari)</label>
+                    <select class="field !text-xs !py-1.5" x-model="promoDraft.days">
+                      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                    </select>
+                  </div>
+                </div>
+                <ul class="text-[11px] text-ink-soft space-y-0.5" x-show="promoPlan && promoPlan.placed.length">
+                  <template x-for="pl in (promoPlan && promoPlan.placed) || []" :key="'plw'+pl.day+pl.zone">
+                    <li x-text="pl.dayLabel+' · '+pl.zone"></li>
+                  </template>
+                </ul>
+                <p class="text-[11px] text-amber-900" x-show="promoPlan && promoPlan.remain" x-text="promoPlan && ('Muat '+promoPlan.fit+' hari minggu ini. Sisa '+promoPlan.remain+' hari → M'+promoPlan.toWeek+' ('+promoPlan.nextZone+'…)')"></p>
+                <div class="flex gap-2">
+                  <button type="button" class="btn-primary !text-xs !py-1.5" @click="confirmPromo()">Tetapkan</button>
+                  <button type="button" class="btn-ghost !text-xs !py-1.5" @click="cancelPromo()">Batal</button>
+                </div>
+              </div>
+              </template>
+            </div>
+          </div>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="(state.contractor.weekRemainder||[]).length">
+            <p class="font-semibold text-amber-950">Sisa ke minggu depan</p>
+            <ul class="space-y-1">
+              <template x-for="r in (state.contractor.weekRemainder||[])" :key="r.id">
+                <li class="text-amber-900" x-text="r.name+' · '+r.zoneBase+'-'+r.nextIndex+' · '+r.days+' hari → M'+r.toWeek"></li>
+              </template>
+            </ul>
           </div>
           <button type="button" class="btn-primary text-sm" x-show="!state.contractor.wwpLocked" @click="lockWwp()">Kunci rencana mingguan dan eksekusi</button>
           <button type="button" class="btn-primary text-sm" x-show="state.contractor.wwpLocked && !state.contractor.huddleComplete" @click="setStage('contractor-huddle')">Buka Daily Huddle →</button>
@@ -1186,10 +1225,49 @@
               <template x-for="w in backlogWorkable" :key="'hw'+w.id">
                 <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
                   <span x-text="w.name+(w.zoneLabel?(' · '+w.zoneLabel):'')+' · M'+w.startWeek"></span>
-                  <button type="button" class="btn-primary !text-[10px] !py-1" x-show="!state.contractor.huddleComplete" @click="promoteToWwp(w.id)">Promosikan ke hari ini</button>
+                  <button type="button" class="btn-primary !text-[10px] !py-1" x-show="!state.contractor.huddleComplete" @click="openPromo(w.id)">Promosikan</button>
                 </li>
               </template>
               <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
+            </ul>
+            <div class="px-3 pb-3">
+              <template x-if="promoDraft && currentStage==='contractor-huddle' && promoPlan">
+              <div class="rounded-lg border border-terra/30 bg-terra-soft/20 p-3 space-y-2" x-show="promoPlan">
+                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+promoPlan.sticky.zoneLabel):''))"></p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] text-ink-mute block mb-0.5">Mulai hari</label>
+                    <select class="field !text-xs !py-1.5" x-model="promoDraft.startDay">
+                      <template x-for="d in promoDayChoices" :key="'pdh'+d.id"><option :value="d.id" x-text="d.label"></option></template>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-ink-mute block mb-0.5">Lama (hari)</label>
+                    <select class="field !text-xs !py-1.5" x-model="promoDraft.days">
+                      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                    </select>
+                  </div>
+                </div>
+                <ul class="text-[11px] text-ink-soft space-y-0.5">
+                  <template x-for="pl in (promoPlan && promoPlan.placed) || []" :key="'plh'+pl.day+pl.zone">
+                    <li x-text="pl.dayLabel+' · '+pl.zone"></li>
+                  </template>
+                </ul>
+                <p class="text-[11px] text-amber-900" x-show="promoPlan && promoPlan.remain" x-text="promoPlan && ('Muat '+promoPlan.fit+' hari minggu ini. Sisa '+promoPlan.remain+' hari → M'+promoPlan.toWeek+' ('+promoPlan.nextZone+'…)')"></p>
+                <div class="flex gap-2">
+                  <button type="button" class="btn-primary !text-xs !py-1.5" @click="confirmPromo()">Tetapkan</button>
+                  <button type="button" class="btn-ghost !text-xs !py-1.5" @click="cancelPromo()">Batal</button>
+                </div>
+              </div>
+              </template>
+            </div>
+          </div>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="(state.contractor.weekRemainder||[]).length">
+            <p class="font-semibold text-amber-950">Sisa ke minggu depan</p>
+            <ul class="space-y-1">
+              <template x-for="r in (state.contractor.weekRemainder||[])" :key="'hr'+r.id">
+                <li class="text-amber-900" x-text="r.name+' · '+r.zoneBase+'-'+r.nextIndex+' · '+r.days+' hari → M'+r.toWeek"></li>
+              </template>
             </ul>
           </div>
 
@@ -2005,6 +2083,8 @@ function emptyContractor() {
     learningNote:'',
     actualLog:[],
     progressLocks:[],
+    weekRemainder:[],
+    promoUsed:[],
   };
 }
 
@@ -2099,6 +2179,7 @@ Alpine.data('app', () => ({
   PPC_REASONS,
   huddleTimerLeft: 15 * 60,
   huddleTimerOn: false,
+  promoDraft: null,
   _huddleTimerHandle: null,
   progressDraft: null,
 
@@ -2117,6 +2198,8 @@ Alpine.data('app', () => ({
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     if (!this.state.contractor.stickyWeeks) this.state.contractor.stickyWeeks = {};
+    if (!Array.isArray(this.state.contractor.weekRemainder)) this.state.contractor.weekRemainder = [];
+    if (!Array.isArray(this.state.contractor.promoUsed)) this.state.contractor.promoUsed = [];
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
     this.currentStage = this.state.currentStage || 'owner';
@@ -2876,13 +2959,52 @@ Alpine.data('app', () => ({
   },
   get backlogWorkable() {
     const week = this.targetExecWeek;
-    const inWwp = new Set((this.state.contractor.wwp || []).map(x => x.workId));
+    const blocked = this.promoBlockedIds;
     return this._allStickies().filter(s => {
-      if (inWwp.has(s.id)) return false;
+      if (blocked.has(s.id)) return false;
       if (!this._isWorkReady(s.id)) return false;
       const w = Number(s.startWeek);
       return w >= week && w <= week + 3;
     });
+  },
+  get promoBlockedIds() {
+    const used = new Set(this.state.contractor.promoUsed || []);
+    for (const r of (this.state.contractor.weekRemainder || [])) used.add(r.stickyId);
+    for (const x of (this.state.contractor.wwp || [])) used.add(x.workId);
+    return used;
+  },
+  get promoDayChoices() {
+    const min = this.currentStage === 'contractor-huddle' ? (Number(this.state.contractor.huddleDayIdx) || 0) : 0;
+    return WWP_DAYS.filter((_, i) => i >= min);
+  },
+  get promoPlan() {
+    const d = this.promoDraft;
+    if (!d) return null;
+    const sticky = this._allStickies().find(s => s.id === d.workId);
+    if (!sticky) return null;
+    const days = WWP_DAYS.map(x => x.id);
+    const min = this.currentStage === 'contractor-huddle' ? (Number(this.state.contractor.huddleDayIdx) || 0) : 0;
+    let sIdx = days.indexOf(d.startDay);
+    if (sIdx < min) sIdx = min;
+    if (sIdx < 0) sIdx = min;
+    const want = Math.max(1, Math.min(6, Number(d.days) || 1));
+    const fit = Math.max(0, Math.min(want, 6 - sIdx));
+    const remain = Math.max(0, want - fit);
+    const prefix = sticky.zoneLabel || 'Z';
+    const split = want > 1 || remain > 0;
+    const placed = [];
+    for (let i = 0; i < fit; i++) {
+      placed.push({
+        day: days[sIdx + i],
+        dayLabel: (WWP_DAYS[sIdx + i] || {}).label,
+        zone: split ? (prefix + '-' + (i + 1)) : prefix,
+      });
+    }
+    return {
+      sticky, sIdx, want, fit, remain, placed, prefix,
+      nextZone: prefix + '-' + (fit + 1),
+      toWeek: this.playWeek + 1,
+    };
   },
   get ppcDoneCount() {
     const ids = new Set((this.state.contractor.wwp || []).map(x => x.id));
@@ -3466,17 +3588,74 @@ Alpine.data('app', () => ({
     if (!this.state.contractor.pullLocked) return;
     const week = this.targetExecWeek;
     const days = WWP_DAYS.map(d => d.id);
+    const remainders = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) === week);
+    const remIds = new Set(remainders.map(r => r.stickyId));
+    const used = new Set(this.state.contractor.promoUsed || []);
     const ready = this._allStickies()
-      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id))
+      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !remIds.has(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
-    const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i, days.length - 1)], s.zoneLabel, false));
-    this.state.contractor.wwp = items;
+    const remItems = [];
+    remainders.forEach((r, ri) => {
+      const sticky = this._allStickies().find(s => s.id === r.stickyId) || {
+        id: r.stickyId, parentId: r.parentId, name: r.name, team: r.team, color: r.color, zoneLabel: r.zoneBase,
+      };
+      for (let i = 0; i < Number(r.days || 1); i++) {
+        const it = this._makeWwpItem(sticky, days[Math.min(i, days.length - 1)], r.zoneBase + '-' + (Number(r.nextIndex || 1) + i), true);
+        it.canSplit = false;
+        it.isLead = i === 0;
+        it.origZoneLabel = r.zoneBase;
+        remItems.push(it);
+      }
+    });
+    const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
+    this.state.contractor.wwp = remItems.concat(items);
+    this.state.contractor.weekRemainder = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) !== week);
     this.state.contractor.ppc = [];
         this.state.contractor.wwpLocked = false;
     this.state.contractor.huddleDayIdx = 0;
     this.state.contractor.huddleResults = {};
     this.state.contractor.followUps = [];
     this.state.contractor.huddleComplete = false;
+    this.save();
+  },
+  openPromo(workId) {
+    if (this.state.contractor.weekClosed) return;
+    if (!this._isWorkReady(workId)) return;
+    const min = this.currentStage === 'contractor-huddle' ? (Number(this.state.contractor.huddleDayIdx) || 0) : 0;
+    this.promoDraft = { workId, startDay: WWP_DAYS[min].id, days: 1 };
+  },
+  cancelPromo() { this.promoDraft = null; },
+  confirmPromo() {
+    const p = this.promoPlan;
+    if (!p || !p.fit) return;
+    if ((this.state.contractor.wwp || []).some(x => x.workId === p.sticky.id)) return;
+    const list = [...(this.state.contractor.wwp || [])];
+    p.placed.forEach((pl, i) => {
+      const it = this._makeWwpItem(p.sticky, pl.day, pl.zone, true);
+      it.canSplit = false;
+      it.isLead = i === 0;
+      it.origZoneLabel = p.prefix;
+      list.push(it);
+    });
+    this.state.contractor.wwp = list;
+    if (p.remain > 0) {
+      this.state.contractor.weekRemainder = [...(this.state.contractor.weekRemainder || []), {
+        id: 'rem' + Date.now(),
+        stickyId: p.sticky.id,
+        parentId: p.sticky.parentId,
+        name: p.sticky.name,
+        team: p.sticky.team,
+        color: p.sticky.color,
+        zoneBase: p.prefix,
+        nextIndex: p.fit + 1,
+        days: p.remain,
+        fromWeek: this.playWeek,
+        toWeek: this.playWeek + 1,
+      }];
+    } else if (Number(p.sticky.startWeek) > this.playWeek) {
+      this.state.contractor.promoUsed = [...(this.state.contractor.promoUsed || []), p.sticky.id];
+    }
+    this.promoDraft = null;
     this.save();
   },
   moveWwpItem(itemId, day) {
