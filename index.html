@@ -5,7 +5,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="theme-color" content="#C45C26"/>
-  <title>SiapKerja! LPS Teaching Simulator</title>
+  <title>SiapKerja! — Pembelajaran LPS dengan simulasi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -54,9 +54,16 @@
 
 <header class="sticky top-0 z-50 bg-paper-card/95 backdrop-blur border-b border-paper-line">
   <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-    <div class="flex items-baseline gap-2">
-      <h1 class="text-lg font-bold text-terra">SiapKerja!</h1>
-      <span class="text-[11px] text-ink-mute hidden sm:inline">LPS Simulator</span>
+    <div class="flex items-center gap-2.5 min-w-0">
+      <svg class="w-9 h-9 shrink-0" viewBox="0 0 36 36" aria-hidden="true">
+        <rect width="36" height="36" rx="9" fill="#C45C26"/>
+        <path d="M7.5 20.5 L18 11.2 L28.5 20.5 V28.2 H7.5 Z" fill="#FFFcf8"/>
+        <path d="M14 23 L17.1 26 L23.2 18.8" fill="none" stroke="#C45C26" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="min-w-0">
+        <h1 class="text-lg font-bold text-terra leading-none">SiapKerja!</h1>
+        <p class="text-[10px] sm:text-[11px] text-ink-mute mt-0.5 leading-snug">Pembelajaran the Last Planner System (LPS) dengan simulasi</p>
+      </div>
     </div>
     <div class="flex items-center gap-1.5">
       <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg">Unduh sesi</button>
@@ -105,17 +112,17 @@
   <div class="max-w-3xl mx-auto px-4 py-2 flex gap-1.5 overflow-x-auto">
     <button @click="setStage('contractor-master')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-master'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Master Plan</button>
     <button @click="setStage('contractor-phase')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-phase'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Phase Plan</button>
-    <button @click="state.contractor.pullLocked&&setStage('contractor-production')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Look-ahead</button>
-    <button @click="state.contractor.pullLocked&&setStage('contractor-wwp')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-wwp'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">WWP</button>
-    <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Huddle</button>
+    <button @click="state.contractor.pullLocked&&setStage('contractor-production')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-production'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Look-ahead Plan</button>
+    <button @click="state.contractor.pullLocked&&setStage('contractor-wwp')" :disabled="!state.contractor.pullLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-wwp'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Weekly Work Plan</button>
+    <button @click="state.contractor.wwpLocked&&setStage('contractor-huddle')" :disabled="!state.contractor.wwpLocked" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-huddle'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Daily Huddle</button>
         <button @click="state.contractor.huddleComplete&&setStage('contractor-learning')" :disabled="!state.contractor.huddleComplete" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap disabled:opacity-40" :class="currentStage==='contractor-learning'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Learning</button>
-    <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Progress</button>
+    <button @click="setStage('contractor-progress')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="currentStage==='contractor-progress'?'bg-terra text-white':'bg-paper text-ink-soft border border-paper-line'">Laporan</button>
     <select class="ml-auto shrink-0 text-[11px] font-semibold px-2 py-1.5 rounded-full border border-paper-line bg-paper text-ink-soft"
       @change="rewindTo($event.target.value); $event.target.selectedIndex=0">
       <option value="">Ulang dari…</option>
-      <option value="huddle">Huddle minggu ini</option>
-      <option value="wwp">WWP minggu ini</option>
-      <option value="lookahead">Look-ahead minggu ini</option>
+      <option value="huddle">Daily Huddle minggu ini</option>
+      <option value="wwp">Weekly Work Plan minggu ini</option>
+      <option value="lookahead">Look-ahead Plan minggu ini</option>
       <option value="phase">Phase Plan</option>
       <option value="contract">Kontrak (Master Plan)</option>
       <option value="owner">Pemilik (semua)</option>
