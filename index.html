@@ -2611,39 +2611,42 @@ Alpine.data('app', () => ({
     }
     const weightBy = {};
     for (const w of this.contractPlan) weightBy[w.id] = Number(w.weight) || 0;
-    const bySticky = {};
-    for (const e of this._mergedActualLog()) {
-      const sid = e.stickyId || (e.parentId + '_w' + e.week);
-      if (!bySticky[sid]) bySticky[sid] = { parentId: e.parentId, done: 0, n: 0, week: Number(e.week) || 0 };
-      bySticky[sid].n += 1;
-      if (e.done) bySticky[sid].done += 1;
-      bySticky[sid].week = Math.max(bySticky[sid].week, Number(e.week) || 0);
-    }
+    const cells = this._zoneCells();
     const inc = {};
-    let earned = 0;
     const parts = [];
-    for (const sid of Object.keys(bySticky)) {
-      const g = bySticky[sid];
-      const plannedN = (planBy[g.parentId] || []).length || 1;
-      const w = weightBy[g.parentId] || 0;
-      const frac = g.n ? (g.done / g.n) : 0;
-      const piece = w / plannedN * frac;
-      if (piece <= 0) continue;
-      earned += piece;
-      inc[g.week] = (inc[g.week] || 0) + piece;
-      const wname = (this.contractPlan.find(x => x.id === g.parentId) || {}).name || g.parentId;
-      parts.push({ name: wname, week: g.week, pct: Math.round(piece * 1000) / 10 });
+    let earned = 0;
+    for (const w of WORKS) {
+      const wt = weightBy[w.id] || 0;
+      if (wt <= 0) continue;
+      const plannedN = Math.max(1, (planBy[w.id] || []).length);
+      const mine = cells.filter(c => c.parentId === w.id);
+      const doneByUnit = {};
+      for (const c of mine) {
+        if (c.status !== 'done') continue;
+        const u = this._zoneUnit(c.zoneLabel) || this.prettyZone(c.zoneLabel);
+        const wk = Number(c.week) || 0;
+        if (!doneByUnit[u] || wk > doneByUnit[u]) doneByUnit[u] = wk;
+      }
+      const nDone = Object.keys(doneByUnit).length;
+      const frac = Math.min(1, nDone / plannedN);
+      earned += wt * frac;
+      const piece = plannedN ? (wt / plannedN) : 0;
+      for (const u of Object.keys(doneByUnit)) {
+        const wk = doneByUnit[u];
+        inc[wk] = (inc[wk] || 0) + piece;
+        parts.push({ name: w.name, week: wk, pct: Math.round(piece * 1000) / 10, unit: u });
+      }
     }
-    const pct = Math.round(earned * 1000) / 10;
+    const pct = Math.min(100, Math.round(earned * 1000) / 10);
     const maxW = Object.keys(inc).length ? Math.max(...Object.keys(inc).map(Number)) : 0;
     const maxJt = this.negoBundle.maxJt || this.oeJt;
     const curve = [];
     let cum = 0;
-    for (let w = 1; w <= Math.max(maxW, 1); w++) {
-      cum += (inc[w] || 0);
-      if (w <= maxW) {
+    for (let week = 1; week <= Math.max(maxW, 1); week++) {
+      cum = Math.min(1, cum + (inc[week] || 0));
+      if (week <= maxW) {
         curve.push({
-          week: w,
+          week,
           cumJt: Math.round(maxJt * cum * 10) / 10,
           planned: Math.round(cum * 1000) / 10,
         });
@@ -2671,10 +2674,10 @@ Alpine.data('app', () => ({
     return Math.round(slice * 10) / 10;
   },
   get displayedPhysicalPct() {
-    if ((this.state.contractor.progressLocks || []).length) return this.lockedPhysicalPct;
-    const live = Number(this.physicalProgress && this.physicalProgress.pct);
-    if (live > 0) return live;
-    return this.suggestedWeekIncrement;
+    const live = Number(this.physicalProgress && this.physicalProgress.pct) || 0;
+    const locked = (this.state.contractor.progressLocks || []).length ? this.lockedPhysicalPct : 0;
+    const v = Math.max(live, locked);
+    return Math.min(100, Math.round(v * 10) / 10);
   },
   get progressLockForWeek() {
     const w = this.playWeek;
@@ -2683,14 +2686,14 @@ Alpine.data('app', () => ({
   get lockedPhysicalPct() {
     const locks = ((this.state.contractor && this.state.contractor.progressLocks) || []).slice().sort((a, b) => a.week - b.week);
     if (!locks.length) return 0;
-    return Math.round(locks.reduce((s, x) => s + (Number(x.increment) || 0), 0) * 10) / 10;
+    return Math.min(100, Math.round(locks.reduce((s, x) => s + (Number(x.increment) || 0), 0) * 10) / 10);
   },
   get lockedProgressCurve() {
     const locks = ((this.state.contractor && this.state.contractor.progressLocks) || []).slice().sort((a, b) => a.week - b.week);
     const maxJt = this.negoBundle.maxJt || this.oeJt;
     let cum = 0;
     return locks.map(l => {
-      cum += Number(l.increment) || 0;
+      cum = Math.min(100, cum + (Number(l.increment) || 0));
       return {
         week: Number(l.week),
         planned: Math.round(cum * 10) / 10,
@@ -2701,8 +2704,9 @@ Alpine.data('app', () => ({
   lockProgress() {
     const week = this.playWeek;
     const incRaw = this.progressDraft == null ? this.suggestedWeekIncrement : Number(this.progressDraft);
-    const inc = Number.isFinite(incRaw) ? Math.max(0, Math.round(incRaw * 10) / 10) : 0;
     const locks = [...(this.state.contractor.progressLocks || [])].filter(x => Number(x.week) !== week);
+    const already = locks.reduce((s, x) => s + (Number(x.increment) || 0), 0);
+    const inc = Number.isFinite(incRaw) ? Math.max(0, Math.min(100 - already, Math.round(incRaw * 10) / 10)) : 0;
     locks.push({
       week,
       increment: inc,
