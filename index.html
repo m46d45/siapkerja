@@ -3515,6 +3515,7 @@ Alpine.data('app', () => ({
       this.stopHuddleTimer();
       this.state.contractor = emptyContractor();
       this.progressDraft = null;
+      this.save();
       this.setStage('contractor-master');
       return;
     }
@@ -3533,6 +3534,7 @@ Alpine.data('app', () => ({
         pullLocked: false,
       });
       this.progressDraft = null;
+      this.save();
       this.setStage('contractor-phase');
       return;
     }
@@ -3542,12 +3544,14 @@ Alpine.data('app', () => ({
       this.state.contractor.makeReady = (this.state.contractor.makeReady || []).filter(x => Number(x.atOffset) !== Number(off));
       this.state.contractor.selectedLookRel = 'L1';
       this.state.contractor.selectedLookWorkId = null;
+      this.save();
       this.setStage('contractor-production');
       return;
     }
     if (target === 'wwp') {
       this._resetWeekOps();
       this.buildWwp();
+      this.save();
       this.setStage('contractor-wwp');
       return;
     }
@@ -3575,6 +3579,7 @@ Alpine.data('app', () => ({
       this.progressDraft = null;
       this._stripWeekLogs(this.playWeek);
       this.resetHuddleTimer();
+      this.save();
       this.setStage('contractor-huddle');
       return;
     }
@@ -3895,7 +3900,7 @@ Alpine.data('app', () => ({
     const byName = WORKS.find(w => w.name === item.name);
     return byName ? byName.id : '';
   },
-  huddleBlockReason(item) {
+  huddleBlockReason(item, forPromo) {
     if (!item) return '';
     const pid0 = this._workType(item);
     const w = WORKS.find(x => x.id === pid0);
@@ -3921,8 +3926,9 @@ Alpine.data('app', () => ({
         if (this._itemHuddleFailed(c)) return loc + ' tidak bisa minggu ini (prasyarat)';
         if (this._itemHuddleDone(c)) continue;
         const cidx = WWP_DAYS.findIndex(d => d.id === c.day);
-        if (cidx < 0 || cidx <= today) return 'Menunggu ' + loc + ' selesai (prasyarat / zona)';
-        return 'Menunggu ' + loc + ' (' + ((WWP_DAYS[cidx] || {}).label || '') + ')';
+        if (cidx < 0) continue;
+        if (cidx < today) return 'Menunggu ' + loc + ' selesai (prasyarat / zona)';
+        if (!forPromo && cidx <= today) return 'Menunggu ' + loc + ' selesai (prasyarat / zona)';
       }
     }
     return '';
@@ -3934,8 +3940,10 @@ Alpine.data('app', () => ({
       parentId: sticky.parentId,
       zoneLabel: sticky.zoneLabel,
       pred: sticky.pred,
+      name: sticky.name,
+      workId: sticky.id,
       day,
-    });
+    }, true);
   },
   wasCarriedOver(id) {
     return ((this.state.contractor.followUps || []).some(f => f.workId === id));
