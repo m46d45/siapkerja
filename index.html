@@ -863,11 +863,9 @@
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Look-ahead Plan</p>
           <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="sessionWeek"></span></h2>
-          <p class="text-sm text-ink-soft mt-1">Make-ready jendela L1–L4. Sesi = minggu kalender saat rapat (M0 dulu, lalu M1, M2… setiap gulir). L1 = minggu eksekusi terdekat.</p>
         </div>
-        <span x-show="state.contractor.pullLocked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+sessionWeek"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!state.contractor.pullLocked" class="rounded-xl border-2 border-dashed border-paper-line bg-paper/50 p-8 text-center">
@@ -876,18 +874,7 @@
         </div>
 
         <div x-show="state.contractor.pullLocked" class="space-y-4">
-          <div class="rounded-xl border border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
-            <strong class="text-ink">Sesi M<span x-text="sessionWeek"></span></strong>
-            — rapat Look-ahead di awal minggu kalender itu.
-            Jendela: <strong x-text="'L1=M'+targetExecWeek+' · L2=M'+(targetExecWeek+1)+' · L3=M'+(targetExecWeek+2)+' · L4=M'+(targetExecWeek+3)"></strong>.
-            Prioritas: L1 paling bebas constraint. Setelah gulir, judul sesi naik (M0→M1→M2…).
-          </div>
-
           <div class="rounded-xl border border-paper-line bg-paper-card p-3 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-[11px] font-semibold text-ink-mute uppercase tracking-wide">Timeline minggu absolut</p>
-              <p class="text-[10px] text-ink-mute" x-text="'Jendela L1–L4 = M'+targetExecWeek+'–M'+(targetExecWeek+3)"></p>
-            </div>
             <div class="flex gap-1 overflow-x-auto pb-1">
               <template x-for="m in timelineWeeks" :key="'tm'+m.n">
                 <div class="shrink-0 w-11 text-center">
@@ -899,11 +886,9 @@
                 </div>
               </template>
             </div>
-            <p class="text-[10px] text-ink-mute">Tidak ada kotak M0. Sesi tercatat di judul. Kotak terra = jendela Look-ahead.</p>
           </div>
 
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="registryInsight">
-            <p class="font-semibold text-amber-950">Umpan balik Learning → Look-ahead</p>
             <p class="text-amber-900 leading-relaxed" x-text="registryInsight"></p>
           </div>
 
@@ -978,12 +963,9 @@
             </div>
             <p class="p-4 text-xs text-ink-mute" x-show="!selectedWorkConstraints.length">Tidak ada constraint pada pekerjaan ini — SiapKerja!</p>
           </div>
-          <p class="text-xs text-ink-mute" x-show="!state.contractor.selectedLookWorkId">Ketuk sticky pekerjaan di jendela untuk analisis & removal constraint item itu.</p>
-                    <!-- Laporan Make-Ready -->
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
               <h3 class="text-sm font-bold">Laporan Make-Ready</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5">Ringkasan seluruh jendela L1–L4 · hijau SiapKerja! · kuning dijanjikan · merah terbuka</p>
             </div>
             <div class="p-3 space-y-2 text-xs">
               <template x-for="row in makeReadyReportRows" :key="row.rel">
@@ -1006,11 +988,9 @@
                       <p class="text-base font-bold text-red-700" x-text="row.open"></p>
                     </div>
                   </div>
-                  <p class="text-[11px] text-ink-mute mt-1.5" x-text="row.summary"></p>
                 </div>
               </template>
               <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0" @click="buildWwp(); setStage('contractor-wwp')">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
-              <p class="text-[11px] text-ink-mute" x-show="targetExecWeek>0">WWP hanya mengambil item <strong>SiapKerja!</strong> di M<span x-text="targetExecWeek"></span>; yang terbuka masuk backlog.</p>
             </div>
           </div>        
 
