@@ -1147,12 +1147,11 @@
             </div>
           </div>
         </div>
-        <div x-show="!(state.contractor.wwp||[]).length" class="rounded-xl border border-dashed border-paper-line p-6 text-center space-y-2">
-          <p class="text-sm text-ink-soft">WWP belum disusun. Dari Look-ahead, klik Susun WWP.</p>
-          <button type="button" class="btn-primary text-sm" @click="setStage('contractor-production')">← Look-ahead Plan</button>
+        <div class="rounded-xl border border-dashed border-terra/30 bg-terra-soft/20 p-3 text-xs text-ink-soft" x-show="!(state.contractor.wwp||[]).length">
+          L1 minggu ini kosong (pekerjaan sudah dipromosikan sebelumnya). Jadwal hari masih bisa diisi dari backlog Workable di bawah.
         </div>
 
-        <div x-show="(state.contractor.wwp||[]).length" class="space-y-4">
+        <div class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="playWeek"></span></h3>
           <p class="text-[11px] text-ink-soft">Pecah ke hari: Z1 menjadi Z1-a-1, Z1-a-2… · Z2-a menjadi Z2-a-1, Z2-a-2… Sisa setelah Sabtu ke minggu depan.</p>
           <div class="overflow-x-auto">
@@ -4356,11 +4355,11 @@ Alpine.data('app', () => ({
   },
     lockWwp() {
     if (!(this.state.contractor.wwp || []).length) {
-      alert('Susun WWP dulu.');
+      alert('Promosikan pekerjaan ke hari dulu, atau L1 memang tanpa kerja.');
       return;
     }
     const week = this.targetExecWeek;
-    const openL1 = this._allStickies().filter(s => Number(s.startWeek) === week && !this._isWorkReady(s.id));
+    const openL1 = this._allStickies().filter(s => Number(s.startWeek) === week && !this._stickyConsumed(s) && !this._isWorkReady(s.id));
     if (openL1.length) {
       alert('L1 / M' + week + ' masih ada constraint: ' + openL1.map(s => s.name + ' ' + this.prettyZone(s.zoneLabel)).join(', ') + '. Hilangkan dulu di Look-ahead Plan.');
       return;
