@@ -1469,6 +1469,17 @@
               </template>
             </div>
           </div>
+          <div class="rounded-xl border border-paper-line overflow-hidden" x-show="scheduledNextItems.length">
+            <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+              <h3 class="text-sm font-bold">Dijadwalkan ke M<span x-text="playWeek+1"></span> <span class="font-normal text-ink-mute">(bukan variansi)</span></h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Tidak muat di minggu ini saat pecah. Masuk L1 minggu depan sebagai rencana, bukan gagal.</p>
+            </div>
+            <ul class="p-3 space-y-1.5 text-xs">
+              <template x-for="r in scheduledNextItems" :key="'sn'+r.zoneLabel+r.name">
+                <li class="rounded-lg border border-paper-line px-2.5 py-2" x-text="r.name+' · '+r.zoneLabel+' · '+r.days+' hari'"></li>
+              </template>
+            </ul>
+          </div>
           <div class="grid grid-cols-3 gap-2 text-xs">
             <div class="rounded-lg border border-paper-line bg-paper p-2.5 text-center">
               <p class="text-[10px] text-ink-mute">Direncanakan</p>
@@ -2830,6 +2841,26 @@ Alpine.data('app', () => ({
   get carryInItems() {
     return this._carryStickies();
   },
+  get scheduledNextItems() {
+    const week = this.playWeek;
+    const next = week + 1;
+    const out = [];
+    for (const r of ((this.state.contractor && this.state.contractor.weekRemainder) || [])) {
+      if (Number(r.fromWeek) !== week && Number(r.toWeek) !== next) continue;
+      const n = Math.max(1, Number(r.days) || 1);
+      const base = r.zoneBase || this._zoneUnit(r.zoneLabel);
+      const start = Number(r.nextIndex) || 1;
+      for (let i = 0; i < n; i++) {
+        out.push({
+          name: r.name,
+          zoneLabel: this.prettyZone(base ? (base + '-' + (start + i)) : r.zoneLabel),
+          days: 1,
+          toWeek: Number(r.toWeek) || next,
+        });
+      }
+    }
+    return out;
+  },
   prettyZone(label) {
     if (!label) return '';
     const m = String(label).match(/^(Z\d+)(?:-([0-9]+|[a-zA-Z]))?(?:-(\d+))?$/i);
@@ -2885,9 +2916,10 @@ Alpine.data('app', () => ({
         color: row.color || s.color,
         zoneLabel: this.prettyZone(row.zoneLabel || s.zoneLabel),
         startWeek: week,
-        carry: true,
+        carry: row.kind !== 'remainder',
+        scheduled: row.kind === 'remainder',
         carryFrom: prev,
-        carryNote: row.carryNote || ('Tidak selesai M' + prev),
+        carryNote: row.carryNote || (row.kind === 'remainder' ? ('Dijadwalkan dari M' + prev) : ('Tidak selesai M' + prev)),
         days: 1,
       });
     };
@@ -2907,7 +2939,8 @@ Alpine.data('app', () => ({
           cellId: (r.id || r.stickyId) + '-' + i,
           parentId: r.parentId, name: r.name, team: r.team, color: r.color,
           zoneLabel: zone,
-          carryNote: 'Sisa dari M' + prev,
+          kind: 'remainder',
+          carryNote: 'Dijadwalkan dari M' + prev,
         });
       }
     }
@@ -3018,7 +3051,7 @@ Alpine.data('app', () => ({
         zoneLabel: c.zoneLabel || '',
         zoneRoot: this._zoneRoot(c.zoneLabel),
         week: play,
-        status: 'carry',
+        status: c.scheduled ? 'planned' : 'carry',
         color: c.color,
       });
     }
@@ -4062,10 +4095,10 @@ Alpine.data('app', () => ({
       const z = String(c.zoneLabel || '').toUpperCase();
       if (z && placedZones.has(z)) continue;
       if (z) placedZones.add(z);
-      const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], c.zoneLabel, true);
+      const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], c.zoneLabel, !c.scheduled);
       it.canSplit = false;
       it.isLead = false;
-      it.carryNote = c.carryNote || ('Tidak selesai M' + (week - 1));
+      it.carryNote = c.carryNote || (c.scheduled ? ('Dijadwalkan dari M' + (week - 1)) : ('Tidak selesai M' + (week - 1)));
       remItems.push(it);
       if (c.id) placedSticky.add(c.id);
     }
@@ -4702,6 +4735,7 @@ Alpine.data('app', () => ({
       wwp: JSON.parse(JSON.stringify(items)),
       huddleResults: JSON.parse(JSON.stringify(this.state.contractor.huddleResults || {})),
       ppc: JSON.parse(JSON.stringify(ppc)),
+      remainder: JSON.parse(JSON.stringify((this.state.contractor.weekRemainder || []).filter(x => Number(x.fromWeek) === week))),
       note: (this.state.contractor.learningNote || '').trim(),
     });
     this.state.contractor.execArchive = arch;
