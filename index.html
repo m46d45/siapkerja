@@ -654,8 +654,8 @@
         <div x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
           <div class="flex items-end justify-between gap-2 mb-2">
             <div>
-              <h3 class="text-sm font-bold">Papan Pull Plan</h3>
-              <p class="text-[11px] text-ink-mute">Tarik dari kiri (serah terima) ke kanan (awal). Sticky berwarna penuh sesuai tim.</p>
+              <h3 class="text-sm font-bold">Pull Planning per Milestone</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff terhadap tim yang lain. Untuk simulasi ini, perencanaan dilakukan untuk milestone Struktur. Milestone lain sudah ditetapkan beserta constraint-nya, tergantung kualitas hasil desain.</p>
             </div>
             <span class="text-[11px] text-ink-mute" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
           </div>
@@ -2492,15 +2492,33 @@ Alpine.data('app', () => ({
     const w = Math.max(1, Math.min(n, Math.ceil(t * n)));
     this.setMilestoneWeek(phId, w);
   },
+  _weeksInPhase(ph, w) {
+    const p0 = Number(ph.startWeek) || 1;
+    const p1 = Number(ph.finishWeek) || p0;
+    const works = ph.works || [];
+    const gMin = works.length ? Math.min(...works.map(x => Number(x.startWeek) || p0)) : p0;
+    const gMax = works.length ? Math.max(...works.map(x => Number(x.finishWeek) || p0)) : p1;
+    const map = (gw) => {
+      const g = Number(gw) || gMin;
+      if (gMax === gMin) return p0;
+      const t = (g - gMin) / (gMax - gMin);
+      return Math.round(p0 + t * (p1 - p0));
+    };
+    let start = map(w.startWeek);
+    let finish = map(w.finishWeek);
+    if (finish < start) finish = start;
+    start = Math.max(p0, Math.min(p1, start));
+    finish = Math.max(p0, Math.min(p1, finish));
+    return { start, finish };
+  },
   get pullPhasesView() {
-    // Semua fase: sticky = pekerjaan × minggu × zona. Struktur = latihan; lain = given (read-only).
+    // Semua fase: sticky = pekerjaan × minggu × zona, minggu dari jendela milestone. Struktur = latihan; lain = given.
     return this.phasesView.slice().reverse().map(ph => {
       const isFocus = ph.id === FOCUS_PHASE;
       const stickies = [];
       for (const w of (ph.works || [])) {
         const zones = WORK_ZONES[w.id] || ['z3'];
-        const start = Number(w.startWeek) || 1;
-        const finish = Number(w.finishWeek) || start;
+        const { start, finish } = this._weeksInPhase(ph, w);
         const weeks = [];
         for (let m = start; m <= finish; m++) weeks.push(m);
         weeks.forEach((wk, wi) => {
@@ -2534,8 +2552,7 @@ Alpine.data('app', () => ({
       const stickies = [];
       for (const w of (ph.works || [])) {
         const zones = WORK_ZONES[w.id] || ['z3'];
-        const start = Number(w.startWeek) || 1;
-        const finish = Number(w.finishWeek) || start;
+        const { start, finish } = this._weeksInPhase(ph, w);
         const weeks = [];
         for (let m = start; m <= finish; m++) weeks.push(m);
         weeks.forEach((wk, wi) => {
