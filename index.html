@@ -3653,7 +3653,7 @@ Alpine.data('app', () => ({
       this._seedGivenConstraints();
     }
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
-    if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !((this.state.contractor.wwp || []).length)) this.buildWwp();
+    if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !this.state.contractor.wwpLocked) this.buildWwp();
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
         if (s === 'contractor-learning' && !this.state.contractor.huddleComplete) s = 'contractor-huddle';
     if (s === 'contractor-progress') this.progressDraft = null;
@@ -4180,13 +4180,9 @@ Alpine.data('app', () => ({
       if (c.id) placedSticky.add(c.id);
     }
     const ready = this._allStickies()
-      .filter(s => Number(s.startWeek) === week && !used.has(s.id) && !placedSticky.has(s.id))
+      .filter(s => Number(s.startWeek) === week && !used.has(s.id) && !placedSticky.has(s.id) && !this._stickyConsumed(s) && this._isWorkReady(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
-    if (!remItems.length && !items.length) {
-      const fallback = this._allStickies().filter(s => Number(s.startWeek) === week);
-      fallback.forEach((s, i) => items.push(this._makeWwpItem(s, days[Math.min(i, days.length - 1)], s.zoneLabel, false)));
-    }
     this.state.contractor.wwp = remItems.concat(items);
     this.state.contractor.ppc = [];
     this.state.contractor.wwpLocked = false;
