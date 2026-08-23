@@ -2067,15 +2067,16 @@ function makeChart(curve, maxJt, opts = {}) {
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const n = Math.max(1, (curve || []).length);
-  const ymax = Math.max(1, maxJt || 1);
   const yMode = opts.yMode || 'rp';
+  const ymax = yMode === 'pct' ? 100 : Math.max(1, maxJt || 1);
+  const yVal = (p) => yMode === 'pct' ? Number(p && p.planned) || 0 : Number(p && p.cumJt) || 0;
   const xOf = (week) => padL + (week / n) * innerW;
-  const yOf = (jt) => padT + (1 - jt / ymax) * innerH;
+  const yOf = (v) => padT + (1 - v / ymax) * innerH;
   const pts = [{ week: 0, planned: 0, cumJt: 0, x: xOf(0), y: yOf(0) }].concat(
     (curve || []).map((p) => ({
       ...p,
       x: xOf(p.week),
-      y: yOf(Number(p.cumJt) || 0),
+      y: yOf(yVal(p)),
     }))
   );
   const last = pts[pts.length - 1];
@@ -2112,7 +2113,7 @@ function makeChart(curve, maxJt, opts = {}) {
       actual.map((p) => ({
         ...p,
         x: xOf(p.week),
-        y: yOf(Number(p.cumJt) || 0),
+        y: yOf(yVal(p)),
       }))
     );
     const aline = smoothPath(apts);
@@ -2601,67 +2602,54 @@ Alpine.data('app', () => ({
     return log;
   },
   get physicalProgress() {
-    const planUnits = {};
-    for (const ph of (this.forwardPhasesView || [])) {
-      for (const s of (ph.stickies || [])) {
-        const pid = s.parentId;
-        if (!planUnits[pid]) planUnits[pid] = new Set();
-        planUnits[pid].add(this._zoneUnit(s.zoneLabel) || s.zoneId || s.id);
-      }
-    }
-    const weightBy = {};
-    for (const w of this.contractPlan) weightBy[w.id] = Number(w.weight) || 0;
+    const plan = this.contractPlan || [];
+    const totalCost = plan.reduce((s, w) => s + (Number(w.costJt) || 0), 0) || this.oeJt || 1;
     const cells = this._zoneCells();
     const inc = {};
     const parts = [];
-    let earned = 0;
-    const totalW = WORKS.reduce((s, w) => s + (weightBy[w.id] || Number(w.weight) || 0), 0) || 1;
+    let earnedCost = 0;
     for (const w of WORKS) {
-      const wt = weightBy[w.id] || Number(w.weight) || 0;
-      if (wt <= 0) continue;
-      const zones = WORK_ZONES[w.id] || [];
-      const plannedN = Math.max(1, (planUnits[w.id] ? planUnits[w.id].size : 0), zones.length);
+      const row = plan.find(x => x.id === w.id);
+      const cost = Number((row && row.costJt) || (totalCost * (Number(w.weight) || 0)) || 0);
       const mine = cells.filter(c => c.parentId === w.id);
-      const doneByUnit = {};
-      for (const c of mine) {
-        if (c.status !== 'done') continue;
-        const u = this._zoneUnit(c.zoneLabel) || this.prettyZone(c.zoneLabel);
+      const planned = Math.max(mine.length, (WORK_ZONES[w.id] || []).length, 1);
+      const doneCells = mine.filter(c => c.status === 'done');
+      const frac = Math.min(1, doneCells.length / planned);
+      earnedCost += cost * frac;
+      const piece = cost / planned;
+      for (const c of doneCells) {
         const wk = Number(c.week) || 0;
-        if (!doneByUnit[u] || wk > doneByUnit[u]) doneByUnit[u] = wk;
-      }
-      const nDone = Object.keys(doneByUnit).length;
-      const frac = Math.min(1, nDone / plannedN);
-      earned += wt * frac;
-      const piece = wt / plannedN;
-      for (const u of Object.keys(doneByUnit)) {
-        const wk = doneByUnit[u];
+        if (!wk) continue;
         inc[wk] = (inc[wk] || 0) + piece;
-        parts.push({ name: w.name, week: wk, pct: Math.round(piece * 1000) / 10, unit: u });
+        parts.push({ name: w.name, week: wk, pct: Math.round(piece / totalCost * 1000) / 10 });
       }
     }
-    const pct = Math.min(100, Math.round((earned / totalW) * 1000) / 10);
-    const maxW = Object.keys(inc).length ? Math.max(...Object.keys(inc).map(Number)) : 0;
-    const maxJt = this.negoBundle.maxJt || this.oeJt;
+    const pct = Math.min(100, Math.round(earnedCost / totalCost * 1000) / 10);
+    const maxW = Math.max(this.playWeek || 1, ...Object.keys(inc).map(Number), 1);
     const curve = [];
-    let cum = 0;
-    for (let week = 1; week <= Math.max(maxW, 1); week++) {
-      cum = Math.min(1, cum + (inc[week] || 0));
-      if (week <= maxW) {
-        curve.push({
-          week,
-          cumJt: Math.round(maxJt * cum * 10) / 10,
-          planned: Math.round(cum * 1000) / 10,
-        });
-      }
+    let cumCost = 0;
+    for (let week = 1; week <= maxW; week++) {
+      cumCost += inc[week] || 0;
+      const p = Math.min(100, Math.round(cumCost / totalCost * 1000) / 10);
+      curve.push({
+        week,
+        planned: p,
+        cumJt: Math.round(cumCost * 10) / 10,
+      });
+    }
+    if (curve.length) {
+      curve[curve.length - 1].planned = pct;
+      curve[curve.length - 1].cumJt = Math.round(earnedCost * 10) / 10;
     }
     const frozen = (this.negoBundle.curve || []).find(p => p.week === this.playWeek);
     const plannedNow = frozen ? Number(frozen.planned) : 0;
-    return { pct, plannedNow, parts, curve, maxW, inc };
+    return { pct, plannedNow, parts, curve, maxW, inc, totalCost, earnedCost };
   },
   get suggestedWeekIncrement() {
     const w = this.playWeek;
-    const inc = (this.physicalProgress && this.physicalProgress.inc) || {};
-    const fromInc = Math.round((Number(inc[w]) || 0) * 1000) / 10;
+    const pp = this.physicalProgress || {};
+    const tot = Number(pp.totalCost) || 1;
+    const fromInc = Math.round((Number((pp.inc || {})[w]) || 0) / tot * 1000) / 10;
     if (fromInc > 0) return fromInc;
     const fromParts = Math.round((this.physicalProgress.parts || []).filter(p => p.week === w).reduce((s, p) => s + p.pct, 0) * 10) / 10;
     if (fromParts > 0) return fromParts;
