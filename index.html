@@ -763,10 +763,13 @@
           </div>
           <ul class="divide-y divide-paper-line">
             <template x-for="t in teamCommitRows" :key="'tm'+t.id">
-              <li class="px-4 py-2.5 flex items-center justify-between gap-2 text-xs">
-                <div>
-                  <p class="font-medium" x-text="t.id"></p>
-                  <p class="text-ink-mute" x-text="t.phaseName+' · M'+t.startWeek+'–'+t.finishWeek"></p>
+              <li class="px-4 py-2.5 flex items-center justify-between gap-2 text-xs border-l-4" :style="'border-left-color:'+t.color">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="'background:'+t.color"></span>
+                  <div>
+                    <p class="font-medium" x-text="t.id"></p>
+                    <p class="text-ink-mute" x-text="t.phaseName+' · M'+t.startWeek+'–'+t.finishWeek"></p>
+                  </div>
                 </div>
                 <button type="button" class="px-3 py-1.5 rounded-full text-[11px] font-semibold"
                   :class="t.committed ? 'bg-forest-soft text-forest' : 'bg-paper border border-paper-line text-ink-soft'"
@@ -2961,7 +2964,8 @@ Alpine.data('app', () => ({
     return TEAMS.map(id => {
       const pid = TEAM_PHASE[id];
       const ph = phBy[pid] || { name: pid, startWeek: 1, finishWeek: 1 };
-      return { id, phaseName: ph.name, startWeek: ph.startWeek, finishWeek: ph.finishWeek, committed: !!comm[id] };
+      const meta = TEAM_META.find(m => m.id === id) || {};
+      return { id, phaseName: ph.name, startWeek: ph.startWeek, finishWeek: ph.finishWeek, committed: !!comm[id], color: meta.color || '#C45C26' };
     });
   },
   get committedCount() {
