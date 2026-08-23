@@ -41,7 +41,7 @@
     select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%2378716C' d='M1.4.6L6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem}
     .board-scroll{display:flex;gap:.5rem;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
     .phase-col{flex:0 0 172px;scroll-snap-align:start}
-    .phase-col-end{flex:0 0 84px;scroll-snap-align:start}
+    .phase-col-end{flex:0 0 56px;scroll-snap-align:start}
     .phase-col-given{flex:0 0 112px;scroll-snap-align:start}
     .phase-col-focus{flex:0 0 196px;scroll-snap-align:start}
     .sticky-note{display:block;width:100%;text-align:left;background:color-mix(in srgb, var(--c,#C45C26) 22%, #FFFcf8);border:1px solid color-mix(in srgb, var(--c,#C45C26) 35%, transparent);border-left:5px solid var(--c,#C45C26);border-radius:6px;box-shadow:0 1px 1px rgba(28,25,23,.06),0 4px 10px rgba(28,25,23,.06);padding:.65rem .7rem;min-height:84px;cursor:pointer}
@@ -665,10 +665,10 @@
           </div>
           <div class="board-scroll">
             <div class="phase-col-end">
-              <p class="text-[9px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Akhir</p>
-              <div class="rounded-lg border border-dashed border-forest/40 bg-forest-soft/50 p-2">
-                <p class="text-[11px] font-bold text-forest leading-tight">Serah terima</p>
-                <p class="text-[10px] text-forest mt-0.5" x-text="'M'+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
+              <p class="text-[8px] font-semibold uppercase tracking-wide text-forest mb-1 px-0.5">Akhir</p>
+              <div class="rounded-md border border-dashed border-forest/40 bg-forest-soft/50 p-1.5">
+                <p class="text-[9px] font-bold text-forest leading-tight">Serah terima</p>
+                <p class="text-[9px] text-forest mt-0.5" x-text="'M'+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
               </div>
             </div>
                         <template x-for="ph in pullPhasesView" :key="'col'+ph.id">
@@ -697,10 +697,10 @@
               </div>
             </template>
             <div class="phase-col-end">
-              <p class="text-[9px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
-              <div class="rounded-lg border border-dashed border-paper-line bg-paper/60 p-2">
-                <p class="text-[11px] font-bold text-ink-soft leading-tight">Mulai</p>
-                <p class="text-[10px] text-ink-mute mt-0.5">M1</p>
+              <p class="text-[8px] font-semibold uppercase tracking-wide text-ink-mute mb-1 px-0.5">Awal</p>
+              <div class="rounded-md border border-dashed border-paper-line bg-paper/60 p-1.5">
+                <p class="text-[9px] font-bold text-ink-soft leading-tight">Mulai</p>
+                <p class="text-[9px] text-ink-mute mt-0.5">M1</p>
               </div>
             </div>
           </div>
@@ -795,10 +795,10 @@
         </div>
         <div class="board-scroll">
           <div class="phase-col-end">
-            <p class="text-[9px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
-            <div class="rounded-lg border border-dashed border-paper-line bg-paper/60 p-2">
-              <p class="text-[11px] font-bold text-ink-soft leading-tight">Mulai</p>
-              <p class="text-[10px] text-ink-mute mt-0.5">M1</p>
+            <p class="text-[8px] font-semibold uppercase tracking-wide text-ink-mute mb-1 px-0.5">Awal</p>
+            <div class="rounded-md border border-dashed border-paper-line bg-paper/60 p-1.5">
+              <p class="text-[9px] font-bold text-ink-soft leading-tight">Mulai</p>
+              <p class="text-[9px] text-ink-mute mt-0.5">M1</p>
             </div>
           </div>
           <template x-for="ph in forwardPhasesView" :key="'fwd'+ph.id">
@@ -818,10 +818,10 @@
             </div>
           </template>
           <div class="phase-col-end">
-            <p class="text-[9px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Akhir</p>
-            <div class="rounded-lg border border-dashed border-forest/40 bg-forest-soft/50 p-2">
-              <p class="text-[11px] font-bold text-forest leading-tight">Serah terima</p>
-              <p class="text-[10px] text-forest mt-0.5" x-text="'M'+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
+            <p class="text-[8px] font-semibold uppercase tracking-wide text-forest mb-1 px-0.5">Akhir</p>
+            <div class="rounded-md border border-dashed border-forest/40 bg-forest-soft/50 p-1.5">
+              <p class="text-[9px] font-bold text-forest leading-tight">Serah terima</p>
+              <p class="text-[9px] text-forest mt-0.5" x-text="'M'+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
             </div>
           </div>
         </div>
