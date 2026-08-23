@@ -933,6 +933,10 @@
           <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-1" x-show="registryInsight">
             <p class="text-amber-900 leading-relaxed" x-text="registryInsight"></p>
           </div>
+          <div class="rounded-xl border border-terra/30 bg-terra-soft/40 p-3 text-xs space-y-1" x-show="lookConstraints.some(c => c.canResolve)">
+            <p class="font-semibold text-terra-dark">Cek janji make-ready sesi lalu</p>
+            <p class="text-ink-soft">Klik sticky yang bersangkutan, lalu Sudah dilaksanakan atau Gagal — baru susun WWP.</p>
+          </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <template x-for="slot in lookSlots" :key="slot.rel">
@@ -1756,7 +1760,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.17.0';
+const VER = '1.18.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 const OWNER_BUDGET_JT = 350;
 const OE_BASE_JT = 250;
@@ -2175,6 +2179,7 @@ function emptyContractor() {
     promoUsed:[],
     wwpSnapshot:null,
     weekFailedTypes:[],
+    execArchive:[],
   };
 }
 
@@ -2761,6 +2766,13 @@ Alpine.data('app', () => ({
     }
     return m[3] ? (z + '-' + mid + '-' + m[3]) : (z + '-' + mid);
   },
+  _zoneUnit(label) {
+    const p = this.prettyZone(label);
+    const m = p.match(/^(Z\d+-[a-z])/i);
+    if (m) return m[1];
+    const z = p.match(/^(Z\d+)/i);
+    return z ? z[1].toUpperCase() : p;
+  },
   _zoneRoot(label) {
     const m = String(label || '').match(/Z(\d+)/i);
     return m ? ('z' + m[1]) : '';
@@ -2857,7 +2869,7 @@ Alpine.data('app', () => ({
     const idx = {};
     const add = (c) => {
       if (!c.zoneLabel && !c.workId) return;
-      const k = String(c.parentId || '') + '|' + String(c.zoneLabel || '').toUpperCase() + '|' + c.week;
+      const k = String(c.parentId || '') + '|' + this.prettyZone(c.zoneLabel) + '|' + c.week;
       const prev = idx[k];
       if (prev != null) {
         if ((rank[c.status] || 0) <= (rank[cells[prev].status] || 0)) return;
@@ -3451,6 +3463,7 @@ Alpine.data('app', () => ({
     if (s === 'contractor-pm') s = 'contractor-master';
     if (s === 'contractor-production' && !this.state.contractor.pullLocked) s = 'contractor-phase';
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
+    if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !((this.state.contractor.wwp || []).length)) this.buildWwp();
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
         if (s === 'contractor-learning' && !this.state.contractor.huddleComplete) s = 'contractor-huddle';
     this.currentStage = s;
@@ -4132,6 +4145,12 @@ Alpine.data('app', () => ({
       alert('Susun WWP dulu.');
       return;
     }
+    const week = this.targetExecWeek;
+    const openL1 = this._allStickies().filter(s => Number(s.startWeek) === week && !this._isWorkReady(s.id));
+    if (openL1.length) {
+      alert('L1 / M' + week + ' masih ada constraint: ' + openL1.map(s => s.name + ' ' + this.prettyZone(s.zoneLabel)).join(', ') + '. Hilangkan dulu di Look-ahead Plan.');
+      return;
+    }
     this.state.contractor.wwpSnapshot = {
       wwp: JSON.parse(JSON.stringify(this.state.contractor.wwp || [])),
       weekRemainder: JSON.parse(JSON.stringify(this.state.contractor.weekRemainder || [])),
@@ -4195,7 +4214,7 @@ Alpine.data('app', () => ({
     return r ? r.status : null;
   },
   _zoneKey(label) {
-    return String(label || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    return this.prettyZone(label).toUpperCase();
   },
   _zonesOverlap(a, b) {
     const na = this._zoneKey(a), nb = this._zoneKey(b);
@@ -4502,21 +4521,21 @@ Alpine.data('app', () => ({
     }
     this.state.contractor.actualLog = log;
     const bag = [...(this.state.contractor.carryOver || [])].filter(x => Number(x.fromWeek) !== week);
-    const seenBag = new Set(bag.filter(x => Number(x.toWeek) === week + 1).map(x => x.stickyId));
+    const seenBag = new Set(bag.filter(x => Number(x.toWeek) === week + 1).map(x => this.prettyZone(x.zoneLabel)));
     for (const item of items) {
       const p = ppc.find(x => x.workId === item.id);
       if (p && p.status === 'done') continue;
-      const sid = item.workId;
-      if (!sid || seenBag.has(sid)) continue;
-      seenBag.add(sid);
+      const zlab = this.prettyZone(item.zoneLabel);
+      if (!zlab || seenBag.has(zlab)) continue;
+      seenBag.add(zlab);
       bag.push({
-        stickyId: sid,
+        stickyId: item.workId,
         parentId: item.parentId,
         name: item.name,
         team: item.team,
         color: item.color,
-        zoneLabel: item.zoneLabel,
-        zoneBase: item.origZoneLabel || String(item.zoneLabel || '').split('-')[0],
+        zoneLabel: zlab,
+        zoneBase: this._zoneUnit(item.origZoneLabel || item.zoneLabel),
         days: 1,
         fromWeek: week,
         toWeek: week + 1,
@@ -4525,6 +4544,15 @@ Alpine.data('app', () => ({
       });
     }
     this.state.contractor.carryOver = bag;
+    const arch = [...(this.state.contractor.execArchive || [])].filter(x => Number(x.week) !== week);
+    arch.push({
+      week,
+      wwp: JSON.parse(JSON.stringify(items)),
+      huddleResults: JSON.parse(JSON.stringify(this.state.contractor.huddleResults || {})),
+      ppc: JSON.parse(JSON.stringify(ppc)),
+      note: (this.state.contractor.learningNote || '').trim(),
+    });
+    this.state.contractor.execArchive = arch;
     this.state.contractor.weekClosed = true;
     this.save();
   },
