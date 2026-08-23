@@ -1558,7 +1558,7 @@
             </div>
             <div class="rounded-lg bg-paper-card border border-forest/20 p-2 text-center">
               <p class="text-[10px] text-forest">Progres fisik</p>
-              <p class="font-bold text-forest" x-text="lockedPhysicalPct+'%'"></p>
+              <p class="font-bold text-forest" x-text="displayedPhysicalPct+'%'"></p>
             </div>
             <div class="rounded-lg bg-paper-card border border-paper-line p-2 text-center">
               <p class="text-[10px] text-ink-mute">PPC</p>
@@ -1651,7 +1651,7 @@
         <div class="grid grid-cols-3 gap-2">
           <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
             <p class="text-[10px] text-forest">Progres fisik</p>
-            <p class="text-lg font-bold text-forest" x-text="lockedPhysicalPct+'%'"></p>
+            <p class="text-lg font-bold text-forest" x-text="displayedPhysicalPct+'%'"></p>
           </div>
           <div class="rounded-xl border border-terra/20 bg-terra-soft/30 p-3 text-center">
             <p class="text-[10px] text-terra">Rencana M<span x-text="playWeek"></span></p>
@@ -1664,11 +1664,13 @@
         </div>
 
         <div class="rounded-xl border-2 border-dashed border-terra/35 bg-terra-soft/20 p-3.5 space-y-2"
-          x-show="!progressLockForWeek && (state.contractor.huddleComplete || (state.contractor.weeklyProgress||[]).length)"
-          x-init="if (progressDraft==null) progressDraft = suggestedWeekIncrement">
+          x-show="!progressLockForWeek && (state.contractor.huddleComplete || (state.contractor.weeklyProgress||[]).length)">
           <p class="text-sm font-bold text-ink">Bakukan progres M<span x-text="playWeek"></span></p>
+          <p class="text-[11px] text-ink-soft">Default hitungan dari pekerjaan selesai minggu ini: <strong x-text="suggestedWeekIncrement"></strong>%</p>
           <div class="flex flex-wrap items-center gap-2">
-            <input type="number" min="0" max="100" step="0.1" class="field !py-1.5 !px-2 w-24 text-center" x-model.number="progressDraft">
+            <input type="number" min="0" max="100" step="0.1" class="field !py-1.5 !px-2 w-24 text-center"
+              :value="progressDraft==null ? suggestedWeekIncrement : progressDraft"
+              @input="progressDraft = $event.target.value==='' ? null : Number($event.target.value)">
             <span class="text-sm text-ink-mute">%</span>
             <button type="button" class="btn-primary text-sm" @click="lockProgress()">Bakukan progres M<span x-text="playWeek"></span></button>
           </div>
@@ -2539,7 +2541,26 @@ Alpine.data('app', () => ({
   },
   get suggestedWeekIncrement() {
     const w = this.playWeek;
-    return Math.round((this.physicalProgress.parts || []).filter(p => p.week === w).reduce((s, p) => s + p.pct, 0) * 10) / 10;
+    const inc = (this.physicalProgress && this.physicalProgress.inc) || {};
+    const fromInc = Math.round((Number(inc[w]) || 0) * 1000) / 10;
+    if (fromInc > 0) return fromInc;
+    const fromParts = Math.round((this.physicalProgress.parts || []).filter(p => p.week === w).reduce((s, p) => s + p.pct, 0) * 10) / 10;
+    if (fromParts > 0) return fromParts;
+    const wp = ((this.state.contractor && this.state.contractor.weeklyProgress) || []).find(r => Number(r.week) === w);
+    const curve = (this.negoBundle && this.negoBundle.curve) || [];
+    const pNow = Number((curve.find(x => Number(x.week) === w) || {}).planned) || 0;
+    const pPrev = Number((curve.find(x => Number(x.week) === w - 1) || {}).planned) || 0;
+    const slice = Math.max(0, pNow - pPrev);
+    if (wp && Number(wp.planned) > 0 && slice) {
+      return Math.round(1000 * (Number(wp.done) / Number(wp.planned)) * slice) / 10;
+    }
+    return Math.round(slice * 10) / 10;
+  },
+  get displayedPhysicalPct() {
+    if ((this.state.contractor.progressLocks || []).length) return this.lockedPhysicalPct;
+    const live = Number(this.physicalProgress && this.physicalProgress.pct);
+    if (live > 0) return live;
+    return this.suggestedWeekIncrement;
   },
   get progressLockForWeek() {
     const w = this.playWeek;
@@ -3492,6 +3513,7 @@ Alpine.data('app', () => ({
     if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !((this.state.contractor.wwp || []).length)) this.buildWwp();
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
         if (s === 'contractor-learning' && !this.state.contractor.huddleComplete) s = 'contractor-huddle';
+    if (s === 'contractor-progress') this.progressDraft = null;
     this.currentStage = s;
     this.state.currentStage = s;
     if (s === 'contractor-learning') this._ensurePpcFromHuddle();
