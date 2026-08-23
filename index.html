@@ -1623,6 +1623,26 @@
           <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
         </div>
 
+        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.execArchive||[]).length">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Arsip eksekusi</h3>
+            <p class="text-[11px] text-ink-mute mt-0.5">WWP & huddle minggu yang sudah digulir — baca saja.</p>
+          </div>
+          <div class="p-3 space-y-3">
+            <template x-for="a in state.contractor.execArchive.slice().reverse()" :key="'ea'+a.week">
+              <div class="rounded-lg border border-paper-line p-3 text-xs">
+                <p class="font-semibold mb-1.5">M<span x-text="a.week"></span></p>
+                <ul class="space-y-0.5">
+                  <template x-for="it in (a.wwp||[])" :key="'eait'+it.id">
+                    <li class="text-ink-soft" x-text="it.name+' · '+prettyZone(it.zoneLabel)+' · '+(it.day||'')"></li>
+                  </template>
+                </ul>
+                <p class="text-ink-mute mt-1" x-show="a.note" x-text="a.note"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <div class="grid grid-cols-3 gap-2">
           <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
             <p class="text-[10px] text-forest">Progres fisik</p>
