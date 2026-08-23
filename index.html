@@ -699,6 +699,8 @@
         </div>
 
         <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between">
+            <h3 class="text-sm font-bold">Komitmen tim (collaborative)</h3>
             <span class="text-[11px] text-ink-mute" x-text="committedCount+'/'+TEAMS.length+' commit'"></span>
           </div>
           <ul class="divide-y divide-paper-line">
