@@ -912,7 +912,7 @@
                       <span class="text-ink-mute font-normal" x-text="' '+row.done+'/'+row.total"></span>
                     </p>
                     <div class="flex flex-wrap gap-1">
-                      <template x-for="c in row.cells" :key="'zblc'+c.id">
+                      <template x-for="c in row.cells" :key="'zblc'+row.id+c.zoneLabel+c.week+c.status">
                         <span class="text-[10px] px-1.5 py-0.5 rounded border font-semibold"
                           :class="c.status==='done' ? 'bg-forest-soft text-forest border-forest/20' : (c.status==='carry' ? 'bg-red-50 text-red-700 border-red-200 border-dashed' : (c.status==='planned' ? 'bg-terra-soft text-terra border-terra/25' : 'bg-paper text-ink-mute border-paper-line'))"
                           x-text="prettyZone(c.zoneLabel)+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
@@ -2894,75 +2894,20 @@ Alpine.data('app', () => ({
     return c === p || c.startsWith(p + '-');
   },
   _carryStickies() {
-    const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
-    const week = off + 1;
-    const prev = week - 1;
-    if (prev < 1) return [];
-    const out = [];
-    const seen = new Set();
-    const push = (row) => {
-      const zone = String(row.zoneLabel || '').toUpperCase();
-      const k = zone || String(row.id || '');
-      if (!k || seen.has(k)) return;
-      seen.add(k);
-      const s = this._allStickies().find(x => x.id === row.id) || {};
-      out.push({
-        ...s,
-        id: row.id,
-        cellId: row.cellId || (row.id + '|' + zone),
-        parentId: row.parentId || s.parentId,
-        name: row.name || s.name,
-        team: row.team || s.team,
-        color: row.color || s.color,
-        zoneLabel: this.prettyZone(row.zoneLabel || s.zoneLabel),
-        startWeek: week,
-        carry: row.kind !== 'remainder',
-        scheduled: row.kind === 'remainder',
-        carryFrom: prev,
-        carryNote: row.carryNote || (row.kind === 'remainder' ? ('Dijadwalkan dari M' + prev) : ('Tidak selesai M' + prev)),
+    const play = this.targetExecWeek;
+    if (play < 2) return [];
+    return this._zoneCells()
+      .filter(c => c.status === 'carry' || c.fromRemainder)
+      .map(c => ({
+        ...c,
+        id: c.workId || c.id,
+        cellId: c.id,
+        startWeek: play,
+        carry: !c.fromRemainder,
+        scheduled: !!c.fromRemainder,
+        carryFrom: play - 1,
         days: 1,
-      });
-    };
-    const findSticky = (stickyId, name, zoneLabel) => {
-      if (stickyId && this._allStickies().some(x => x.id === stickyId)) return stickyId;
-      const hits = this._allStickies().filter(s => s.name === name && this._zoneMatches(s.zoneLabel, zoneLabel));
-      if (hits.length === 1) return hits[0].id;
-      const exact = hits.find(s => String(s.zoneLabel).toUpperCase() === String(zoneLabel||'').toUpperCase());
-      return exact ? exact.id : (hits[0] && hits[0].id);
-    };
-    for (const r of (this.state.contractor.weekRemainder || []).filter(x => Number(x.toWeek) === week)) {
-      const n = Math.max(1, Number(r.days) || 1);
-      for (let i = 0; i < n; i++) {
-        const zone = r.zoneBase ? (r.zoneBase + '-' + (Number(r.nextIndex || 1) + i)) : (r.zoneLabel || '');
-        push({
-          id: r.stickyId,
-          cellId: (r.id || r.stickyId) + '-' + i,
-          parentId: r.parentId, name: r.name, team: r.team, color: r.color,
-          zoneLabel: zone,
-          kind: 'remainder',
-          carryNote: 'Dijadwalkan dari M' + prev,
-        });
-      }
-    }
-    for (const a of this._allExecCells().filter(x => Number(x.week) === prev && !x.done)) {
-      push({
-        id: findSticky(a.stickyId, a.name, a.zoneLabel) || a.stickyId,
-        cellId: a.id,
-        parentId: a.parentId, name: a.name,
-        zoneLabel: a.zoneLabel,
-        carryNote: 'Tidak selesai M' + prev,
-      });
-    }
-    for (const r of (this.state.contractor.carryOver || []).filter(x => Number(x.toWeek) === week)) {
-      push({
-        id: findSticky(r.stickyId, r.name, r.zoneLabel || r.zoneBase) || r.stickyId,
-        cellId: r.stickyId + '|' + (r.zoneLabel || r.zoneBase),
-        parentId: r.parentId, name: r.name, team: r.team, color: r.color,
-        zoneLabel: r.zoneLabel || (r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : ''),
-        carryNote: r.note || ('Tidak selesai M' + prev),
-      });
-    }
-    return out;
+      }));
   },
   _huddleEver(id, status) {
     const hr = this.state.contractor.huddleResults || {};
@@ -2972,90 +2917,110 @@ Alpine.data('app', () => ({
     }
     return false;
   },
-  get zoneBoard() {
+  _zoneCells() {
     const play = this.targetExecWeek;
-    const wwp = this.state.contractor.wwp || [];
-    const log = this._allExecCells();
     const rank = { done: 3, carry: 2, planned: 1, future: 0 };
     const cells = [];
     const idx = {};
-    const add = (c) => {
-      if (!c.zoneLabel && !c.workId) return;
-      const k = String(c.parentId || '') + '|' + this.prettyZone(c.zoneLabel) + '|' + c.week;
+    const add = (raw) => {
+      const z = this.prettyZone(raw.zoneLabel);
+      const pid = this._workType(raw) || raw.parentId;
+      if (!z || !pid) return;
+      const status = raw.status || 'future';
+      const k = pid + '|' + z;
+      const row = {
+        id: k,
+        workId: raw.workId || raw.stickyId || raw.id,
+        parentId: pid,
+        name: raw.name,
+        team: raw.team,
+        zoneLabel: z,
+        zoneRoot: this._zoneRoot(z),
+        week: Number(raw.week) || play,
+        status,
+        color: raw.color || ((WORKS.find(w => w.id === pid) || {}).color),
+        fromRemainder: !!raw.fromRemainder,
+        carryNote: raw.carryNote || '',
+      };
       const prev = idx[k];
       if (prev != null) {
-        if ((rank[c.status] || 0) <= (rank[cells[prev].status] || 0)) return;
-        cells[prev] = c;
+        if ((rank[status] || 0) < (rank[cells[prev].status] || 0)) return;
+        cells[prev] = row;
         return;
       }
       idx[k] = cells.length;
-      cells.push(c);
+      cells.push(row);
     };
-    for (const item of wwp) {
+    for (const arch of ((this.state.contractor && this.state.contractor.execArchive) || [])) {
+      for (const it of (arch.wwp || [])) {
+        const p = (arch.ppc || []).find(x => x.workId === it.id);
+        add({
+          ...it,
+          week: arch.week,
+          status: (p && p.status === 'done') ? 'done' : 'carry',
+          carryNote: (p && p.status === 'done') ? '' : ('Tidak selesai M' + arch.week),
+        });
+      }
+      for (const r of (arch.remainder || [])) {
+        const n = Math.max(1, Number(r.days) || 1);
+        const start = Number(r.nextIndex) || 1;
+        const base = r.zoneBase || this._zoneUnit(r.zoneLabel);
+        for (let i = 0; i < n; i++) {
+          add({
+            parentId: this._workType(r) || r.parentId,
+            name: r.name, team: r.team, color: r.color,
+            zoneLabel: base ? (base + '-' + (start + i)) : r.zoneLabel,
+            week: Number(r.toWeek) || (Number(arch.week) + 1),
+            status: 'planned',
+            fromRemainder: true,
+            carryNote: 'Dijadwalkan dari M' + arch.week,
+          });
+        }
+      }
+    }
+    for (const a of ((this.state.contractor && this.state.contractor.actualLog) || [])) {
+      add({
+        ...a,
+        week: a.week,
+        status: a.done ? 'done' : 'carry',
+        carryNote: a.done ? '' : ('Tidak selesai M' + a.week),
+      });
+    }
+    for (const r of ((this.state.contractor && this.state.contractor.weekRemainder) || [])) {
+      const n = Math.max(1, Number(r.days) || 1);
+      const start = Number(r.nextIndex) || 1;
+      const base = r.zoneBase || this._zoneUnit(r.zoneLabel);
+      for (let i = 0; i < n; i++) {
+        add({
+          parentId: this._workType(r) || r.parentId,
+          name: r.name, team: r.team, color: r.color,
+          zoneLabel: base ? (base + '-' + (start + i)) : r.zoneLabel,
+          week: Number(r.toWeek) || play,
+          status: 'planned',
+          fromRemainder: true,
+          carryNote: 'Dijadwalkan dari M' + (Number(r.fromWeek) || (play - 1)),
+        });
+      }
+    }
+    for (const item of ((this.state.contractor && this.state.contractor.wwp) || [])) {
       let status = 'planned';
       if (this._huddleEver(item.id, 'done')) status = 'done';
       else if (item.carryNote || this._huddleEver(item.id, 'failed') || this._huddleEver(item.id, 'extended')) status = 'carry';
-      add({
-        id: item.id,
-        workId: item.workId,
-        parentId: this._workType(item),
-        name: item.name,
-        zoneLabel: item.zoneLabel || '',
-        zoneRoot: this._zoneRoot(item.zoneLabel),
-        week: play,
-        day: item.day,
-        status,
-        color: item.color,
-      });
-    }
-    for (const a of log) {
-      const w = Number(a.week);
-      if (w === play && wwp.length) continue;
-      const pid = this._workType(a) || a.parentId;
-      add({
-        id: a.id,
-        workId: a.stickyId,
-        parentId: pid,
-        name: a.name,
-        zoneLabel: a.zoneLabel || '',
-        zoneRoot: this._zoneRoot(a.zoneLabel),
-        week: w,
-        status: a.done ? 'done' : 'carry',
-        color: ((WORKS.find(x => x.id === pid) || {}).color),
-      });
+      add({ ...item, week: play, status });
     }
     for (const s of this._allStickies()) {
-      const w = Number(s.startWeek);
       const childed = cells.some(c => c.parentId === s.parentId && this._zoneMatches(s.zoneLabel, c.zoneLabel) && this.prettyZone(c.zoneLabel) !== this.prettyZone(s.zoneLabel));
       if (childed) continue;
+      const w = Number(s.startWeek);
       let status = 'future';
       if (w < play) status = 'carry';
       else if (w === play) status = 'planned';
-      add({
-        id: s.id,
-        workId: s.id,
-        parentId: s.parentId,
-        name: s.name,
-        zoneLabel: s.zoneLabel || '',
-        zoneRoot: this._zoneRoot(s.zoneLabel),
-        week: w,
-        status,
-        color: s.color,
-      });
+      add({ ...s, week: w, status, workId: s.id });
     }
-    for (const c of this._carryStickies()) {
-      add({
-        id: c.cellId || ('c' + c.id),
-        workId: c.id,
-        parentId: c.parentId,
-        name: c.name,
-        zoneLabel: c.zoneLabel || '',
-        zoneRoot: this._zoneRoot(c.zoneLabel),
-        week: play,
-        status: c.scheduled ? 'planned' : 'carry',
-        color: c.color,
-      });
-    }
+    return cells;
+  },
+  get zoneBoard() {
+    const cells = this._zoneCells();
     const rows = WORKS.map(w => {
       const list = cells.filter(c => c.parentId === w.id)
         .sort((a, b) => (Number(a.week) - Number(b.week)) || String(a.zoneLabel).localeCompare(String(b.zoneLabel)));
