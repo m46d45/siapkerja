@@ -578,26 +578,12 @@
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
             <div>
               <h3 class="text-sm font-bold">Milestone</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5">Kapan fase selesai — titik waktu, bukan durasi. Pilih milestone, ketuk minggu pada garis. Lalu kunci.</p>
+              <p class="text-[11px] text-ink-mute mt-0.5">Kapan fase selesai. Tarik batang tiap milestone pada garis waktu, lalu kunci.</p>
             </div>
             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.milestonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.milestonesLocked ? 'Terkunci' : 'Belum dikunci'"></span>
           </div>
           <div class="p-4 space-y-3">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <template x-for="ph in phasesView" :key="'ms'+ph.id">
-                <button type="button" class="text-left rounded-xl border p-3"
-                  :class="state.contractor.selectedMilestone===ph.id ? 'border-terra bg-terra-soft/40' : 'border-paper-line bg-paper-card'"
-                  :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked"
-                  @click="state.contractor.selectedMilestone=ph.id">
-                  <p class="text-[10px] uppercase tracking-wide text-ink-mute">Milestone</p>
-                  <p class="text-sm font-bold leading-tight" x-text="ph.name"></p>
-                  <p class="text-xs font-semibold tabular-nums mt-1" :style="'color:'+ph.color" x-text="'Minggu '+ph.week"></p>
-                  <p class="text-[10px] text-ink-mute mt-0.5" x-show="!state.contractor.milestonesLocked" x-text="'Default Gantt: M'+ph.derivedWeek"></p>
-                </button>
-              </template>
-            </div>
             <div class="rounded-xl border border-paper-line bg-paper/40 p-3 overflow-x-auto">
-              <p class="text-[10px] uppercase tracking-wide text-ink-mute mb-2">Garis waktu kontrak</p>
               <div class="min-w-[480px]">
                 <div class="flex mb-1">
                   <div class="w-24 shrink-0"></div>
@@ -608,24 +594,27 @@
                   </div>
                 </div>
                 <template x-for="ph in phasesView" :key="'tl'+ph.id">
-                  <div class="flex items-center h-8 border-t border-paper-line/70">
-                    <div class="w-24 shrink-0 pr-2 text-[10px] font-semibold truncate" :style="'color:'+ph.color" x-text="ph.name"></div>
-                    <div class="flex-1 flex">
-                      <template x-for="w in milestoneTimelineWeeks" :key="'tc'+ph.id+w">
-                        <button type="button" class="flex-1 h-8 relative border-l border-paper-line/50"
-                          :class="state.contractor.selectedMilestone===ph.id && !state.contractor.milestonesLocked ? 'bg-terra-soft/30' : ''"
-                          :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked"
-                          @click="state.contractor.selectedMilestone=ph.id; setMilestoneWeek(ph.id, w)"
-                          :title="ph.name+' · M'+w">
-                          <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rotate-45 border border-white shadow-sm"
-                            x-show="Number(ph.week)===w" :style="'background:'+ph.color"></span>
-                        </button>
-                      </template>
+                  <div class="flex items-center h-11 border-t border-paper-line/70">
+                    <div class="w-24 shrink-0 pr-2">
+                      <p class="text-[10px] font-semibold leading-tight truncate" :style="'color:'+ph.color" x-text="ph.name"></p>
+                      <p class="text-[10px] tabular-nums text-ink-mute" x-text="'M'+ph.week"></p>
+                    </div>
+                    <div class="flex-1 relative h-9 select-none"
+                      :class="state.contractor.milestonesLocked || state.contractor.pullLocked ? 'cursor-default' : 'cursor-grab'"
+                      @pointerdown="startMilestoneDrag(ph.id, $event)">
+                      <div class="absolute inset-0 flex pointer-events-none">
+                        <template x-for="w in milestoneTimelineWeeks" :key="'tg'+ph.id+w">
+                          <div class="flex-1 border-l border-paper-line/50"></div>
+                        </template>
+                      </div>
+                      <div class="absolute top-1/2 h-3.5 rounded-full -translate-y-1/2 opacity-80 pointer-events-none" :style="milestoneBarStyle(ph)"></div>
+                      <div class="absolute top-1/2 w-3.5 h-3.5 rotate-45 -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow pointer-events-none" :style="milestoneHandleStyle(ph)"></div>
                     </div>
                   </div>
                 </template>
               </div>
             </div>
+            <p class="text-[11px] text-ink-mute" x-show="!state.contractor.milestonesLocked">Default mengikuti Gantt kontrak. Tarik ujung batang ke minggu yang diinginkan.</p>
             <div class="flex flex-wrap gap-2" x-show="!state.contractor.pullLocked">
               <button type="button" class="btn-primary text-sm" x-show="!state.contractor.milestonesLocked" @click="lockMilestones()">Kunci milestone</button>
               <button type="button" class="btn-danger text-sm" x-show="state.contractor.milestonesLocked" @click="unlockMilestones()">Unlock milestone</button>
@@ -2464,6 +2453,42 @@ Alpine.data('app', () => ({
     const weeks = [];
     for (let i = 1; i <= n; i++) weeks.push(i);
     return weeks;
+  },
+  milestoneBarStyle(ph) {
+    const n = (this.milestoneTimelineWeeks || []).length || 12;
+    const start = Number(ph.startWeek) || 1;
+    const end = Number(ph.week) || start;
+    const left = ((start - 1) / n) * 100;
+    const width = (Math.max(1, end - start + 1) / n) * 100;
+    return 'left:' + left + '%;width:' + width + '%;background:' + (ph.color || '#C45C26');
+  },
+  milestoneHandleStyle(ph) {
+    const n = (this.milestoneTimelineWeeks || []).length || 12;
+    const end = Number(ph.week) || 1;
+    const left = ((end - 0.5) / n) * 100;
+    return 'left:' + left + '%;background:' + (ph.color || '#C45C26');
+  },
+  startMilestoneDrag(phId, e) {
+    if (this.state.contractor.milestonesLocked || this.state.contractor.pullLocked) return;
+    const track = e.currentTarget;
+    const move = (ev) => this._applyMilestoneDrag(phId, track, ev);
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    if (track.setPointerCapture && e.pointerId != null) {
+      try { track.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+    this._applyMilestoneDrag(phId, track, e);
+  },
+  _applyMilestoneDrag(phId, track, ev) {
+    const rect = track.getBoundingClientRect();
+    const n = (this.milestoneTimelineWeeks || []).length || 12;
+    const t = (ev.clientX - rect.left) / Math.max(1, rect.width);
+    const w = Math.max(1, Math.min(n, Math.ceil(t * n)));
+    this.setMilestoneWeek(phId, w);
   },
   get pullPhasesView() {
     // Semua fase: sticky = pekerjaan × minggu × zona. Struktur = latihan; lain = given (read-only).
