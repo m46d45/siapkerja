@@ -1052,7 +1052,7 @@
                         :style="'border-left:4px solid '+(item.color||'#C45C26')+';background:color-mix(in srgb, '+(item.color||'#C45C26')+' 18%, #FFFcf8)'">
                         <p class="font-semibold text-ink" x-text="item.name"></p>
                         <p class="text-ink-soft" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
-                        <p class="text-ink-mute" x-text="item.promoted ? 'dipromosikan' : 'rencana'"></p>
+                        <p class="text-ink-mute" x-text="item.carryNote || (item.promoted ? 'dipromosikan' : 'rencana')"></p>
                         <select class="mt-1 w-full text-[10px] border border-paper-line rounded" :disabled="state.contractor.weekClosed" @change="moveWwpItem(item.id, $event.target.value)">
                           <template x-for="dd in WWP_DAYS" :key="dd.id+'m'+item.id">
                             <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
@@ -3662,27 +3662,37 @@ Alpine.data('app', () => ({
     const remainders = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) === week);
     const remIds = new Set(remainders.map(r => r.stickyId));
     const used = this._promoUsedIdSet();
-    const ready = this._allStickies()
-      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !remIds.has(s.id))
-      .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const remItems = [];
-    remainders.forEach((r, ri) => {
+    remainders.forEach((r) => {
       const sticky = this._allStickies().find(s => s.id === r.stickyId) || {
         id: r.stickyId, parentId: r.parentId, name: r.name, team: r.team, color: r.color, zoneLabel: r.zoneBase,
       };
       for (let i = 0; i < Number(r.days || 1); i++) {
-        const it = this._makeWwpItem(sticky, days[Math.min(i, days.length - 1)], r.zoneBase + '-' + (Number(r.nextIndex || 1) + i), true);
+        const it = this._makeWwpItem(sticky, days[Math.min(remItems.length, days.length - 1)], r.zoneBase + '-' + (Number(r.nextIndex || 1) + i), true);
         it.canSplit = false;
         it.isLead = i === 0;
         it.origZoneLabel = r.zoneBase;
+        it.carryNote = 'Sisa dari M' + (week - 1);
         remItems.push(it);
       }
     });
+    for (const c of this._carryStickies()) {
+      if (remIds.has(c.id) || used.has(c.id)) continue;
+      if ((this.state.contractor.wwp || []).some(x => x.workId === c.id)) continue;
+      const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], c.zoneLabel, true);
+      it.canSplit = true;
+      it.carryNote = c.carryNote || ('Tidak selesai M' + (week - 1));
+      remItems.push(it);
+      remIds.add(c.id);
+    }
+    const ready = this._allStickies()
+      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !remIds.has(s.id))
+      .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
     this.state.contractor.wwp = remItems.concat(items);
     this.state.contractor.weekRemainder = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) !== week);
     this.state.contractor.ppc = [];
-        this.state.contractor.wwpLocked = false;
+    this.state.contractor.wwpLocked = false;
     this.state.contractor.huddleDayIdx = 0;
     this.state.contractor.huddleResults = {};
     this.state.contractor.followUps = [];
