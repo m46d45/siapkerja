@@ -55,10 +55,6 @@
     .gantt-bar-act{position:absolute;top:13px;height:8px;border-radius:2px;min-width:4px}
     .house-wrap svg{width:100%;height:auto;display:block}
     .house-wrap.compact svg{max-height:220px}
-    details > summary::-webkit-details-marker{display:none}
-    details > summary{list-style:none}
-    details[open] .arch-closed{display:none}
-    details:not([open]) .arch-open{display:none}
   </style>
 </head>
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
@@ -78,6 +74,7 @@
     </div>
     <div class="flex items-center gap-1.5 shrink-0">
       <button type="button" @click="openManual()" class="px-2.5 py-1.5 text-xs font-medium text-ink-soft rounded-lg">Manual</button>
+      <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="px-2.5 py-1.5 text-xs font-semibold text-terra rounded-lg">Unduh PDF</a>
       <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg hidden sm:inline">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
         Muat sesi
@@ -143,21 +140,13 @@
 
 <main class="max-w-3xl mx-auto px-4 py-5 pb-24">
 
-  <div class="rounded-xl border border-terra/20 bg-terra-soft/25 px-4 py-3 text-xs flex flex-wrap items-start justify-between gap-2" x-show="currentStage!=='manual' && tabGuide">
-    <div class="min-w-0">
-      <p class="font-semibold text-terra" x-text="'Di tab ini · '+tabGuide.title"></p>
-      <p class="text-ink-soft mt-0.5 leading-relaxed" x-text="tabGuide.blurb"></p>
-    </div>
-    <button type="button" class="text-[11px] font-semibold text-terra shrink-0" @click="openManual(currentStage)">Manual lengkap →</button>
-  </div>
-
   <section x-show="currentStage==='manual'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Manual mahasiswa</p>
           <h2 class="text-xl font-bold text-ink">SiapKerja! · Last Planner System</h2>
-          <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata. Versi 1.19 — konstruksi default 10 minggu, latihan pull Pondasi + Struktur.</p>
+          <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata.</p>
         </div>
         <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="btn-primary !text-xs !py-2 shrink-0">Unduh PDF</a>
       </div>
@@ -196,16 +185,17 @@
           <div>
             <label class="block text-sm font-medium mb-1.5">Durasi desain</label>
             <select class="field" x-model.number="state.owner.designDuration" :disabled="state.owner.locked" @change="recalcPlan()">
-              <option value="2">2 minggu</option>
               <option value="4">4 minggu</option>
+              <option value="6">6 minggu</option>
+              <option value="8">8 minggu</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1.5">Durasi konstruksi</label>
             <select class="field" x-model.number="state.owner.constructionDuration" :disabled="state.owner.locked" @change="recalcPlan()">
-              <option value="8">8 minggu</option>
-              <option value="10">10 minggu</option>
               <option value="12">12 minggu</option>
+              <option value="16">16 minggu</option>
+              <option value="20">20 minggu</option>
             </select>
           </div>
           <div>
@@ -410,7 +400,7 @@
             <div>
               <label class="block text-sm font-medium mb-1.5">Durasi ditawarkan</label>
               <select class="field" x-model.number="state.negotiation.bidDuration" :disabled="state.negotiation.deal">
-                <option :value="state.owner.constructionDuration-2" x-show="state.owner.constructionDuration>8" x-text="(state.owner.constructionDuration-2)+' minggu (lebih cepat)'"></option>
+                <option :value="state.owner.constructionDuration-2" x-show="state.owner.constructionDuration>12" x-text="(state.owner.constructionDuration-2)+' minggu (lebih cepat)'"></option>
                 <option :value="state.owner.constructionDuration" x-text="state.owner.constructionDuration+' minggu (sesuai pemilik)'"></option>
                 <option :value="state.owner.constructionDuration+2" x-text="(state.owner.constructionDuration+2)+' minggu (lebih lama)'"></option>
               </select>
@@ -699,9 +689,9 @@
           <div class="mb-2">
             <div class="flex items-end justify-between gap-2">
               <h3 class="text-sm font-bold">Pull Planning per Milestone</h3>
-              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+reviewedFocusTotal+' sticky latihan ditinjau'"></span>
+              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+reviewedFocusTotal+' sticky Struktur ditinjau'"></span>
             </div>
-            <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff. Latihan: milestone Pondasi dan Struktur. Atap & MEP serta Finishing sudah given; constraint-nya dari kualitas hasil desain.</p>
+            <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff terhadap tim yang lain. Untuk simulasi ini, perencanaan dilakukan untuk milestone Struktur. Milestone lain sudah ditetapkan beserta constraint-nya, tergantung kualitas hasil desain.</p>
           </div>
           <div class="board-scroll">
             <div class="phase-col-end">
@@ -918,14 +908,6 @@
 
         <div x-show="state.contractor.pullLocked" class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="sessionWeek"></span></h3>
-          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" x-show="activeLookScenarios.length">
-            <p class="font-semibold">Skenario gangguan di jendela ini</p>
-            <ul class="mt-1 space-y-0.5">
-              <template x-for="sc in activeLookScenarios" :key="'sc'+sc.id">
-                <li x-text="'M'+sc.week+' · '+sc.note"></li>
-              </template>
-            </ul>
-          </div>
           <div class="rounded-xl border border-paper-line bg-paper-card p-3 space-y-2">
             <div class="flex gap-1 overflow-x-auto pb-1">
               <template x-for="m in timelineWeeks" :key="'tm'+m.n">
@@ -1102,8 +1084,7 @@
                   </div>
                 </div>
               </template>
-              <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0 && !projectComplete" @click="buildWwp(); setStage('contractor-wwp')">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
-              <p class="text-sm text-forest font-semibold" x-show="projectComplete">Proyek selesai. Tidak ada Look-ahead berikutnya — buka tab Laporan.</p>
+              <button type="button" class="btn-primary text-sm mt-1" x-show="targetExecWeek>0" @click="buildWwp(); setStage('contractor-wwp')">Susun WWP minggu M<span x-text="targetExecWeek"></span> →</button>
             </div>
           </div>        
 
@@ -1158,11 +1139,12 @@
             </div>
           </div>
         </div>
-        <div class="rounded-xl border border-dashed border-terra/30 bg-terra-soft/20 p-3 text-xs text-ink-soft" x-show="!(state.contractor.wwp||[]).length">
-          L1 minggu ini kosong (pekerjaan sudah dipromosikan sebelumnya). Jadwal hari masih bisa diisi dari backlog Workable di bawah.
+        <div x-show="!(state.contractor.wwp||[]).length" class="rounded-xl border border-dashed border-paper-line p-6 text-center space-y-2">
+          <p class="text-sm text-ink-soft">WWP belum disusun. Dari Look-ahead, klik Susun WWP.</p>
+          <button type="button" class="btn-primary text-sm" @click="setStage('contractor-production')">← Look-ahead Plan</button>
         </div>
 
-        <div class="space-y-4">
+        <div x-show="(state.contractor.wwp||[]).length" class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="playWeek"></span></h3>
           <p class="text-[11px] text-ink-soft">Pecah ke hari: Z1 menjadi Z1-a-1, Z1-a-2… · Z2-a menjadi Z2-a-1, Z2-a-2… Sisa setelah Sabtu ke minggu depan.</p>
           <div class="overflow-x-auto">
@@ -1308,10 +1290,6 @@
 
         <div x-show="state.contractor.wwpLocked" class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="playWeek"></span> · <span x-text="huddleDayLabel"></span></h3>
-          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" x-show="weatherToday">
-            <p class="font-semibold">Skenario: hujan Sen–Sel (M6)</p>
-            <p class="mt-0.5">Tidak bisa centang hijau hari ini. Perpanjang atau gagal, alasan Cuaca. Setelah Rabu, sisa hari bisa dijalankan cepat jika tidak ada kunci lain.</p>
-          </div>
 
           <div class="rounded-xl border border-paper-line overflow-hidden" x-show="zoneBoard.rows.length">
             <div class="px-4 py-2.5 bg-paper/60 border-b border-paper-line flex flex-wrap items-center justify-between gap-2">
@@ -1473,7 +1451,6 @@
 
           <div class="flex flex-wrap gap-2 pt-1">
             <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleDayIdx<5 && !state.contractor.huddleComplete" @click="nextHuddleDay()">Lanjut hari berikutnya →</button>
-            <button type="button" class="btn-ghost text-sm border border-terra/30" x-show="!state.contractor.huddleComplete && canFastForwardHuddle" @click="fastForwardHuddle()">Jalankan sisa hari (tanpa gangguan)</button>
             <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleDayIdx>=5 && !state.contractor.huddleComplete" @click="completeHuddle()">Selesai minggu ini, lanjut evaluasi</button>
             <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleComplete" @click="setStage('contractor-wwp')">Ke PPC di tab WWP →</button>
           </div>
@@ -1613,9 +1590,8 @@
           </div>
           <div class="flex flex-wrap gap-2">
             <button type="button" class="btn-primary text-sm" x-show="!state.contractor.weekClosed" @click="lockLearning()">Kunci evaluasi minggu ini →</button>
-            <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed && !projectComplete" @click="rollLookahead()">Look-ahead Plan 4 minggu ke depan</button>
-            <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed && projectComplete" @click="setStage('contractor-progress')">Tutup proyek · Laporan</button>
-            <button type="button" class="btn-ghost text-sm" x-show="state.contractor.weekClosed && !projectComplete" @click="setStage('contractor-progress')">Lihat Laporan Proyek</button>
+            <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed" @click="rollLookahead()">Look-ahead Plan 4 minggu ke depan</button>
+            <button type="button" class="btn-ghost text-sm" x-show="state.contractor.weekClosed" @click="setStage('contractor-progress')">Lihat Laporan Proyek</button>
           </div>
         </div>
       </div>
@@ -1629,41 +1605,12 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Progress</p>
-          <h2 class="text-xl font-bold text-ink" x-text="projectComplete ? 'Proyek ditutup' : ('Sesi · M'+playWeek)"></h2>
-          <p class="text-sm text-ink-soft mt-1" x-text="projectComplete ? 'Tidak ada kegiatan terjadwal tersisa. Semua pekerjaan selesai.' : 'Laporan akumulatif ke Owner. Gantt, Kurva S, PPC.'"></p>
+          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span></h2>
+          <p class="text-sm text-ink-soft mt-1">Laporan akumulatif ke Owner. Gantt, Kurva S, PPC.</p>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full border"
-          :class="projectComplete ? 'bg-forest-soft text-forest border-forest/25' : 'bg-terra-soft text-terra border-terra/20'"
-          x-text="projectComplete ? 'Selesai' : ('Sesi M'+playWeek)"></span>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek"></span>
       </div>
       <div class="p-5 space-y-4 text-xs">
-        <div class="rounded-xl border border-forest/30 bg-forest-soft/40 p-4 space-y-3" x-show="projectComplete">
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-forest">Proyek ditutup</p>
-          <p class="text-sm text-ink leading-relaxed">Tidak ada lagi kegiatan terjadwal. Semua pekerjaan, termasuk serah terima, sudah selesai. Look-ahead dan Weekly Work Plan tidak dilanjutkan.</p>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div class="rounded-lg bg-paper-card border border-paper-line p-2 text-center">
-              <p class="text-[10px] text-ink-mute">Kontrak</p>
-              <p class="font-bold" x-text="projectCloseStats.contractWeeks+' mgg'"></p>
-              <p class="text-[10px] text-ink-mute" x-text="projectCloseStats.contractCalDays+' hari kalender'"></p>
-            </div>
-            <div class="rounded-lg bg-paper-card border border-forest/25 p-2 text-center">
-              <p class="text-[10px] text-forest">Aktual</p>
-              <p class="font-bold text-forest" x-text="projectCloseStats.actualWeeks+' mgg'"></p>
-              <p class="text-[10px] text-forest" x-text="projectCloseStats.actualCalDays+' hari kalender'"></p>
-            </div>
-            <div class="rounded-lg bg-paper-card border border-paper-line p-2 text-center">
-              <p class="text-[10px] text-ink-mute">Hari kerja (Sen–Sab)</p>
-              <p class="font-bold" x-text="projectCloseStats.actualWorkDays+' / '+projectCloseStats.contractWorkDays"></p>
-            </div>
-            <div class="rounded-lg bg-paper-card border p-2 text-center"
-              :class="projectCloseStats.ahead ? 'border-forest/25' : (projectCloseStats.late ? 'border-amber-200' : 'border-paper-line')">
-              <p class="text-[10px] text-ink-mute">Selisih</p>
-              <p class="font-bold" :class="projectCloseStats.ahead ? 'text-forest' : (projectCloseStats.late ? 'text-amber-800' : 'text-ink')"
-                x-text="projectCloseStats.ahead ? ('−'+projectCloseStats.savedWeeks+' mgg') : (projectCloseStats.late ? ('+'+(-projectCloseStats.savedWeeks)+' mgg') : 'sesuai')"></p>
-              <p class="text-[10px] text-ink-mute" x-text="projectCloseStats.ahead ? 'lebih cepat' : (projectCloseStats.late ? 'terlambat' : 'tepat waktu')"></p>
-            </div>
-          </div>
-        </div>
         <div class="rounded-xl border border-forest/20 bg-forest-soft/25 p-4 space-y-2">
           <div class="flex items-start justify-between gap-3">
             <div>
@@ -1711,7 +1658,7 @@
                 <div class="flex items-center h-9 border-t border-paper-line/70">
                   <div class="gantt-label">
                     <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
-                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+'–'+row.actEnd+' ('+row.calWeeks+' mgg)') : ' · belum aktual')"></p>
+                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual '+row.earnedWeeks+' mgg ('+row.actPct+'%)') : ' · belum aktual')"></p>
                   </div>
                   <div class="flex-1 relative h-9">
                     <div class="absolute inset-0 flex">
@@ -1754,6 +1701,26 @@
           <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
         </div>
 
+        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.execArchive||[]).length">
+          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
+            <h3 class="text-sm font-bold">Arsip eksekusi</h3>
+            <p class="text-[11px] text-ink-mute mt-0.5">WWP & huddle minggu yang sudah digulir — baca saja.</p>
+          </div>
+          <div class="p-3 space-y-3">
+            <template x-for="a in state.contractor.execArchive.slice().reverse()" :key="'ea'+a.week">
+              <div class="rounded-lg border border-paper-line p-3 text-xs">
+                <p class="font-semibold mb-1.5">M<span x-text="a.week"></span></p>
+                <ul class="space-y-0.5">
+                  <template x-for="it in (a.wwp||[])" :key="'eait'+it.id">
+                    <li class="text-ink-soft" x-text="it.name+' · '+prettyZone(it.zoneLabel)+' · '+(it.day||'')"></li>
+                  </template>
+                </ul>
+                <p class="text-ink-mute mt-1" x-show="a.note" x-text="a.note"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <div class="grid grid-cols-3 gap-2">
           <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
             <p class="text-[10px] text-forest">Progres fisik</p>
@@ -1770,7 +1737,7 @@
         </div>
 
         <div class="rounded-xl border-2 border-dashed border-terra/35 bg-terra-soft/20 p-3.5 space-y-2"
-          x-show="!projectComplete && !progressLockForWeek && (state.contractor.huddleComplete || (state.contractor.weeklyProgress||[]).length)">
+          x-show="!progressLockForWeek && (state.contractor.huddleComplete || (state.contractor.weeklyProgress||[]).length)">
           <p class="text-sm font-bold text-ink">Bakukan progres M<span x-text="playWeek"></span></p>
           <p class="text-[11px] text-ink-soft">Default hitungan dari pekerjaan selesai minggu ini: <strong x-text="suggestedWeekIncrement"></strong>%</p>
           <div class="flex flex-wrap items-center gap-2">
@@ -1782,7 +1749,7 @@
           </div>
         </div>
         <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-[11px] text-forest"
-          x-show="!projectComplete && progressLockForWeek">
+          x-show="progressLockForWeek">
           M<span x-text="playWeek"></span> terkunci:
           <strong x-text="'+'+(progressLockForWeek&&progressLockForWeek.increment)+'%'"></strong>
           fisik.
@@ -1879,35 +1846,10 @@
             </div>
           </template>
         </div>
-
-        <details class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.execArchive||[]).length">
-          <summary class="px-4 py-3 bg-paper/60 cursor-pointer list-none flex items-center justify-between gap-2">
-            <span>
-              <span class="text-sm font-bold">Arsip eksekusi</span>
-              <span class="text-[11px] text-ink-mute ml-1.5" x-text="(state.contractor.execArchive||[]).length+' minggu · buka jika perlu'"></span>
-            </span>
-            <span class="text-[11px] font-semibold text-terra arch-closed">Tampilkan</span>
-            <span class="text-[11px] font-semibold text-ink-soft arch-open">Tutup</span>
-          </summary>
-          <div class="p-3 space-y-2 border-t border-paper-line">
-            <p class="text-[11px] text-ink-mute">WWP & huddle minggu yang sudah digulir — baca saja.</p>
-            <template x-for="a in state.contractor.execArchive.slice().reverse()" :key="'ea'+a.week">
-              <details class="rounded-lg border border-paper-line">
-                <summary class="px-3 py-2 text-xs font-semibold cursor-pointer" x-text="'M'+a.week+' · '+((a.wwp||[]).length)+' pekerjaan'"></summary>
-                <ul class="px-3 pb-2 space-y-0.5 text-xs">
-                  <template x-for="it in (a.wwp||[])" :key="'eait'+it.id">
-                    <li class="text-ink-soft" x-text="it.name+' · '+prettyZone(it.zoneLabel)+' · '+(it.day||'')"></li>
-                  </template>
-                </ul>
-                <p class="px-3 pb-2 text-[11px] text-ink-mute" x-show="a.note" x-text="a.note"></p>
-              </details>
-            </template>
-            <button type="button" class="btn-ghost !text-xs !py-1.5" @click="$el.closest('details').open=false">Tutup arsip</button>
-          </div>
-        </details>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
-        <button @click="setStage('contractor-learning')" class="btn-ghost" x-show="!projectComplete">← Learning</button>
+        <button @click="setStage('contractor-learning')" class="btn-ghost">← Learning</button>
+        <button x-show="state.contractor.weekClosed" @click="rollLookahead()" class="btn-primary">Look-ahead Plan 4 minggu ke depan</button>
       </div>
     </div>
   </section>
@@ -1918,39 +1860,32 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.19.0';
+const VER = '1.18.0';
 const MANUAL = [
-  { id:'alur', title:'Alur lengkap', blurb:'', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir — atau tutup proyek jika semua pekerjaan selesai.', bullets:[
-    'Pemilik (value, durasi desain 2/4, konstruksi 8/10/12 default 10) → Desainer (LOD, OE, denah/3D)',
-    'Pemilihan: nego harga & waktu, tanda tangan kontrak',
-    'Master Plan → Phase Plan (6 tim, zonasi, pull Pondasi + Struktur; atap & finishing given)',
-    'Look-ahead L1–L4 (L1 harus SiapKerja!). Skenario: material M3, hujan M6',
-    'Weekly Work Plan → Daily Huddle (atau Jalankan sisa hari) → Learning → Laporan → gulir',
-    'Jika semua pekerjaan selesai (termasuk serah terima): proyek ditutup, tidak ada look-ahead lagi',
+  { id:'alur', title:'Alur lengkap', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir minggu berikutnya.', bullets:[
+    'Pemilik → Desainer → Pemilihan (kontrak)',
+    'Master Plan → Phase Plan (milestone, zonasi, pull)',
+    'Look-ahead Plan 4 minggu (L1 harus SiapKerja!)',
+    'Weekly Work Plan → Daily Huddle → Learning → Laporan → gulir',
   ]},
-  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value. Mutu tidak boleh turun. Durasi desain 2/4, konstruksi 8/10/12 (default 10).', body:'Pemilik wajib menetapkan nilai yang ingin dicapai. Mutu bukan kompensasi — spek yang dipilih harus terpenuhi di nego. Fokus yang boleh dipilih: waktu atau biaya. Budget simulasi 350 jt (desain + konstruksi). Durasi desain 2 atau 4 minggu; konstruksi 8, 10, atau 12 minggu (default 10) agar satu sesi kuliah tidak bertele-tele.', bullets:['Pilih durasi, mutu, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
-  { id:'designer', title:'2 · Desainer', blurb:'Terjemahkan value ke denah, 3D, OE, dan LOD. LOD menentukan banyaknya constraint.', body:'Desainer menerjemahkan keinginan pemilik ke tanah, struktur, arsitektur, MEP, denah dan 3D. Kualitas hasil desain (LOD: cepat / standar / sempurna) menentukan biaya konstruksi (OE) dan berapa constraint yang muncul di lapangan. Fee desainer given, tergantung LOD dan budget.', bullets:['LOD kurang detail → constraint banyak','Tombol: Tetapkan desain & undang kontraktor'] },
-  { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Mutu harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar mutu. Nego dibanding OE, bukan vs budget. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Tanda tangan kontrak → Eksekusi konstruksi'] },
-  { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt adalah dokumen kontrak, media komunikasi dengan pemilik. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone (Phase Plan).', bullets:[] },
-  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Enam tim, garis milestone, zonasi. Latihan pull: Pondasi + Struktur.', body:'Kenalkan 6 tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi denah, tetapkan. Collaborative pull: latihan pada Pondasi dan Struktur (site, galian, kolom, dinding) agar hands-off Z2 → kolom kelihatan. Atap, MEP, finishing given beserta constraint LOD. L1/M1 bersih dari constraint given. Komitmen semua tim, lalu kunci.', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
-  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka. Material M3 = skenario.', body:'Jendela 4 minggu. L1 = minggu eksekusi berikutnya: harus SiapKerja! L2–L4: hilangkan atau commit hilangkan. Tiga pilihan: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Skenario material di M3 harus make-ready sebelum masuk L1. Pekerjaan yang sudah dipromosikan/selesai tidak muncul lagi di minggu asalnya. Predecessor phase plan berlaku (dinding menunggu struktur, bukan galian).', bullets:['L1 bersih baru susun WWP','Promosi tidak menghapus urutan predecessor'] },
-  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Minggu kosong bisa diisi dari backlog Workable.', body:'Hanya L1 yang SiapKerja! Pecah: Z1 3 hari → Z1-a-1…Z1-a-3. Z2-a 2 hari → Z2-a-1, Z2-a-2. Sisa setelah Sabtu = rencana minggu depan, bukan gagal. Jika L1 kosong karena sudah dipromosikan, jadwal Sen–Sab tetap tampil — isi dari Workable. Tahan = belum predecessor/constraint. Kunci rencana, lalu Daily Huddle.', bullets:[] },
-  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit. Selesai / perpanjang / gagal. M6 hujan Sen–Sel. Ada jalankan sisa hari.', body:'Last planner menyampaikan cepat. Centang hijau jika sesuai; perpanjang (1–2 hari) atau tidak bisa (alasan variansi). Masalah tidak didiskusikan di huddle — masuk registry. Prasyarat zona: site gagal memblok galian di zona itu. Promosi hanya sisa hari minggu yang sama, dan successor hanya setelah predecessor selesai. M6: hujan Sen–Sel (skenario) — tidak bisa hijau, perpanjang/gagal alasan Cuaca. Jika tidak ada kunci, tombol Jalankan sisa hari menuntaskan huddle tanpa klik per hari.', bullets:[] },
-  { id:'contractor-learning', title:'9 · Learning', blurb:'PPC, alasan variansi, konfirmasi pecahan. Gulir — atau tutup jika proyek selesai.', body:'Konfirmasi selesai/tidak per pecahan. Yang tidak selesai = variansi, dibawa ke L1. Yang tidak muat pecah (dijadwalkan minggu depan) bukan gagal, tidak masuk PPC. Isi pembelajaran. Kunci evaluasi. Jika masih ada pekerjaan: Look-ahead 4 minggu ke depan. Jika semua selesai termasuk serah terima: tombol gulir hilang, buka Laporan proyek ditutup.', bullets:[] },
-  { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Progres = bobot OE × zona selesai. Tutup otomatis jika selesai.', body:'Progres fisik dari cost OE, bukan jumlah pecah hari (maksimal 100%). Finishing di OE = plester 8% + lantai 6% + cat 4% + serah terima 1% = 19%. Gantt aktual = rentang kalender minggu pertama–terakhir. Arsip eksekusi di bawah, dilipat. Jika proyek selesai: durasi aktual vs kontrak (minggu kerja, hari kerja Sen–Sab ×6, hari kalender ×7). Tidak ada tombol gulir.', bullets:[] },
-  { id:'skenario', title:'Skenario gangguan', body:'Dua skrip tetap (bukan random) agar kelas bisa diulang.', bullets:[
-    'M3 — material (semen/besi telat). Muncul di Look-ahead jendela yang memuat M3. Harus make-ready sebelum L1.',
-    'M6 — hujan Sen–Sel. Daily Huddle: tidak bisa centang hijau; perpanjang atau gagal, alasan Cuaca. Setelah Rabu, Jalankan sisa hari boleh dipakai.',
-  ]},
+  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value: kualitas tidak boleh turun. Pilih fokus waktu/biaya dan budget.', body:'Owner menetapkan nilai yang ingin dicapai. Kualitas tidak boleh dikompensasi. Budget mencakup desain + konstruksi (350 jt di simulasi ini).', bullets:['Pilih durasi, kualitas, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
+  { id:'designer', title:'2 · Desainer', blurb:'Terjemahkan value ke denah, 3D, OE, dan LOD. LOD menentukan banyaknya constraint.', body:'Desainer menerjemahkan keinginan pemilik ke tanah, struktur, arsitektur, MEP, denah dan 3D. Kualitas hasil desain (LOD) menentukan biaya dan berapa constraint yang muncul di lapangan.', bullets:['LOD kurang detail → constraint banyak','Tombol: Tetapkan desain & undang kontraktor'] },
+  { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Kualitas harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar kualitas. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Nego vs OE, bukan vs budget','Tanda tangan kontrak → Eksekusi konstruksi'] },
+  { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt dokumen kontrak. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone.', bullets:[] },
+  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Tim, garis milestone, zonasi, pull planning. Latihan di milestone Struktur.', body:'Enam tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi, tetapkan, lalu pull per milestone. Constraint given muncul dari LOD, mulai minggu ke-2 (L1/M1 bersih).', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
+  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka.', body:'Tiga pilihan constraint: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Sisa/gagal minggu lalu tampil di papan zona dan Dibawa ke L1.', bullets:['L1 = minggu eksekusi berikutnya','Baru susun WWP setelah L1 SiapKerja!'] },
+  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Promo hanya jika predecessor fase di zona itu sudah selesai.', body:'Z1 pecah 3 hari → Z1-a-1…Z1-a-3. Z2-a pecah 2 hari → Z2-a-1, Z2-a-2. Dinding menunggu kolom & balok, bukan galian. Kartu sisa/gagal tidak dipecah lagi. Kunci rencana lalu Daily Huddle.', bullets:[] },
+  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku: Site gagal di Z1-a memblok Galian zona itu. Promosi hanya sisa hari dalam minggu yang sama, dan predecessor harus selesai.', bullets:[] },
+  { id:'contractor-learning', title:'9 · Learning', blurb:'Centang selesai/tidak per pecahan. Sisa pecah ke M berikutnya bukan variansi.', body:'PPC hanya janji minggu itu. Yang tidak selesai dibawa ke L1. Yang tidak muat pecah (mis. Z2-a-3) dijadwalkan minggu depan, tidak masuk PPC. Kunci evaluasi sebelum gulir.', bullets:[] },
+  { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Bakukan progres fisik (default sudah dihitung).', body:'Angka progres default dari pekerjaan selesai. Arsip eksekusi = WWP minggu yang sudah digulir (baca saja).', bullets:[] },
   { id:'aturan', title:'Aturan yang sering keliru', body:'', bullets:[
     'L1 harus bebas constraint sebelum kunci WWP.',
     'Commit hilangkan ≠ sudah hilang — dicek di look-ahead berikutnya.',
+    'Promo L1–L4 hanya jika predecessor phase plan di zona itu selesai.',
     'PPC tidak menghitung sisa pecah yang belum jadi janji minggu ini.',
     'Unit minggu Z2-a; pecah hari Z2-a-1. Jangan pecah kartu yang sudah pecah.',
     'M0 = sesi perencanaan; L1 pada M0 = M1 eksekusi.',
-    'Mutu pemilik tidak boleh dikompensasi di nego.',
-    'Predecessor dari phase plan: dinding setelah struktur, bukan setelah galian.',
-    'Progres fisik tidak boleh >100%; finishing yang belum dikerjakan mengurangi %.',
+    'Quality tidak boleh dikompensasi di nego.',
   ]},
 ];
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
@@ -2014,12 +1949,7 @@ const TEAM_META = [
   { id:'MEP',       color:'#7C3AED', phase:'Atap & MEP', role:'MEP rough-in' },
   { id:'Finishing', color:'#CA8A04', phase:'Finishing',  role:'Plester, lantai, cat, serah terima' },
 ];
-const FOCUS_PHASES = ['pondasi', 'struktur'];
 const FOCUS_PHASE = 'struktur';
-const SCENARIOS = [
-  { id: 'mat3', week: 3, kind: 'material', type: 'material', note: 'Semen/besi telat kirim (skenario). Make-ready sebelum masuk L1.' },
-  { id: 'rain6', week: 6, kind: 'weather', type: 'weather', days: 2, note: 'Hujan Sen–Sel (skenario). Daily huddle: perpanjang atau gagal, alasan Cuaca.' },
-];
 const WORK_ZONES = {
   struct: ['z3','z4','z5','z6'],
   wall:   ['z3','z4','z5','z6'],
@@ -2121,16 +2051,15 @@ function makeChart(curve, maxJt, opts = {}) {
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const n = Math.max(1, (curve || []).length);
+  const ymax = Math.max(1, maxJt || 1);
   const yMode = opts.yMode || 'rp';
-  const ymax = yMode === 'pct' ? 100 : Math.max(1, maxJt || 1);
-  const yVal = (p) => yMode === 'pct' ? Number(p && p.planned) || 0 : Number(p && p.cumJt) || 0;
   const xOf = (week) => padL + (week / n) * innerW;
-  const yOf = (v) => padT + (1 - v / ymax) * innerH;
+  const yOf = (jt) => padT + (1 - jt / ymax) * innerH;
   const pts = [{ week: 0, planned: 0, cumJt: 0, x: xOf(0), y: yOf(0) }].concat(
     (curve || []).map((p) => ({
       ...p,
       x: xOf(p.week),
-      y: yOf(yVal(p)),
+      y: yOf(Number(p.cumJt) || 0),
     }))
   );
   const last = pts[pts.length - 1];
@@ -2167,7 +2096,7 @@ function makeChart(curve, maxJt, opts = {}) {
       actual.map((p) => ({
         ...p,
         x: xOf(p.week),
-        y: yOf(yVal(p)),
+        y: yOf(Number(p.cumJt) || 0),
       }))
     );
     const aline = smoothPath(apts);
@@ -2369,7 +2298,6 @@ function emptyContractor() {
     extendType:'material',
     problemRegistry:[],
     weeklyProgress:[],
-    scenarioApplied:[],
     learningNote:'',
     actualLog:[],
     progressLocks:[],
@@ -2444,7 +2372,7 @@ function initState() {
   return {
     version: VER,
     currentStage: 'owner',
-    owner: { designDuration:2, constructionDuration:10, qualityLevel:'standard', budgetLevel:'standard', priority:'time', plannedSCurve:[], workPlan:[], locked:false },
+    owner: { designDuration:6, constructionDuration:16, qualityLevel:'standard', budgetLevel:'standard', priority:'time', plannedSCurve:[], workPlan:[], locked:false },
     designer: { designFreezeWeek:null, levelOfDetail:'standar', locked:false },
     negotiation: emptyNego(),
     contractor: emptyContractor(),
@@ -2471,12 +2399,14 @@ Alpine.data('app', () => ({
   TEAM_META,
   WWP_DAYS,
   PPC_REASONS,
-  MANUAL,
   huddleTimerLeft: 15 * 60,
   huddleTimerOn: false,
   promoDraft: null,
   _huddleTimerHandle: null,
   progressDraft: null,
+  MANUAL,
+  manualFocus: null,
+  manualFrom: 'owner',
 
   init() {
     this.state = loadState();
@@ -2506,7 +2436,7 @@ Alpine.data('app', () => ({
 
   get oeJt() {
     const q = this.state.owner.qualityLevel === 'premium' ? 1.18 : 1;
-    const w = Number(this.state.owner.constructionDuration) || 10;
+    const w = Number(this.state.owner.constructionDuration) || 16;
     const t = w <= 12 ? 1.12 : (w >= 20 ? 0.95 : 1);
     return Math.round(OE_BASE_JT * q * t);
   },
@@ -2562,7 +2492,7 @@ Alpine.data('app', () => ({
     if (n.deal && n.contract && n.contract.sCurve && n.contract.sCurve.length) {
       return { curve: n.contract.sCurve, maxJt: n.contract.price, plan: n.contract.sCurve };
     }
-    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 10;
+    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
     const price = Number(n.bidPriceJt) || this.safeBidJt;
     const { curve } = buildPlan(weeks, price);
     return { curve, maxJt: price, plan: curve };
@@ -2577,14 +2507,14 @@ Alpine.data('app', () => ({
   get negoWorkPlan() {
     const n = this.state.negotiation;
     if (n.deal && n.contract && n.contract.workPlan && n.contract.workPlan.length) return n.contract.workPlan;
-    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 10;
+    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
     const price = Number(n.bidPriceJt) || this.safeBidJt;
     return buildPlan(weeks, price).plan;
   },
   get negoWeeks() {
     const n = this.state.negotiation;
-    if (n.deal && n.contract) return Number(n.contract.duration) || 10;
-    return Number(n.bidDuration) || this.state.owner.constructionDuration || 10;
+    if (n.deal && n.contract) return Number(n.contract.duration) || 16;
+    return Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
   },
   get ganttWeekNums() {
     return Array.from({ length: Math.max(1, this.negoWeeks) }, (_, i) => i + 1);
@@ -2606,67 +2536,40 @@ Alpine.data('app', () => ({
   },
   get progressGanttRows() {
     const weeks = Math.max(1, this.negoWeeks);
-    const play = this.targetExecWeek;
-    const cells = this._zoneCells();
-    const log = this._allExecCells();
+    const log = this._mergedActualLog();
     return this.ganttRows.map(row => {
-      const pid = row.id;
-      const fromLog = log.filter(x => (this._workType(x) || x.parentId) === pid && Number(x.week) > 0);
-      const fromCells = cells.filter(c => c.parentId === pid && (c.status === 'done' || c.status === 'carry'));
-      const weekSet = new Set();
-      for (const e of fromLog) weekSet.add(Number(e.week));
-      for (const c of fromCells) weekSet.add(Number(c.week));
-      const wwp = (this.state.contractor && this.state.contractor.wwp) || [];
-      if (wwp.some(it => (this._workType(it) || it.parentId) === pid)) weekSet.add(play);
-      const list = [...weekSet].filter(w => w > 0).sort((a, b) => a - b);
-      if (!list.length) {
-        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, actEnd: null, calWeeks: 0, earnedWeeks: 0, actPct: 0 };
+      const entries = log.filter(x => x.parentId === row.id);
+      const bySticky = {};
+      for (const e of entries) {
+        const sid = e.stickyId || (row.id + '_w' + e.week);
+        if (!bySticky[sid]) bySticky[sid] = { done: 0, n: 0, week: Number(e.week) || 0 };
+        bySticky[sid].n += 1;
+        if (e.done) bySticky[sid].done += 1;
+        bySticky[sid].week = Math.max(bySticky[sid].week, Number(e.week) || 0);
       }
-      const actStart = list[0];
-      const actEnd = list[list.length - 1];
-      const calWeeks = Math.max(1, actEnd - actStart + 1);
+      let earnedWeeks = 0;
+      let actStart = Infinity;
+      for (const sid of Object.keys(bySticky)) {
+        const g = bySticky[sid];
+        const frac = g.n ? (g.done / g.n) : 0;
+        if (frac <= 0) continue;
+        earnedWeeks += frac;
+        actStart = Math.min(actStart, g.week);
+      }
+      if (!earnedWeeks) {
+        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, earnedWeeks: 0, actPct: 0 };
+      }
       const planDur = Math.max(1, (Number(row.finishWeek) || 1) - (Number(row.startWeek) || 1) + 1);
       return {
         ...row,
         hasActual: true,
         actStart,
-        actEnd,
-        calWeeks,
-        earnedWeeks: calWeeks,
-        actPct: Math.round(100 * calWeeks / planDur),
+        earnedWeeks: Math.round(earnedWeeks * 10) / 10,
+        actPct: Math.round(100 * earnedWeeks / planDur),
         actLeft: Math.max(0, (actStart - 1) / weeks * 100),
-        actWidth: Math.max(0.45, (calWeeks / weeks) * 100),
+        actWidth: Math.max(0.45, (earnedWeeks / weeks) * 100),
       };
     });
-  },
-  get projectComplete() {
-    const rows = this.progressGanttRows || [];
-    if (rows.length < WORKS.length) return false;
-    const close = rows.find(r => r.id === 'close');
-    if (!close || !close.hasActual) return false;
-    if (rows.some(r => !r.hasActual)) return false;
-    const cells = this._zoneCells();
-    if (cells.some(c => c.status === 'carry')) return false;
-    const pct = Number(this.physicalProgress && this.physicalProgress.pct) || 0;
-    return pct >= 99.5 || (cells.length > 0 && cells.every(c => c.status === 'done'));
-  },
-  get projectCloseStats() {
-    const contractWeeks = Number((this.state.negotiation.contract || {}).duration) || this.negoWeeks || 10;
-    const rows = this.progressGanttRows || [];
-    const ends = rows.filter(r => r.hasActual && r.actEnd).map(r => Number(r.actEnd));
-    const actualWeeks = ends.length ? Math.max(...ends) : (this.playWeek || 1);
-    const saved = contractWeeks - actualWeeks;
-    return {
-      contractWeeks,
-      actualWeeks,
-      contractWorkDays: contractWeeks * 6,
-      actualWorkDays: actualWeeks * 6,
-      contractCalDays: contractWeeks * 7,
-      actualCalDays: actualWeeks * 7,
-      savedWeeks: saved,
-      ahead: saved > 0,
-      late: saved < 0,
-    };
   },
   _mergedActualLog() {
     const log = [...((this.state.contractor && this.state.contractor.actualLog) || [])];
@@ -2687,54 +2590,62 @@ Alpine.data('app', () => ({
     return log;
   },
   get physicalProgress() {
-    const plan = this.contractPlan || [];
-    const totalCost = plan.reduce((s, w) => s + (Number(w.costJt) || 0), 0) || this.oeJt || 1;
-    const cells = this._zoneCells();
-    const inc = {};
-    const parts = [];
-    let earnedCost = 0;
-    for (const w of WORKS) {
-      const row = plan.find(x => x.id === w.id);
-      const cost = Number((row && row.costJt) || (totalCost * (Number(w.weight) || 0)) || 0);
-      const mine = cells.filter(c => c.parentId === w.id);
-      const planned = Math.max(mine.length, (WORK_ZONES[w.id] || []).length, 1);
-      const doneCells = mine.filter(c => c.status === 'done');
-      const frac = Math.min(1, doneCells.length / planned);
-      earnedCost += cost * frac;
-      const piece = cost / planned;
-      for (const c of doneCells) {
-        const wk = Number(c.week) || 0;
-        if (!wk) continue;
-        inc[wk] = (inc[wk] || 0) + piece;
-        parts.push({ name: w.name, week: wk, pct: Math.round(piece / totalCost * 1000) / 10 });
+    const planBy = {};
+    for (const ph of (this.forwardPhasesView || [])) {
+      for (const s of (ph.stickies || [])) {
+        const pid = s.parentId;
+        if (!planBy[pid]) planBy[pid] = [];
+        planBy[pid].push(s.id);
       }
     }
-    const pct = Math.min(100, Math.round(earnedCost / totalCost * 1000) / 10);
-    const maxW = Math.max(this.playWeek || 1, ...Object.keys(inc).map(Number), 1);
-    const curve = [];
-    let cumCost = 0;
-    for (let week = 1; week <= maxW; week++) {
-      cumCost += inc[week] || 0;
-      const p = Math.min(100, Math.round(cumCost / totalCost * 1000) / 10);
-      curve.push({
-        week,
-        planned: p,
-        cumJt: Math.round(cumCost * 10) / 10,
-      });
+    const weightBy = {};
+    for (const w of this.contractPlan) weightBy[w.id] = Number(w.weight) || 0;
+    const bySticky = {};
+    for (const e of this._mergedActualLog()) {
+      const sid = e.stickyId || (e.parentId + '_w' + e.week);
+      if (!bySticky[sid]) bySticky[sid] = { parentId: e.parentId, done: 0, n: 0, week: Number(e.week) || 0 };
+      bySticky[sid].n += 1;
+      if (e.done) bySticky[sid].done += 1;
+      bySticky[sid].week = Math.max(bySticky[sid].week, Number(e.week) || 0);
     }
-    if (curve.length) {
-      curve[curve.length - 1].planned = pct;
-      curve[curve.length - 1].cumJt = Math.round(earnedCost * 10) / 10;
+    const inc = {};
+    let earned = 0;
+    const parts = [];
+    for (const sid of Object.keys(bySticky)) {
+      const g = bySticky[sid];
+      const plannedN = (planBy[g.parentId] || []).length || 1;
+      const w = weightBy[g.parentId] || 0;
+      const frac = g.n ? (g.done / g.n) : 0;
+      const piece = w / plannedN * frac;
+      if (piece <= 0) continue;
+      earned += piece;
+      inc[g.week] = (inc[g.week] || 0) + piece;
+      const wname = (this.contractPlan.find(x => x.id === g.parentId) || {}).name || g.parentId;
+      parts.push({ name: wname, week: g.week, pct: Math.round(piece * 1000) / 10 });
+    }
+    const pct = Math.round(earned * 1000) / 10;
+    const maxW = Object.keys(inc).length ? Math.max(...Object.keys(inc).map(Number)) : 0;
+    const maxJt = this.negoBundle.maxJt || this.oeJt;
+    const curve = [];
+    let cum = 0;
+    for (let w = 1; w <= Math.max(maxW, 1); w++) {
+      cum += (inc[w] || 0);
+      if (w <= maxW) {
+        curve.push({
+          week: w,
+          cumJt: Math.round(maxJt * cum * 10) / 10,
+          planned: Math.round(cum * 1000) / 10,
+        });
+      }
     }
     const frozen = (this.negoBundle.curve || []).find(p => p.week === this.playWeek);
     const plannedNow = frozen ? Number(frozen.planned) : 0;
-    return { pct, plannedNow, parts, curve, maxW, inc, totalCost, earnedCost };
+    return { pct, plannedNow, parts, curve, maxW, inc };
   },
   get suggestedWeekIncrement() {
     const w = this.playWeek;
-    const pp = this.physicalProgress || {};
-    const tot = Number(pp.totalCost) || 1;
-    const fromInc = Math.round((Number((pp.inc || {})[w]) || 0) / tot * 1000) / 10;
+    const inc = (this.physicalProgress && this.physicalProgress.inc) || {};
+    const fromInc = Math.round((Number(inc[w]) || 0) * 1000) / 10;
     if (fromInc > 0) return fromInc;
     const fromParts = Math.round((this.physicalProgress.parts || []).filter(p => p.week === w).reduce((s, p) => s + p.pct, 0) * 10) / 10;
     if (fromParts > 0) return fromParts;
@@ -2749,9 +2660,10 @@ Alpine.data('app', () => ({
     return Math.round(slice * 10) / 10;
   },
   get displayedPhysicalPct() {
-    if (this.projectComplete) return 100;
-    const live = Number(this.physicalProgress && this.physicalProgress.pct) || 0;
-    return Math.min(100, Math.max(0, Math.round(live * 10) / 10));
+    if ((this.state.contractor.progressLocks || []).length) return this.lockedPhysicalPct;
+    const live = Number(this.physicalProgress && this.physicalProgress.pct);
+    if (live > 0) return live;
+    return this.suggestedWeekIncrement;
   },
   get progressLockForWeek() {
     const w = this.playWeek;
@@ -2760,14 +2672,14 @@ Alpine.data('app', () => ({
   get lockedPhysicalPct() {
     const locks = ((this.state.contractor && this.state.contractor.progressLocks) || []).slice().sort((a, b) => a.week - b.week);
     if (!locks.length) return 0;
-    return Math.min(100, Math.round(locks.reduce((s, x) => s + (Number(x.increment) || 0), 0) * 10) / 10);
+    return Math.round(locks.reduce((s, x) => s + (Number(x.increment) || 0), 0) * 10) / 10;
   },
   get lockedProgressCurve() {
     const locks = ((this.state.contractor && this.state.contractor.progressLocks) || []).slice().sort((a, b) => a.week - b.week);
     const maxJt = this.negoBundle.maxJt || this.oeJt;
     let cum = 0;
     return locks.map(l => {
-      cum = Math.min(100, cum + (Number(l.increment) || 0));
+      cum += Number(l.increment) || 0;
       return {
         week: Number(l.week),
         planned: Math.round(cum * 10) / 10,
@@ -2778,9 +2690,8 @@ Alpine.data('app', () => ({
   lockProgress() {
     const week = this.playWeek;
     const incRaw = this.progressDraft == null ? this.suggestedWeekIncrement : Number(this.progressDraft);
+    const inc = Number.isFinite(incRaw) ? Math.max(0, Math.round(incRaw * 10) / 10) : 0;
     const locks = [...(this.state.contractor.progressLocks || [])].filter(x => Number(x.week) !== week);
-    const already = locks.reduce((s, x) => s + (Number(x.increment) || 0), 0);
-    const inc = Number.isFinite(incRaw) ? Math.max(0, Math.min(100 - already, Math.round(incRaw * 10) / 10)) : 0;
     locks.push({
       week,
       increment: inc,
@@ -2797,16 +2708,10 @@ Alpine.data('app', () => ({
     const ppc = ppcRow ? ppcRow.ppc : this.ppcPercent;
     const top = (this.problemFrequency || [])[0];
     const topLab = top ? (this.constraintLabel(top.type) + ' (' + top.count + 'x)') : 'belum ada';
-    const fisik = this.projectComplete ? 100 : this.displayedPhysicalPct;
+    const fisik = this.lockedPhysicalPct;
     const rencana = this.physicalProgress.plannedNow;
-    const st = this.projectCloseStats;
-    let t = 'Kontrak Rp ' + (c.price || this.oeJt) + ' jt · ' + (c.duration || this.negoWeeks) + ' minggu · quality ' + (c.quality || this.state.owner.qualityLevel)
+    return 'Kontrak Rp ' + (c.price || this.oeJt) + ' jt · ' + (c.duration || this.negoWeeks) + ' minggu · quality ' + (c.quality || this.state.owner.qualityLevel)
       + '. Progres fisik ' + fisik + '% (rencana M' + this.playWeek + ' = ' + rencana + '%). PPC minggu ini ' + ppc + '%. Masalah terbanyak: ' + topLab + '.';
-    if (this.projectComplete) {
-      t += ' PROYEK DITUTUP. Tidak ada kegiatan terjadwal tersisa. Durasi aktual ' + st.actualWeeks + ' minggu kerja (' + st.actualWorkDays + ' hari kerja / ' + st.actualCalDays + ' hari kalender) vs kontrak ' + st.contractWeeks + ' minggu (' + st.contractCalDays + ' hari kalender).'
-        + (st.ahead ? (' Lebih cepat ' + st.savedWeeks + ' minggu.') : (st.late ? (' Terlambat ' + (-st.savedWeeks) + ' minggu.') : ' Sesuai kontrak.'));
-    }
-    return t;
   },
   copyOwnerReport() {
     const t = this.ownerReportText;
@@ -2821,7 +2726,7 @@ Alpine.data('app', () => ({
       color: '#C45C26',
       fillId: 'scFillProg',
       yMode: 'pct',
-      actual: (this.physicalProgress && this.physicalProgress.curve) || [],
+      actual: this.lockedProgressCurve || [],
     }).markup;
   },
   get contractPlan() {
@@ -2904,7 +2809,7 @@ Alpine.data('app', () => ({
     const ov = (this.state.contractor && this.state.contractor.stickyWeeks) || {};
     const p0 = Number(ph.startWeek) || 1;
     const p1 = Number(ph.finishWeek) || p0;
-    const isFocus = FOCUS_PHASES.includes(ph.id);
+    const isFocus = ph.id === FOCUS_PHASE;
     const stickies = [];
     for (const w of (ph.works || [])) {
       const zones = WORK_ZONES[w.id] || ['z3'];
@@ -2957,29 +2862,17 @@ Alpine.data('app', () => ({
   },
   get pullPhasesView() {
     return this.phasesView.slice().reverse().map(ph => {
-      const isFocus = FOCUS_PHASES.includes(ph.id);
+      const isFocus = ph.id === FOCUS_PHASE;
       const stickies = this._makeStickies(ph).sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
   },
     get forwardPhasesView() {
     return this.phasesView.map(ph => {
-      const isFocus = FOCUS_PHASES.includes(ph.id);
+      const isFocus = ph.id === FOCUS_PHASE;
       const stickies = this._makeStickies(ph).sort((a, b) => (a.startWeek - b.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
-  },
-  _stickyConsumed(s) {
-    if (!s) return false;
-    if (this._promoUsedIdSet().has(s.id)) return true;
-    const z = this.prettyZone(s.zoneLabel);
-    const pid = s.parentId || this._workType(s);
-    if (!z || !pid) return false;
-    const cells = this._zoneCells().filter(c => c.parentId === pid && this._zoneMatches(z, c.zoneLabel));
-    const done = cells.filter(c => c.status === 'done');
-    if (!done.length) return false;
-    const lastDone = Math.max(...done.map(c => Number(c.week) || 0));
-    return Number(s.startWeek) > lastDone;
   },
     get lookSlots() {
     const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
@@ -2994,7 +2887,7 @@ Alpine.data('app', () => ({
     return [1,2,3,4].map(i => {
       const abs = off + i;
       const absLabel = 'M' + abs;
-      let stickies = allStickies.filter(s => Number(s.startWeek) === abs && !this._stickyConsumed(s));
+      let stickies = allStickies.filter(s => Number(s.startWeek) === abs);
       if (i === 1 && carry.length) {
         const haveZ = new Set(stickies.map(s => this.prettyZone(s.zoneLabel)));
         for (const c of carry) {
@@ -3536,7 +3429,7 @@ Alpine.data('app', () => ({
     const week = this.targetExecWeek;
     const blocked = this.promoBlockedIds;
     return this._allStickies().filter(s => {
-      if (blocked.has(s.id) || this._stickyConsumed(s)) return false;
+      if (blocked.has(s.id)) return false;
       if (!this._isWorkReady(s.id)) return false;
       if (this._predBlockReason(s)) return false;
       const w = Number(s.startWeek);
@@ -3600,12 +3493,8 @@ Alpine.data('app', () => ({
     return Math.round(100 * this.ppcDoneCount / n);
   },
   get focusStickies() {
-    const out = [];
-    for (const ph of (this.pullPhasesView || [])) {
-      if (!ph.isFocus) continue;
-      out.push(...(ph.stickies || []));
-    }
-    return out;
+    const ph = (this.pullPhasesView || []).find(p => p.isFocus);
+    return (ph && ph.stickies) || [];
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
@@ -3641,11 +3530,7 @@ Alpine.data('app', () => ({
     return succs.map(p => p.name).join(', ');
   },
   get focusMilestoneWeeks() {
-    const w = this.selectedWorkObj;
-    const pid = w && (w.parentId || w.id);
-    const phId = (PHASES.find(p => (p.works || []).includes(pid)) || {}).id;
-    const ph = (this.phasesView || []).find(p => p.id === phId && FOCUS_PHASES.includes(p.id))
-      || (this.phasesView || []).find(p => FOCUS_PHASES.includes(p.id));
+    const ph = (this.phasesView || []).find(p => p.id === FOCUS_PHASE);
     const a = Number(ph && ph.startWeek) || 1;
     const b = Number(ph && ph.finishWeek) || a;
     const weeks = [];
@@ -3700,7 +3585,7 @@ Alpine.data('app', () => ({
   get canSignContract() {
     const p = Number(this.state.negotiation.bidPriceJt);
     const d = Number(this.state.negotiation.bidDuration);
-    const ask = Number(this.state.owner.constructionDuration) || 10;
+    const ask = Number(this.state.owner.constructionDuration) || 16;
     if (!(p > 0) || !(d > 0)) return false;
     if (p > this.oeJt + 0.05) return false;
     if (d > ask) return false;
@@ -3709,7 +3594,7 @@ Alpine.data('app', () => ({
   get signBlockReason() {
     const p = Number(this.state.negotiation.bidPriceJt);
     const d = Number(this.state.negotiation.bidDuration);
-    const ask = Number(this.state.owner.constructionDuration) || 10;
+    const ask = Number(this.state.owner.constructionDuration) || 16;
     const reasons = [];
     if (!(p > 0)) reasons.push('Harga penawaran belum diisi.');
     else if (p > this.oeJt + 0.05) reasons.push('Harga di atas OE Rp ' + this.oeJt + ' jt — tidak bisa tanda tangan.');
@@ -3738,10 +3623,6 @@ Alpine.data('app', () => ({
     this.manualFocus = null;
     this.setStage(back === 'manual' ? 'owner' : back);
   },
-  get tabGuide() {
-    const id = this.currentStage;
-    return (this.MANUAL || []).find(ch => ch.id === id && ch.blurb) || null;
-  },
 
   setStage(s) {
     if (s === 'designer' && !this.canAccessDesigner()) return;
@@ -3754,7 +3635,7 @@ Alpine.data('app', () => ({
       this._seedGivenConstraints();
     }
     if (s === 'contractor-wwp' && !this.state.contractor.pullLocked) s = 'contractor-phase';
-    if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !this.state.contractor.wwpLocked) this.buildWwp();
+    if (s === 'contractor-wwp' && this.state.contractor.pullLocked && !((this.state.contractor.wwp || []).length)) this.buildWwp();
         if (s === 'contractor-huddle' && !this.state.contractor.wwpLocked) s = 'contractor-wwp';
         if (s === 'contractor-learning' && !this.state.contractor.huddleComplete) s = 'contractor-huddle';
     if (s === 'contractor-progress') this.progressDraft = null;
@@ -3772,7 +3653,7 @@ Alpine.data('app', () => ({
     this.recalcPlan();
   },
   recalcPlan() {
-    const weeks = this.state.owner.constructionDuration || 10;
+    const weeks = this.state.owner.constructionDuration || 16;
     const mid = this.oeJt;
     const { plan, curve } = buildPlan(weeks, mid);
     this.state.owner.workPlan = plan;
@@ -3788,7 +3669,7 @@ Alpine.data('app', () => ({
   },
   _syncDesignFreeze() {
     if (!this.state || !this.state.designer) return;
-    const max = Number(this.state.owner.designDuration) || 2;
+    const max = Number(this.state.owner.designDuration) || 6;
     const f = Number(this.state.designer.designFreezeWeek);
     if (!Number.isFinite(f) || f < 1 || f > max) {
       this.state.designer.designFreezeWeek = max;
@@ -3891,7 +3772,7 @@ Alpine.data('app', () => ({
   _seedGivenConstraints() {
     const specs = LOD_GIVEN[this.lodKey] || [];
     const stickies = this._allStickies();
-    const focusWorks = new Set(PHASES.filter(p => FOCUS_PHASES.includes(p.id)).flatMap(p => p.works || []));
+    const strukturWorks = new Set(((PHASES.find(p => p.id === FOCUS_PHASE) || {}).works) || []);
     const extra = [];
     for (const spec of specs) {
       const w = WORKS.find(x => x.id === spec.workId);
@@ -3904,53 +3785,13 @@ Alpine.data('app', () => ({
           type: spec.type,
           note: spec.note,
           given: true,
-          editable: focusWorks.has(spec.workId),
+          editable: strukturWorks.has(spec.workId),
           workLabel: (w ? w.name : spec.workId) + ' · ' + this.prettyZone(t.zoneLabel) + ' · M' + t.startWeek,
         });
       }
     }
-    const keep = (this.state.contractor.constraints || []).filter(c => !c.given && !c.scenario);
+    const keep = (this.state.contractor.constraints || []).filter(c => !c.given);
     this.state.contractor.constraints = keep.concat(extra);
-    this._applyScenarioConstraints();
-  },
-  _applyScenarioConstraints() {
-    const spec = SCENARIOS.find(s => s.kind === 'material');
-    if (!spec) return;
-    const stickies = this._allStickies();
-    let targets = stickies.filter(s => Number(s.startWeek) === spec.week);
-    if (!targets.length && stickies.length) {
-      const best = Math.min(...stickies.map(s => Math.abs(Number(s.startWeek) - spec.week)));
-      targets = stickies.filter(s => Math.abs(Number(s.startWeek) - spec.week) === best).slice(0, 4);
-    }
-    const extra = targets.map(t => ({
-      id: 'sc-' + spec.id + '-' + t.id,
-      workId: t.id,
-      parentId: t.parentId,
-      type: spec.type,
-      note: spec.note,
-      given: true,
-      scenario: true,
-      editable: true,
-      workLabel: t.name + ' · ' + this.prettyZone(t.zoneLabel) + ' · M' + t.startWeek,
-    }));
-    const keep = (this.state.contractor.constraints || []).filter(c => !c.scenario);
-    this.state.contractor.constraints = keep.concat(extra);
-  },
-  get activeLookScenarios() {
-    const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
-    const weeks = [off + 1, off + 2, off + 3, off + 4];
-    return SCENARIOS.filter(s => weeks.includes(s.week));
-  },
-  get weatherToday() {
-    if (this.playWeek !== 6) return false;
-    if (this.state.contractor && this.state.contractor.huddleComplete) return false;
-    const idx = Number((this.state.contractor && this.state.contractor.huddleDayIdx) || 0);
-    return idx <= 1;
-  },
-  _weatherBlocksDay(dayId) {
-    if (this.playWeek !== 6) return false;
-    const d = dayId || ((WWP_DAYS[Number(this.state.contractor.huddleDayIdx) || 0] || {}).id);
-    return d === 'sen' || d === 'sel';
   },
   addConstraint() {
     const c = this.state.contractor;
@@ -4321,9 +4162,13 @@ Alpine.data('app', () => ({
       if (c.id) placedSticky.add(c.id);
     }
     const ready = this._allStickies()
-      .filter(s => Number(s.startWeek) === week && !used.has(s.id) && !placedSticky.has(s.id) && !this._stickyConsumed(s) && this._isWorkReady(s.id))
+      .filter(s => Number(s.startWeek) === week && !used.has(s.id) && !placedSticky.has(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
+    if (!remItems.length && !items.length) {
+      const fallback = this._allStickies().filter(s => Number(s.startWeek) === week);
+      fallback.forEach((s, i) => items.push(this._makeWwpItem(s, days[Math.min(i, days.length - 1)], s.zoneLabel, false)));
+    }
     this.state.contractor.wwp = remItems.concat(items);
     this.state.contractor.ppc = [];
     this.state.contractor.wwpLocked = false;
@@ -4497,11 +4342,11 @@ Alpine.data('app', () => ({
   },
     lockWwp() {
     if (!(this.state.contractor.wwp || []).length) {
-      alert('Promosikan pekerjaan ke hari dulu, atau L1 memang tanpa kerja.');
+      alert('Susun WWP dulu.');
       return;
     }
     const week = this.targetExecWeek;
-    const openL1 = this._allStickies().filter(s => Number(s.startWeek) === week && !this._stickyConsumed(s) && !this._isWorkReady(s.id));
+    const openL1 = this._allStickies().filter(s => Number(s.startWeek) === week && !this._isWorkReady(s.id));
     if (openL1.length) {
       alert('L1 / M' + week + ' masih ada constraint: ' + openL1.map(s => s.name + ' ' + this.prettyZone(s.zoneLabel)).join(', ') + '. Hilangkan dulu di Look-ahead Plan.');
       return;
@@ -4626,9 +4471,6 @@ Alpine.data('app', () => ({
   },
   huddleBlockReason(item, forPromo) {
     if (!item) return '';
-    if (!forPromo && this._weatherBlocksDay(item.day)) {
-      return 'Hujan skenario (Sen–Sel) — perpanjang atau gagal (Cuaca)';
-    }
     const hist = this._predBlockReason(item);
     if (hist) return hist;
     const pid0 = this._workType(item);
@@ -4692,8 +4534,8 @@ Alpine.data('app', () => ({
     this.state.contractor.extendNote = '';
     const item = (this.state.contractor.wwp || []).find(x => x.id === id);
     const blocked = item && this.huddleBlockReason(item);
-    this.state.contractor.extendDays = blocked ? 'fail' : (this.weatherToday ? '2' : '1');
-    this.state.contractor.extendType = blocked ? 'prereq' : (this.weatherToday ? 'weather' : 'material');
+    this.state.contractor.extendDays = blocked ? 'fail' : '1';
+    this.state.contractor.extendType = blocked ? 'prereq' : 'material';
   },
   _addRegistry(entry) {
     const week = this.playWeek;
@@ -4807,36 +4649,6 @@ Alpine.data('app', () => ({
     this.applyHuddleToPpc();
     this.stopHuddleTimer();
     this.setStage('contractor-learning');
-  },
-  get canFastForwardHuddle() {
-    if (!this.state.contractor.wwpLocked || this.state.contractor.huddleComplete || this.state.contractor.weekClosed) return false;
-    if (this.weatherToday) return false;
-    const idx = Number(this.state.contractor.huddleDayIdx) || 0;
-    const wwp = this.state.contractor.wwp || [];
-    for (let i = idx; i < 6; i++) {
-      const day = WWP_DAYS[i].id;
-      const items = wwp.filter(x => x.day === day);
-      for (const it of items) {
-        if (this.huddleStatus(it.id)) continue;
-        if (this.huddleBlockReason(it)) return false;
-      }
-    }
-    return true;
-  },
-  fastForwardHuddle() {
-    if (!this.canFastForwardHuddle) {
-      alert('Ada item terkunci atau skenario gangguan. Jalankan hari per hari.');
-      return;
-    }
-    const start = Number(this.state.contractor.huddleDayIdx) || 0;
-    for (let i = start; i < 6; i++) {
-      this.state.contractor.huddleDayIdx = i;
-      const items = [...this.huddleTodayItems];
-      for (const it of items) {
-        if (!this.huddleStatus(it.id) && !this.huddleBlockReason(it)) this.markHuddleDone(it.id);
-      }
-    }
-    this.completeHuddle();
   },
     applyHuddleToPpc() {
     if (this.state.contractor.weekClosed) return;
@@ -5057,10 +4869,6 @@ Alpine.data('app', () => ({
     this.save();
   },
     rollLookahead() {
-    if (this.projectComplete) {
-      this.setStage('contractor-progress');
-      return;
-    }
     if (!this.state.contractor.pullLocked) return;
     if (!this.state.contractor.weekClosed) {
       alert('Tutup minggu (PPC) dulu sebelum gulir.');
