@@ -60,7 +60,7 @@
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
 
 <header class="sticky top-0 z-50 bg-paper-card/95 backdrop-blur border-b border-paper-line">
-  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+  <div class="max-w-3xl mx-auto px-4 pt-3 pb-2">
     <div class="flex items-center gap-2.5 min-w-0">
       <svg class="w-9 h-9 shrink-0" viewBox="0 0 36 36" aria-hidden="true">
         <rect width="36" height="36" rx="9" fill="#C45C26"/>
@@ -69,18 +69,17 @@
       </svg>
       <div class="min-w-0">
         <h1 class="text-lg font-bold text-ink leading-none">SiapKerja!</h1>
-        <p class="text-[10px] sm:text-[11px] text-ink-mute mt-0.5 leading-snug">Pembelajaran the Last Planner System (LPS) dengan simulasi</p>
+        <p class="text-[11px] text-ink-mute mt-0.5 leading-snug">Pembelajaran LPS dengan simulasi</p>
       </div>
     </div>
-    <div class="flex items-center gap-1.5 shrink-0">
+    <div class="mt-2.5 pt-2 border-t border-paper-line flex items-center gap-1 flex-wrap">
       <button type="button" @click="openManual()" class="px-2.5 py-1.5 text-xs font-medium text-ink-soft rounded-lg">Manual</button>
-      <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="px-2.5 py-1.5 text-xs font-semibold text-terra rounded-lg">Unduh PDF</a>
       <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg hidden sm:inline">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
         Muat sesi
         <input type="file" accept=".json" class="hidden" @change="importJSON($event)">
       </label>
-      <select class="text-[11px] font-semibold px-2 py-1.5 rounded-full border border-paper-line bg-paper text-ink-soft max-w-[9.5rem]"
+      <select class="ml-auto text-[11px] font-semibold px-2 py-1.5 rounded-full border border-paper-line bg-paper text-ink-soft max-w-[10rem]"
         @change="rewindTo($event.target.value); $event.target.selectedIndex=0">
         <option value="">Ulang dari…</option>
         <option value="huddle">Daily Huddle minggu ini</option>
