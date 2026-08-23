@@ -197,17 +197,16 @@
           <div>
             <label class="block text-sm font-medium mb-1.5">Durasi desain</label>
             <select class="field" x-model.number="state.owner.designDuration" :disabled="state.owner.locked" @change="recalcPlan()">
+              <option value="2">2 minggu</option>
               <option value="4">4 minggu</option>
-              <option value="6">6 minggu</option>
-              <option value="8">8 minggu</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1.5">Durasi konstruksi</label>
             <select class="field" x-model.number="state.owner.constructionDuration" :disabled="state.owner.locked" @change="recalcPlan()">
+              <option value="8">8 minggu</option>
+              <option value="10">10 minggu</option>
               <option value="12">12 minggu</option>
-              <option value="16">16 minggu</option>
-              <option value="20">20 minggu</option>
             </select>
           </div>
           <div>
@@ -412,7 +411,7 @@
             <div>
               <label class="block text-sm font-medium mb-1.5">Durasi ditawarkan</label>
               <select class="field" x-model.number="state.negotiation.bidDuration" :disabled="state.negotiation.deal">
-                <option :value="state.owner.constructionDuration-2" x-show="state.owner.constructionDuration>12" x-text="(state.owner.constructionDuration-2)+' minggu (lebih cepat)'"></option>
+                <option :value="state.owner.constructionDuration-2" x-show="state.owner.constructionDuration>8" x-text="(state.owner.constructionDuration-2)+' minggu (lebih cepat)'"></option>
                 <option :value="state.owner.constructionDuration" x-text="state.owner.constructionDuration+' minggu (sesuai pemilik)'"></option>
                 <option :value="state.owner.constructionDuration+2" x-text="(state.owner.constructionDuration+2)+' minggu (lebih lama)'"></option>
               </select>
@@ -701,9 +700,9 @@
           <div class="mb-2">
             <div class="flex items-end justify-between gap-2">
               <h3 class="text-sm font-bold">Pull Planning per Milestone</h3>
-              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+reviewedFocusTotal+' sticky Struktur ditinjau'"></span>
+              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+reviewedFocusTotal+' sticky latihan ditinjau'"></span>
             </div>
-            <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff terhadap tim yang lain. Untuk simulasi ini, perencanaan dilakukan untuk milestone Struktur. Milestone lain sudah ditetapkan beserta constraint-nya, tergantung kualitas hasil desain.</p>
+            <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff. Latihan: milestone Pondasi dan Struktur. Atap & MEP serta Finishing sudah given; constraint-nya dari kualitas hasil desain.</p>
           </div>
           <div class="board-scroll">
             <div class="phase-col-end">
@@ -920,6 +919,14 @@
 
         <div x-show="state.contractor.pullLocked" class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="sessionWeek"></span></h3>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" x-show="activeLookScenarios.length">
+            <p class="font-semibold">Skenario gangguan di jendela ini</p>
+            <ul class="mt-1 space-y-0.5">
+              <template x-for="sc in activeLookScenarios" :key="'sc'+sc.id">
+                <li x-text="'M'+sc.week+' · '+sc.note"></li>
+              </template>
+            </ul>
+          </div>
           <div class="rounded-xl border border-paper-line bg-paper-card p-3 space-y-2">
             <div class="flex gap-1 overflow-x-auto pb-1">
               <template x-for="m in timelineWeeks" :key="'tm'+m.n">
@@ -1302,6 +1309,10 @@
 
         <div x-show="state.contractor.wwpLocked" class="space-y-4">
           <h3 class="text-sm font-bold">Sesi · M<span x-text="playWeek"></span> · <span x-text="huddleDayLabel"></span></h3>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" x-show="weatherToday">
+            <p class="font-semibold">Skenario: hujan Sen–Sel (M6)</p>
+            <p class="mt-0.5">Tidak bisa centang hijau hari ini. Perpanjang atau gagal, alasan Cuaca. Setelah Rabu, sisa hari bisa dijalankan cepat jika tidak ada kunci lain.</p>
+          </div>
 
           <div class="rounded-xl border border-paper-line overflow-hidden" x-show="zoneBoard.rows.length">
             <div class="px-4 py-2.5 bg-paper/60 border-b border-paper-line flex flex-wrap items-center justify-between gap-2">
@@ -1463,6 +1474,7 @@
 
           <div class="flex flex-wrap gap-2 pt-1">
             <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleDayIdx<5 && !state.contractor.huddleComplete" @click="nextHuddleDay()">Lanjut hari berikutnya →</button>
+            <button type="button" class="btn-ghost text-sm border border-terra/30" x-show="!state.contractor.huddleComplete && canFastForwardHuddle" @click="fastForwardHuddle()">Jalankan sisa hari (tanpa gangguan)</button>
             <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleDayIdx>=5 && !state.contractor.huddleComplete" @click="completeHuddle()">Selesai minggu ini, lanjut evaluasi</button>
             <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleComplete" @click="setStage('contractor-wwp')">Ke PPC di tab WWP →</button>
           </div>
@@ -1907,7 +1919,7 @@
 import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
 
 const SK = 'siapkerja_project_state';
-const VER = '1.18.0';
+const VER = '1.19.0';
 const MANUAL = [
   { id:'alur', title:'Alur lengkap', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir minggu berikutnya.', bullets:[
     'Pemilik → Desainer → Pemilihan (kontrak)',
@@ -1915,14 +1927,14 @@ const MANUAL = [
     'Look-ahead Plan 4 minggu (L1 harus SiapKerja!)',
     'Weekly Work Plan → Daily Huddle → Learning → Laporan → gulir',
   ]},
-  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value: kualitas tidak boleh turun. Pilih fokus waktu/biaya dan budget.', body:'Owner menetapkan nilai yang ingin dicapai. Kualitas tidak boleh dikompensasi. Budget mencakup desain + konstruksi (350 jt di simulasi ini).', bullets:['Pilih durasi, kualitas, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
+  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value: kualitas tidak boleh turun. Pilih fokus waktu/biaya dan budget.', body:'Owner menetapkan nilai yang ingin dicapai. Kualitas tidak boleh dikompensasi. Budget mencakup desain + konstruksi (350 jt di simulasi ini). Durasi desain 2/4 minggu, konstruksi 8/10/12 (default 10).', bullets:['Pilih durasi, kualitas, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
   { id:'designer', title:'2 · Desainer', blurb:'Terjemahkan value ke denah, 3D, OE, dan LOD. LOD menentukan banyaknya constraint.', body:'Desainer menerjemahkan keinginan pemilik ke tanah, struktur, arsitektur, MEP, denah dan 3D. Kualitas hasil desain (LOD) menentukan biaya dan berapa constraint yang muncul di lapangan.', bullets:['LOD kurang detail → constraint banyak','Tombol: Tetapkan desain & undang kontraktor'] },
   { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Kualitas harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar kualitas. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Nego vs OE, bukan vs budget','Tanda tangan kontrak → Eksekusi konstruksi'] },
   { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt dokumen kontrak. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone.', bullets:[] },
-  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Tim, garis milestone, zonasi, pull planning. Latihan di milestone Struktur.', body:'Enam tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi, tetapkan, lalu pull per milestone. Constraint given muncul dari LOD, mulai minggu ke-2 (L1/M1 bersih).', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
+  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Tim, garis milestone, zonasi, pull. Latihan Pondasi + Struktur.', body:'Enam tim kerja (warna). Milestone = kapan terjadi. Latihan pull: Pondasi dan Struktur. Atap & finishing given dari LOD. Constraint given mulai minggu ke-2 (L1/M1 bersih). Skenario: material M3, hujan M6.', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
   { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka.', body:'Tiga pilihan constraint: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Sisa/gagal minggu lalu tampil di papan zona dan Dibawa ke L1.', bullets:['L1 = minggu eksekusi berikutnya','Baru susun WWP setelah L1 SiapKerja!'] },
   { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Sisa setelah Sabtu = rencana minggu depan, bukan gagal.', body:'Z1 pecah 3 hari → Z1-a-1…Z1-a-3. Z2-a pecah 2 hari → Z2-a-1, Z2-a-2. Kartu sisa/gagal tidak dipecah lagi. Kunci rencana lalu Daily Huddle.', bullets:[] },
-  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku: Site gagal di Z1-a memblok Galian zona itu. Promosi hanya sisa hari dalam minggu yang sama.', bullets:[] },
+  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku. Promosi hanya sisa hari dalam minggu yang sama. Jika tidak ada kunci, tombol Jalankan sisa hari. M6 hujan Sen–Sel (skenario).', bullets:[] },
   { id:'contractor-learning', title:'9 · Learning', blurb:'Centang selesai/tidak per pecahan. Sisa pecah ke M berikutnya bukan variansi.', body:'PPC hanya janji minggu itu. Yang tidak selesai dibawa ke L1. Yang tidak muat pecah (mis. Z2-a-3) dijadwalkan minggu depan, tidak masuk PPC. Kunci evaluasi sebelum gulir.', bullets:[] },
   { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Bakukan progres fisik (default sudah dihitung).', body:'Angka progres default dari pekerjaan selesai. Arsip eksekusi = WWP minggu yang sudah digulir (baca saja).', bullets:[] },
   { id:'aturan', title:'Aturan yang sering keliru', body:'', bullets:[
@@ -1995,7 +2007,12 @@ const TEAM_META = [
   { id:'MEP',       color:'#7C3AED', phase:'Atap & MEP', role:'MEP rough-in' },
   { id:'Finishing', color:'#CA8A04', phase:'Finishing',  role:'Plester, lantai, cat, serah terima' },
 ];
+const FOCUS_PHASES = ['pondasi', 'struktur'];
 const FOCUS_PHASE = 'struktur';
+const SCENARIOS = [
+  { id: 'mat3', week: 3, kind: 'material', type: 'material', note: 'Semen/besi telat kirim (skenario). Make-ready sebelum masuk L1.' },
+  { id: 'rain6', week: 6, kind: 'weather', type: 'weather', days: 2, note: 'Hujan Sen–Sel (skenario). Daily huddle: perpanjang atau gagal, alasan Cuaca.' },
+];
 const WORK_ZONES = {
   struct: ['z3','z4','z5','z6'],
   wall:   ['z3','z4','z5','z6'],
@@ -2345,6 +2362,7 @@ function emptyContractor() {
     extendType:'material',
     problemRegistry:[],
     weeklyProgress:[],
+    scenarioApplied:[],
     learningNote:'',
     actualLog:[],
     progressLocks:[],
@@ -2419,7 +2437,7 @@ function initState() {
   return {
     version: VER,
     currentStage: 'owner',
-    owner: { designDuration:6, constructionDuration:16, qualityLevel:'standard', budgetLevel:'standard', priority:'time', plannedSCurve:[], workPlan:[], locked:false },
+    owner: { designDuration:2, constructionDuration:10, qualityLevel:'standard', budgetLevel:'standard', priority:'time', plannedSCurve:[], workPlan:[], locked:false },
     designer: { designFreezeWeek:null, levelOfDetail:'standar', locked:false },
     negotiation: emptyNego(),
     contractor: emptyContractor(),
@@ -2480,7 +2498,7 @@ Alpine.data('app', () => ({
 
   get oeJt() {
     const q = this.state.owner.qualityLevel === 'premium' ? 1.18 : 1;
-    const w = Number(this.state.owner.constructionDuration) || 16;
+    const w = Number(this.state.owner.constructionDuration) || 10;
     const t = w <= 12 ? 1.12 : (w >= 20 ? 0.95 : 1);
     return Math.round(OE_BASE_JT * q * t);
   },
@@ -2536,7 +2554,7 @@ Alpine.data('app', () => ({
     if (n.deal && n.contract && n.contract.sCurve && n.contract.sCurve.length) {
       return { curve: n.contract.sCurve, maxJt: n.contract.price, plan: n.contract.sCurve };
     }
-    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
+    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 10;
     const price = Number(n.bidPriceJt) || this.safeBidJt;
     const { curve } = buildPlan(weeks, price);
     return { curve, maxJt: price, plan: curve };
@@ -2551,14 +2569,14 @@ Alpine.data('app', () => ({
   get negoWorkPlan() {
     const n = this.state.negotiation;
     if (n.deal && n.contract && n.contract.workPlan && n.contract.workPlan.length) return n.contract.workPlan;
-    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
+    const weeks = Number(n.bidDuration) || this.state.owner.constructionDuration || 10;
     const price = Number(n.bidPriceJt) || this.safeBidJt;
     return buildPlan(weeks, price).plan;
   },
   get negoWeeks() {
     const n = this.state.negotiation;
-    if (n.deal && n.contract) return Number(n.contract.duration) || 16;
-    return Number(n.bidDuration) || this.state.owner.constructionDuration || 16;
+    if (n.deal && n.contract) return Number(n.contract.duration) || 10;
+    return Number(n.bidDuration) || this.state.owner.constructionDuration || 10;
   },
   get ganttWeekNums() {
     return Array.from({ length: Math.max(1, this.negoWeeks) }, (_, i) => i + 1);
@@ -2625,7 +2643,7 @@ Alpine.data('app', () => ({
     return pct >= 99.5 || (cells.length > 0 && cells.every(c => c.status === 'done'));
   },
   get projectCloseStats() {
-    const contractWeeks = Number((this.state.negotiation.contract || {}).duration) || this.negoWeeks || 16;
+    const contractWeeks = Number((this.state.negotiation.contract || {}).duration) || this.negoWeeks || 10;
     const rows = this.progressGanttRows || [];
     const ends = rows.filter(r => r.hasActual && r.actEnd).map(r => Number(r.actEnd));
     const actualWeeks = ends.length ? Math.max(...ends) : (this.playWeek || 1);
@@ -2878,7 +2896,7 @@ Alpine.data('app', () => ({
     const ov = (this.state.contractor && this.state.contractor.stickyWeeks) || {};
     const p0 = Number(ph.startWeek) || 1;
     const p1 = Number(ph.finishWeek) || p0;
-    const isFocus = ph.id === FOCUS_PHASE;
+    const isFocus = FOCUS_PHASES.includes(ph.id);
     const stickies = [];
     for (const w of (ph.works || [])) {
       const zones = WORK_ZONES[w.id] || ['z3'];
@@ -2931,14 +2949,14 @@ Alpine.data('app', () => ({
   },
   get pullPhasesView() {
     return this.phasesView.slice().reverse().map(ph => {
-      const isFocus = ph.id === FOCUS_PHASE;
+      const isFocus = FOCUS_PHASES.includes(ph.id);
       const stickies = this._makeStickies(ph).sort((a, b) => (b.startWeek - a.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
   },
     get forwardPhasesView() {
     return this.phasesView.map(ph => {
-      const isFocus = ph.id === FOCUS_PHASE;
+      const isFocus = FOCUS_PHASES.includes(ph.id);
       const stickies = this._makeStickies(ph).sort((a, b) => (a.startWeek - b.startWeek) || a.name.localeCompare(b.name));
       return { ...ph, isFocus, stickies };
     });
@@ -3574,8 +3592,12 @@ Alpine.data('app', () => ({
     return Math.round(100 * this.ppcDoneCount / n);
   },
   get focusStickies() {
-    const ph = (this.pullPhasesView || []).find(p => p.isFocus);
-    return (ph && ph.stickies) || [];
+    const out = [];
+    for (const ph of (this.pullPhasesView || [])) {
+      if (!ph.isFocus) continue;
+      out.push(...(ph.stickies || []));
+    }
+    return out;
   },
   get reviewedCount() {
     const r = (this.state.contractor && this.state.contractor.reviewed) || {};
@@ -3611,7 +3633,11 @@ Alpine.data('app', () => ({
     return succs.map(p => p.name).join(', ');
   },
   get focusMilestoneWeeks() {
-    const ph = (this.phasesView || []).find(p => p.id === FOCUS_PHASE);
+    const w = this.selectedWorkObj;
+    const pid = w && (w.parentId || w.id);
+    const phId = (PHASES.find(p => (p.works || []).includes(pid)) || {}).id;
+    const ph = (this.phasesView || []).find(p => p.id === phId && FOCUS_PHASES.includes(p.id))
+      || (this.phasesView || []).find(p => FOCUS_PHASES.includes(p.id));
     const a = Number(ph && ph.startWeek) || 1;
     const b = Number(ph && ph.finishWeek) || a;
     const weeks = [];
@@ -3666,7 +3692,7 @@ Alpine.data('app', () => ({
   get canSignContract() {
     const p = Number(this.state.negotiation.bidPriceJt);
     const d = Number(this.state.negotiation.bidDuration);
-    const ask = Number(this.state.owner.constructionDuration) || 16;
+    const ask = Number(this.state.owner.constructionDuration) || 10;
     if (!(p > 0) || !(d > 0)) return false;
     if (p > this.oeJt + 0.05) return false;
     if (d > ask) return false;
@@ -3675,7 +3701,7 @@ Alpine.data('app', () => ({
   get signBlockReason() {
     const p = Number(this.state.negotiation.bidPriceJt);
     const d = Number(this.state.negotiation.bidDuration);
-    const ask = Number(this.state.owner.constructionDuration) || 16;
+    const ask = Number(this.state.owner.constructionDuration) || 10;
     const reasons = [];
     if (!(p > 0)) reasons.push('Harga penawaran belum diisi.');
     else if (p > this.oeJt + 0.05) reasons.push('Harga di atas OE Rp ' + this.oeJt + ' jt — tidak bisa tanda tangan.');
@@ -3738,7 +3764,7 @@ Alpine.data('app', () => ({
     this.recalcPlan();
   },
   recalcPlan() {
-    const weeks = this.state.owner.constructionDuration || 16;
+    const weeks = this.state.owner.constructionDuration || 10;
     const mid = this.oeJt;
     const { plan, curve } = buildPlan(weeks, mid);
     this.state.owner.workPlan = plan;
@@ -3754,7 +3780,7 @@ Alpine.data('app', () => ({
   },
   _syncDesignFreeze() {
     if (!this.state || !this.state.designer) return;
-    const max = Number(this.state.owner.designDuration) || 6;
+    const max = Number(this.state.owner.designDuration) || 2;
     const f = Number(this.state.designer.designFreezeWeek);
     if (!Number.isFinite(f) || f < 1 || f > max) {
       this.state.designer.designFreezeWeek = max;
@@ -3857,7 +3883,7 @@ Alpine.data('app', () => ({
   _seedGivenConstraints() {
     const specs = LOD_GIVEN[this.lodKey] || [];
     const stickies = this._allStickies();
-    const strukturWorks = new Set(((PHASES.find(p => p.id === FOCUS_PHASE) || {}).works) || []);
+    const focusWorks = new Set(PHASES.filter(p => FOCUS_PHASES.includes(p.id)).flatMap(p => p.works || []));
     const extra = [];
     for (const spec of specs) {
       const w = WORKS.find(x => x.id === spec.workId);
@@ -3870,13 +3896,53 @@ Alpine.data('app', () => ({
           type: spec.type,
           note: spec.note,
           given: true,
-          editable: strukturWorks.has(spec.workId),
+          editable: focusWorks.has(spec.workId),
           workLabel: (w ? w.name : spec.workId) + ' · ' + this.prettyZone(t.zoneLabel) + ' · M' + t.startWeek,
         });
       }
     }
-    const keep = (this.state.contractor.constraints || []).filter(c => !c.given);
+    const keep = (this.state.contractor.constraints || []).filter(c => !c.given && !c.scenario);
     this.state.contractor.constraints = keep.concat(extra);
+    this._applyScenarioConstraints();
+  },
+  _applyScenarioConstraints() {
+    const spec = SCENARIOS.find(s => s.kind === 'material');
+    if (!spec) return;
+    const stickies = this._allStickies();
+    let targets = stickies.filter(s => Number(s.startWeek) === spec.week);
+    if (!targets.length && stickies.length) {
+      const best = Math.min(...stickies.map(s => Math.abs(Number(s.startWeek) - spec.week)));
+      targets = stickies.filter(s => Math.abs(Number(s.startWeek) - spec.week) === best).slice(0, 4);
+    }
+    const extra = targets.map(t => ({
+      id: 'sc-' + spec.id + '-' + t.id,
+      workId: t.id,
+      parentId: t.parentId,
+      type: spec.type,
+      note: spec.note,
+      given: true,
+      scenario: true,
+      editable: true,
+      workLabel: t.name + ' · ' + this.prettyZone(t.zoneLabel) + ' · M' + t.startWeek,
+    }));
+    const keep = (this.state.contractor.constraints || []).filter(c => !c.scenario);
+    this.state.contractor.constraints = keep.concat(extra);
+  },
+  get activeLookScenarios() {
+    const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
+    const weeks = [off + 1, off + 2, off + 3, off + 4];
+    return SCENARIOS.filter(s => weeks.includes(s.week));
+  },
+  get weatherToday() {
+    if (this.playWeek !== 6) return false;
+    if (this.state.contractor && this.state.contractor.huddleComplete) return false;
+    const idx = Number((this.state.contractor && this.state.contractor.huddleDayIdx) || 0);
+    return idx <= 1;
+  },
+  _weatherBlocksDay(dayId) {
+    if (this.playWeek !== 6) return false;
+    const d = dayId || ((WWP_DAYS[Number(this.state.contractor.huddleDayIdx) || 0] || {}).id);
+    return d === 'sen' || d === 'sel';
   },
   addConstraint() {
     const c = this.state.contractor;
@@ -4552,6 +4618,9 @@ Alpine.data('app', () => ({
   },
   huddleBlockReason(item, forPromo) {
     if (!item) return '';
+    if (!forPromo && this._weatherBlocksDay(item.day)) {
+      return 'Hujan skenario (Sen–Sel) — perpanjang atau gagal (Cuaca)';
+    }
     const hist = this._predBlockReason(item);
     if (hist) return hist;
     const pid0 = this._workType(item);
@@ -4615,8 +4684,8 @@ Alpine.data('app', () => ({
     this.state.contractor.extendNote = '';
     const item = (this.state.contractor.wwp || []).find(x => x.id === id);
     const blocked = item && this.huddleBlockReason(item);
-    this.state.contractor.extendDays = blocked ? 'fail' : '1';
-    this.state.contractor.extendType = blocked ? 'prereq' : 'material';
+    this.state.contractor.extendDays = blocked ? 'fail' : (this.weatherToday ? '2' : '1');
+    this.state.contractor.extendType = blocked ? 'prereq' : (this.weatherToday ? 'weather' : 'material');
   },
   _addRegistry(entry) {
     const week = this.playWeek;
@@ -4730,6 +4799,36 @@ Alpine.data('app', () => ({
     this.applyHuddleToPpc();
     this.stopHuddleTimer();
     this.setStage('contractor-learning');
+  },
+  get canFastForwardHuddle() {
+    if (!this.state.contractor.wwpLocked || this.state.contractor.huddleComplete || this.state.contractor.weekClosed) return false;
+    if (this.weatherToday) return false;
+    const idx = Number(this.state.contractor.huddleDayIdx) || 0;
+    const wwp = this.state.contractor.wwp || [];
+    for (let i = idx; i < 6; i++) {
+      const day = WWP_DAYS[i].id;
+      const items = wwp.filter(x => x.day === day);
+      for (const it of items) {
+        if (this.huddleStatus(it.id)) continue;
+        if (this.huddleBlockReason(it)) return false;
+      }
+    }
+    return true;
+  },
+  fastForwardHuddle() {
+    if (!this.canFastForwardHuddle) {
+      alert('Ada item terkunci atau skenario gangguan. Jalankan hari per hari.');
+      return;
+    }
+    const start = Number(this.state.contractor.huddleDayIdx) || 0;
+    for (let i = start; i < 6; i++) {
+      this.state.contractor.huddleDayIdx = i;
+      const items = [...this.huddleTodayItems];
+      for (const it of items) {
+        if (!this.huddleStatus(it.id) && !this.huddleBlockReason(it)) this.markHuddleDone(it.id);
+      }
+    }
+    this.completeHuddle();
   },
     applyHuddleToPpc() {
     if (this.state.contractor.weekClosed) return;
