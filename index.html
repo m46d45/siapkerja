@@ -90,7 +90,7 @@
           <span x-show="!state.negotiation.deal||currentStage==='negotiation'">3</span>
           <span x-show="state.negotiation.deal&&currentStage!=='negotiation'">✓</span>
         </span>
-        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='negotiation'?'text-terra':(state.negotiation.deal?'text-forest':'text-ink-mute')">Nego</span>
+        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='negotiation'?'text-terra':(state.negotiation.deal?'text-forest':'text-ink-mute')">Pemilihan</span>
       </button>
       <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.negotiation.deal?'bg-forest/40':'bg-paper-line'"></div>
       <button @click="canAccessContractor()&&setStage('contractor-master')" :disabled="!canAccessContractor()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
@@ -293,7 +293,7 @@
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('owner')" class="btn-ghost">← Pemilik</button>
         <button x-show="!state.designer.locked" @click="handoffToNego()" class="btn-primary flex-1 sm:flex-none">Tetapkan desain & undang kontraktor →</button>
-        <button x-show="state.designer.locked" @click="setStage('negotiation')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Negosiasi →</button>
+        <button x-show="state.designer.locked" @click="setStage('negotiation')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Pemilihan →</button>
       </div>
     </div>
   </section>
@@ -303,16 +303,16 @@
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3 · Tender</p>
-          <h2 class="text-xl font-bold text-ink">Negosiasi Kontrak</h2>
-          <p class="text-sm text-ink-soft mt-1">Deal mengunci nilai, durasi, Kurva S, dan Gantt — itu dokumen kontrak yang diprogress kontraktor.</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3 · Pemilihan Kontraktor</p>
+          <h2 class="text-xl font-bold text-ink">Penunjukan kontraktor dan kontrak</h2>
+          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Untuk rumah Tipe 36, kontraktor ditunjuk langsung lalu dinegosiasi. Negosiasi berdasarkan harga dan waktu. Kualitas harus sesuai dengan yang diminta pemilik.</p>
         </div>
-        <span x-show="state.negotiation.deal" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Deal</span>
+        <span x-show="state.negotiation.deal" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Kontrak</span>
       </div>
       <div class="p-5 space-y-5">
 
         <div class="rounded-xl border p-3.5" :class="priorityHint.box">
-          <p class="text-[11px] font-semibold uppercase tracking-wide mb-1" x-text="'Fokus Owner: '+priorityHint.title"></p>
+          <p class="text-[11px] font-semibold uppercase tracking-wide mb-1" x-text="'Fokus pemilik: '+priorityHint.title"></p>
           <p class="text-xs leading-relaxed" x-text="priorityHint.body"></p>
         </div>
 
@@ -359,35 +359,19 @@
               <label class="block text-sm font-medium mb-1.5">Durasi ditawarkan</label>
               <select class="field" x-model.number="state.negotiation.bidDuration" :disabled="state.negotiation.deal">
                 <option :value="state.owner.constructionDuration-2" x-show="state.owner.constructionDuration>12" x-text="(state.owner.constructionDuration-2)+' minggu (lebih cepat)'"></option>
-                <option :value="state.owner.constructionDuration" x-text="state.owner.constructionDuration+' minggu (sesuai Owner)'"></option>
+                <option :value="state.owner.constructionDuration" x-text="state.owner.constructionDuration+' minggu (sesuai pemilik)'"></option>
                 <option :value="state.owner.constructionDuration+2" x-text="(state.owner.constructionDuration+2)+' minggu (lebih lama)'"></option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-1.5">Quality ditawarkan</label>
-              <select class="field" x-model="state.negotiation.bidQuality" :disabled="state.negotiation.deal">
-                <option value="standard">Standard</option>
-                <option value="premium">Premium</option>
-              </select>
+              <label class="block text-sm font-medium mb-1.5">Mutu <span class="font-normal text-ink-mute">(tidak ditawar)</span></label>
+              <p class="field bg-paper text-ink capitalize" x-text="state.owner.qualityLevel"></p>
+              <p class="text-[11px] text-ink-mute mt-1.5">Harus sesuai permintaan pemilik.</p>
             </div>
           </div>
         </div>
 
-        <div x-show="state.negotiation.lastResult" class="rounded-xl border p-4"
-          :class="state.negotiation.lastResult.status==='accept'?'bg-forest-soft/70 border-forest/20':(state.negotiation.lastResult.status==='reject'?'bg-red-50 border-red-200':'bg-amber-50 border-amber-200')">
-          <p class="text-[11px] font-semibold uppercase tracking-wide mb-1"
-            :class="state.negotiation.lastResult.status==='accept'?'text-forest':(state.negotiation.lastResult.status==='reject'?'text-red-800':'text-amber-800')"
-            x-text="state.negotiation.lastResult.title"></p>
-          <p class="text-sm" x-text="state.negotiation.lastResult.body"></p>
-          <ul class="mt-2 space-y-1 text-xs" x-show="(state.negotiation.lastResult.issues||[]).length">
-            <template x-for="iss in state.negotiation.lastResult.issues" :key="iss.text">
-              <li x-text="'• '+iss.text"></li>
-            </template>
-          </ul>
-          <p class="mt-2 text-xs font-medium" x-show="state.negotiation.lastResult.ask" x-text="state.negotiation.lastResult.ask && state.negotiation.lastResult.ask.label"></p>
-          <button x-show="state.negotiation.lastResult.ask && !state.negotiation.deal"
-            @click="applyOwnerAsk()" class="mt-3 btn-ghost text-sm">Terapkan usulan Owner</button>
-        </div>
+        <div x-show="!state.negotiation.deal && !canSignContract" class="rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-800" x-text="signBlockReason"></div>
 
         <div x-show="state.negotiation.deal && state.negotiation.contract" class="rounded-xl border border-forest/25 bg-forest-soft/40 p-4">
           <p class="text-[11px] font-semibold uppercase tracking-wide text-forest mb-2">Kontrak dikunci</p>
@@ -395,7 +379,7 @@
             <div>Nilai kontrak <strong class="block" x-text="'Rp '+state.negotiation.contract.price+' jt'"></strong></div>
             <div>Cadangan VO <strong class="block" x-text="'Rp '+state.negotiation.contract.contingency+' jt ('+state.negotiation.contract.contingencyPct+'%)'"></strong></div>
             <div>Durasi <strong class="block" x-text="state.negotiation.contract.duration+' minggu'"></strong></div>
-            <div>Quality <strong class="block capitalize" x-text="state.negotiation.contract.quality"></strong></div>
+            <div>Mutu <strong class="block capitalize" x-text="state.negotiation.contract.quality"></strong></div>
           </div>
         </div>
 
@@ -483,13 +467,11 @@
           </div>
         </div>
 
-        <p class="text-[11px] text-ink-mute" x-show="!state.negotiation.deal" x-text="'Putaran '+(state.negotiation.round||0)+' / '+state.negotiation.maxRounds"></p>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
-        <button @click="setStage('designer')" class="btn-ghost">← Kembali</button>
-        <button x-show="!state.negotiation.deal" @click="submitBid()" class="btn-primary flex-1 sm:flex-none">Ajukan ke Owner</button>
+        <button @click="setStage('designer')" class="btn-ghost">← Desainer</button>
+        <button x-show="!state.negotiation.deal" @click="signContract()" :disabled="!canSignContract" class="btn-primary flex-1 sm:flex-none disabled:opacity-40">Tanda tangan kontrak</button>
         <button x-show="state.negotiation.deal" @click="setStage('contractor-master')" class="btn-primary flex-1 sm:flex-none">Masuk ke Master Plan →</button>
-        <button x-show="!state.negotiation.deal && state.negotiation.round>0" @click="resetNego()" class="btn-danger">Reset penawaran</button>
       </div>
     </div>
   </section>
@@ -2837,9 +2819,28 @@ Alpine.data('app', () => ({
   },
   get priorityHint() {
     const p = this.state.owner.priority;
-    if (p === 'cost') return { title:'COST', box:'border-terra/25 bg-terra-soft/40', body:'Harga jadi acuan. Ideal: penawaran ≈ OE ÷ 1,1 agar VO +10% masih ≤ budget Owner. Terlalu murah juga dicurigai.' };
-    if (p === 'quality') return { title:'QUALITY', box:'border-forest/20 bg-forest-soft/50', body:'Spek jadi acuan. Jangan turunkan quality. Harga boleh lebih tinggi asal ≤ OE dan masih ada cadangan VO.' };
-    return { title:'TIME', box:'border-amber-200 bg-amber-50', body:'Durasi jadi acuan. Molor = ditolak. Harga boleh dekat OE, tapi tetap lebih aman jika ada ruang VO 10%.' };
+    if (p === 'cost') return { title:'Biaya', box:'border-terra/25 bg-terra-soft/40', body:'Harga jadi acuan. Ideal: penawaran ≈ OE ÷ 1,1 agar VO +10% masih ≤ OE. Mutu tidak ditawar.' };
+    return { title:'Waktu', box:'border-amber-200 bg-amber-50', body:'Durasi jadi acuan. Molor = tidak bisa tanda tangan. Harga boleh dekat OE, lebih aman jika ada ruang VO 10%. Mutu tidak ditawar.' };
+  },
+  get canSignContract() {
+    const p = Number(this.state.negotiation.bidPriceJt);
+    const d = Number(this.state.negotiation.bidDuration);
+    const ask = Number(this.state.owner.constructionDuration) || 16;
+    if (!(p > 0) || !(d > 0)) return false;
+    if (p > this.oeJt + 0.05) return false;
+    if (d > ask) return false;
+    return true;
+  },
+  get signBlockReason() {
+    const p = Number(this.state.negotiation.bidPriceJt);
+    const d = Number(this.state.negotiation.bidDuration);
+    const ask = Number(this.state.owner.constructionDuration) || 16;
+    const reasons = [];
+    if (!(p > 0)) reasons.push('Harga penawaran belum diisi.');
+    else if (p > this.oeJt + 0.05) reasons.push('Harga di atas OE Rp ' + this.oeJt + ' jt — tidak bisa tanda tangan.');
+    if (!(d > 0)) reasons.push('Durasi belum dipilih.');
+    else if (d > ask) reasons.push('Durasi molor dari ' + ask + ' minggu pemilik — tidak bisa tanda tangan.');
+    return reasons.join(' ');
   },
 
   canAccessDesigner() { return this.state.owner.locked === true; },
@@ -2934,41 +2935,26 @@ Alpine.data('app', () => ({
     this.initNegotiation();
     this.save();
   },
-  submitBid() {
+  signContract() {
+    if (!this.canSignContract || this.state.negotiation.deal) return;
     const n = this.state.negotiation;
-    if (n.deal) return;
-    if (n.round >= n.maxRounds) {
-      n.lastResult = { status:'reject', title:'Putaran habis', body:'Tiga kali nego tanpa deal. Reset penawaran atau unlock Owner.', issues:[], praises:[], ask:null };
-      this.save();
-      return;
-    }
-    n.round += 1;
-    const result = evaluateOwner(this.state.owner, n, this.oeJt);
-    if (n.round >= n.maxRounds && result.status !== 'accept') {
-      result.status = 'reject';
-      result.title = 'Tidak deal';
-      result.body = 'Sudah 3 putaran. Owner menutup nego. Reset atau ubah constraint Owner.';
-    }
-    n.lastResult = result;
-    n.history.push({ round:n.round, price:n.bidPriceJt, duration:n.bidDuration, quality:n.bidQuality, status:result.status });
-    if (result.status === 'accept') {
-      n.deal = true;
-      const price = Number(n.bidPriceJt);
-      const duration = Number(n.bidDuration);
-      const contingency = Math.round((this.oeJt - price) * 10) / 10;
-      const built = buildPlan(duration, price);
-      n.contract = {
-        price,
-        duration,
-        quality: n.bidQuality,
-        oe: this.oeJt,
-        contingency,
-        contingencyPct: this.oeJt ? Math.round(contingency / this.oeJt * 1000) / 10 : 0,
-        sCurve: built.curve,
-        workPlan: built.plan,
-      };
-      this.state.contractor = emptyContractor();
-    }
+    n.bidQuality = this.state.owner.qualityLevel;
+    const price = Number(n.bidPriceJt);
+    const duration = Number(n.bidDuration);
+    const contingency = Math.round((this.oeJt - price) * 10) / 10;
+    const built = buildPlan(duration, price);
+    n.deal = true;
+    n.contract = {
+      price,
+      duration,
+      quality: this.state.owner.qualityLevel,
+      oe: this.oeJt,
+      contingency,
+      contingencyPct: this.oeJt ? Math.round(contingency / this.oeJt * 1000) / 10 : 0,
+      sCurve: built.curve,
+      workPlan: built.plan,
+    };
+    this.state.contractor = emptyContractor();
     this.save();
   },
   workName(id) {
