@@ -2601,12 +2601,12 @@ Alpine.data('app', () => ({
     return log;
   },
   get physicalProgress() {
-    const planBy = {};
+    const planUnits = {};
     for (const ph of (this.forwardPhasesView || [])) {
       for (const s of (ph.stickies || [])) {
         const pid = s.parentId;
-        if (!planBy[pid]) planBy[pid] = [];
-        planBy[pid].push(s.id);
+        if (!planUnits[pid]) planUnits[pid] = new Set();
+        planUnits[pid].add(this._zoneUnit(s.zoneLabel) || s.zoneId || s.id);
       }
     }
     const weightBy = {};
@@ -2615,10 +2615,12 @@ Alpine.data('app', () => ({
     const inc = {};
     const parts = [];
     let earned = 0;
+    const totalW = WORKS.reduce((s, w) => s + (weightBy[w.id] || Number(w.weight) || 0), 0) || 1;
     for (const w of WORKS) {
-      const wt = weightBy[w.id] || 0;
+      const wt = weightBy[w.id] || Number(w.weight) || 0;
       if (wt <= 0) continue;
-      const plannedN = Math.max(1, (planBy[w.id] || []).length);
+      const zones = WORK_ZONES[w.id] || [];
+      const plannedN = Math.max(1, (planUnits[w.id] ? planUnits[w.id].size : 0), zones.length);
       const mine = cells.filter(c => c.parentId === w.id);
       const doneByUnit = {};
       for (const c of mine) {
@@ -2630,14 +2632,14 @@ Alpine.data('app', () => ({
       const nDone = Object.keys(doneByUnit).length;
       const frac = Math.min(1, nDone / plannedN);
       earned += wt * frac;
-      const piece = plannedN ? (wt / plannedN) : 0;
+      const piece = wt / plannedN;
       for (const u of Object.keys(doneByUnit)) {
         const wk = doneByUnit[u];
         inc[wk] = (inc[wk] || 0) + piece;
         parts.push({ name: w.name, week: wk, pct: Math.round(piece * 1000) / 10, unit: u });
       }
     }
-    const pct = Math.min(100, Math.round(earned * 1000) / 10);
+    const pct = Math.min(100, Math.round((earned / totalW) * 1000) / 10);
     const maxW = Object.keys(inc).length ? Math.max(...Object.keys(inc).map(Number)) : 0;
     const maxJt = this.negoBundle.maxJt || this.oeJt;
     const curve = [];
@@ -2675,9 +2677,7 @@ Alpine.data('app', () => ({
   },
   get displayedPhysicalPct() {
     const live = Number(this.physicalProgress && this.physicalProgress.pct) || 0;
-    const locked = (this.state.contractor.progressLocks || []).length ? this.lockedPhysicalPct : 0;
-    const v = Math.max(live, locked);
-    return Math.min(100, Math.round(v * 10) / 10);
+    return Math.min(100, Math.max(0, Math.round(live * 10) / 10));
   },
   get progressLockForWeek() {
     const w = this.playWeek;
@@ -2741,7 +2741,7 @@ Alpine.data('app', () => ({
       color: '#C45C26',
       fillId: 'scFillProg',
       yMode: 'pct',
-      actual: this.lockedProgressCurve || [],
+      actual: (this.physicalProgress && this.physicalProgress.curve) || [],
     }).markup;
   },
   get contractPlan() {
