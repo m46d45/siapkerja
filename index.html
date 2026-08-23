@@ -1916,43 +1916,61 @@ function houseSvg(showZones, selectedId) {
 
 function houseElevationSvg() {
   const ff = 'ui-sans-serif,system-ui,sans-serif';
-  const ox = 214, oy = 168;
-  const iso = (x, y, z) => [ox + (x - z) * 0.86, oy + (x + z) * 0.5 - y];
+  const W = 160, D = 138, H = 50, RH = 36;
+  const raw = (x, y, z) => [(x - z) * 0.86, (x + z) * 0.5 - y];
+  const keys = [
+    [-28, 0, -32], [W + 32, 0, -32], [W + 32, 0, D + 24], [-28, 0, D + 24],
+    [0, 0, 0], [W, 0, 0], [0, 0, D], [W, 0, D],
+    [0, H, 0], [W, H, 0], [0, H, D], [W, H, D],
+    [W / 2, H + RH, D / 2],
+  ];
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+  for (const p of keys) {
+    const [X, Y] = raw(...p);
+    minX = Math.min(minX, X); maxX = Math.max(maxX, X);
+    minY = Math.min(minY, Y); maxY = Math.max(maxY, Y);
+  }
+  const VB_W = 400, VB_H = 268, pad = 22;
+  const s = Math.min((VB_W - pad * 2) / (maxX - minX), (VB_H - pad * 2 - 18) / (maxY - minY));
+  const ox = (VB_W - (maxX - minX) * s) / 2 - minX * s;
+  const oy = pad - minY * s;
+  const iso = (x, y, z) => {
+    const [X, Y] = raw(x, y, z);
+    return [ox + X * s, oy + Y * s];
+  };
   const pts = (arr) => arr.map(p => iso(p[0], p[1], p[2]).map(n => n.toFixed(1)).join(',')).join(' ');
-  const poly = (arr, fill, sw = 1.55) =>
+  const poly = (arr, fill, sw = 1.45) =>
     `<polygon points="${pts(arr)}" fill="${fill}" stroke="#1C1917" stroke-width="${sw}" stroke-linejoin="round"/>`;
-  const line = (a, b, sw = 1.2) => {
+  const line = (a, b, sw = 1.15) => {
     const p = iso(...a), q = iso(...b);
     return `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" stroke="#1C1917" stroke-width="${sw}"/>`;
   };
-  const W = 168, D = 146, H = 52;
-  const Lx = 84;
-  const dx0 = 22, dx1 = 46, dH = 38;
-  let s = `<svg viewBox="0 0 400 252" role="img" aria-label="Axonometri Type 36 sesuai denah">
-    <rect width="400" height="252" fill="#EFE8DC"/>`;
-  s += poly([[-30, 0, -36], [W + 36, 0, -36], [W + 36, 0, D + 28], [-30, 0, D + 28]], '#D9CDB8', 0);
-  s += poly([[-8, 0, -22], [Lx + 8, 0, -22], [Lx + 8, 0, 0], [-8, 0, 0]], '#CABBAA', 1.1);
-  s += poly([[W, 0, 0], [W, H, 0], [W, H, D], [W, 0, D]], '#E4D3B8');
-  s += poly([[W, 22, 10], [W, 42, 10], [W, 42, 28], [W, 22, 28]], '#FFFcf8');
-  s += line([W, 32, 10], [W, 32, 28], 1);
-  s += poly([[W, 18, 44], [W, 42, 44], [W, 42, 66], [W, 18, 66]], '#FFFcf8');
-  s += line([W, 30, 44], [W, 30, 66], 1);
-  s += poly([[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]], '#F3E6D4');
-  s += line([Lx, 0, 0], [Lx, H, 0], 1.15);
-  s += poly([[dx0, 0, 0], [dx1, 0, 0], [dx1, dH, 0], [dx0, dH, 0]], '#6B3F24');
-  const knob = iso(dx1 - 4, 20, 0);
-  s += `<circle cx="${knob[0].toFixed(1)}" cy="${knob[1].toFixed(1)}" r="1.5" fill="#E8D5BC"/>`;
-  const cx = W / 2, cz = D / 2, R = H + 38;
-  s += poly([[0, H, D], [W, H, D], [cx, R, cz]], '#7A4A2A');
-  s += poly([[0, H, 0], [0, H, D], [cx, R, cz]], '#8B5E3C');
-  s += poly([[W, H, 0], [W, H, D], [cx, R, cz]], '#8B5E3C');
-  s += poly([[0, H, 0], [W, H, 0], [cx, R, cz]], '#A0522D');
-  const t1 = iso(28, 28, 0);
-  const t2 = iso(118, 28, 0);
-  s += `<text x="${t1[0].toFixed(1)}" y="${t1[1].toFixed(1)}" text-anchor="middle" font-size="9" fill="#57534E" font-family="${ff}">Tamu</text>`;
-  s += `<text x="${t2[0].toFixed(1)}" y="${t2[1].toFixed(1)}" text-anchor="middle" font-size="9" fill="#57534E" font-family="${ff}">KM</text>`;
-  s += `<text x="200" y="242" text-anchor="middle" font-size="10" fill="#78716C" font-family="${ff}">Axonometri · pintu di Tamu (utara) · KM–dapur di timur</text>`;
-  return s + `</svg>`;
+  const Lx = 80, dx0 = 20, dx1 = 42, dH = 36;
+  const cx = W / 2, cz = D / 2;
+  let out = `<svg viewBox="0 0 ${VB_W} ${VB_H}" role="img" aria-label="Axonometri Type 36 sesuai denah">
+    <rect width="${VB_W}" height="${VB_H}" fill="#EFE8DC"/>`;
+  out += poly([[-28, 0, -32], [W + 32, 0, -32], [W + 32, 0, D + 24], [-28, 0, D + 24]], '#D9CDB8', 0);
+  out += poly([[-6, 0, -18], [Lx + 6, 0, -18], [Lx + 6, 0, 0], [-6, 0, 0]], '#CABBAA', 1.1);
+  out += poly([[W, 0, 0], [W, H, 0], [W, H, D], [W, 0, D]], '#E4D3B8');
+  out += poly([[W, 20, 8], [W, 38, 8], [W, 38, 26], [W, 20, 26]], '#FFFcf8');
+  out += line([W, 29, 8], [W, 29, 26], 1);
+  out += poly([[W, 16, 42], [W, 38, 42], [W, 38, 62], [W, 16, 62]], '#FFFcf8');
+  out += line([W, 27, 42], [W, 27, 62], 1);
+  out += poly([[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]], '#F3E6D4');
+  out += line([Lx, 0, 0], [Lx, H, 0], 1.1);
+  out += poly([[dx0, 0, 0], [dx1, 0, 0], [dx1, dH, 0], [dx0, dH, 0]], '#6B3F24');
+  const knob = iso(dx1 - 3, 18, 0);
+  out += `<circle cx="${knob[0].toFixed(1)}" cy="${knob[1].toFixed(1)}" r="1.4" fill="#E8D5BC"/>`;
+  out += poly([[0, H, D], [W, H, D], [cx, H + RH, cz]], '#7A4A2A');
+  out += poly([[0, H, 0], [0, H, D], [cx, H + RH, cz]], '#8B5E3C');
+  out += poly([[W, H, 0], [W, H, D], [cx, H + RH, cz]], '#8B5E3C');
+  out += poly([[0, H, 0], [W, H, 0], [cx, H + RH, cz]], '#A0522D');
+  const t1 = iso(32, 22, -1);
+  const t2 = iso(118, 22, -1);
+  out += `<text x="${t1[0].toFixed(1)}" y="${t1[1].toFixed(1)}" text-anchor="middle" font-size="10" fill="#44403C" font-family="${ff}">Tamu</text>`;
+  out += `<text x="${t2[0].toFixed(1)}" y="${t2[1].toFixed(1)}" text-anchor="middle" font-size="10" fill="#44403C" font-family="${ff}">KM</text>`;
+  out += `<text x="200" y="${VB_H - 8}" text-anchor="middle" font-size="10" fill="#78716C" font-family="${ff}">Pintu utara di Tamu · KM & dapur di timur · kamar di selatan</text>`;
+  return out + `</svg>`;
 }
 
 function emptyNego() {
