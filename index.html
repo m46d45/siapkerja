@@ -577,43 +577,58 @@
                 <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
             <div>
-              <h3 class="text-sm font-bold">Milestone & Jendela Waktu</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5">Dari Master Plan (kontrak). Konfirmasi jendela waktu dulu — ini belum pull.</p>
+              <h3 class="text-sm font-bold">Milestone</h3>
+              <p class="text-[11px] text-ink-mute mt-0.5">Kapan fase selesai — titik waktu, bukan durasi. Pilih milestone, ketuk minggu pada garis. Lalu kunci.</p>
             </div>
             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full" :class="state.contractor.milestonesLocked ? 'bg-forest-soft text-forest' : 'bg-paper-card text-ink-soft border border-paper-line'" x-text="state.contractor.milestonesLocked ? 'Terkunci' : 'Belum dikunci'"></span>
           </div>
-          <div class="p-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-4 space-y-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <template x-for="ph in phasesView" :key="'ms'+ph.id">
-                <div class="rounded-xl border border-paper-line bg-paper-card p-3.5">
-                  <div class="flex items-start justify-between gap-2 mb-2">
-                    <div>
-                      <p class="text-[10px] uppercase tracking-wide text-ink-mute">Milestone</p>
-                      <p class="text-sm font-bold" x-text="ph.name"></p>
-                    </div>
-                    <p class="text-[11px] text-ink-mute tabular-nums" x-text="'Rp '+ph.costJt+' jt'"></p>
-                  </div>
-                  <div class="flex items-center gap-2 text-xs" x-show="!state.contractor.milestonesLocked">
-                    <label class="text-ink-mute shrink-0">M</label>
-                    <input type="number" class="field !py-1.5 !px-2 text-center w-16" min="1"
-                      :value="ph.startWeek"
-                      @change="updatePhaseWindow(ph.id, 'startWeek', $event.target.value)"
-                      :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked">
-                    <span class="text-ink-mute">–</span>
-                    <input type="number" class="field !py-1.5 !px-2 text-center w-16" min="1"
-                      :value="ph.finishWeek"
-                      @change="updatePhaseWindow(ph.id, 'finishWeek', $event.target.value)"
-                      :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked">
-                  </div>
-                  <p class="text-[11px] text-ink-soft mt-1 tabular-nums" x-show="state.contractor.milestonesLocked" x-text="'M'+ph.startWeek+'–'+ph.finishWeek"></p>
-                  <p class="text-[10px] text-ink-mute mt-1" x-show="!state.contractor.milestonesLocked" x-text="'Default Gantt: M'+ph.derivedStart+'–'+ph.derivedFinish"></p>
-                </div>
+                <button type="button" class="text-left rounded-xl border p-3"
+                  :class="state.contractor.selectedMilestone===ph.id ? 'border-terra bg-terra-soft/40' : 'border-paper-line bg-paper-card'"
+                  :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked"
+                  @click="state.contractor.selectedMilestone=ph.id">
+                  <p class="text-[10px] uppercase tracking-wide text-ink-mute">Milestone</p>
+                  <p class="text-sm font-bold leading-tight" x-text="ph.name"></p>
+                  <p class="text-xs font-semibold tabular-nums mt-1" :style="'color:'+ph.color" x-text="'Minggu '+ph.week"></p>
+                  <p class="text-[10px] text-ink-mute mt-0.5" x-show="!state.contractor.milestonesLocked" x-text="'Default Gantt: M'+ph.derivedWeek"></p>
+                </button>
               </template>
             </div>
-            <div class="mt-3 flex flex-wrap gap-2" x-show="!state.contractor.pullLocked">
-              <button type="button" class="btn-primary text-sm" x-show="!state.contractor.milestonesLocked" @click="lockMilestones()">Kunci jendela milestone</button>
-              <button type="button" class="btn-danger text-sm" x-show="state.contractor.milestonesLocked" @click="unlockMilestones()">Unlock jendela</button>
-              
+            <div class="rounded-xl border border-paper-line bg-paper/40 p-3 overflow-x-auto">
+              <p class="text-[10px] uppercase tracking-wide text-ink-mute mb-2">Garis waktu kontrak</p>
+              <div class="min-w-[480px]">
+                <div class="flex mb-1">
+                  <div class="w-24 shrink-0"></div>
+                  <div class="flex-1 flex">
+                    <template x-for="w in milestoneTimelineWeeks" :key="'mw'+w">
+                      <div class="flex-1 text-center text-[9px] tabular-nums text-ink-mute" x-text="w"></div>
+                    </template>
+                  </div>
+                </div>
+                <template x-for="ph in phasesView" :key="'tl'+ph.id">
+                  <div class="flex items-center h-8 border-t border-paper-line/70">
+                    <div class="w-24 shrink-0 pr-2 text-[10px] font-semibold truncate" :style="'color:'+ph.color" x-text="ph.name"></div>
+                    <div class="flex-1 flex">
+                      <template x-for="w in milestoneTimelineWeeks" :key="'tc'+ph.id+w">
+                        <button type="button" class="flex-1 h-8 relative border-l border-paper-line/50"
+                          :class="state.contractor.selectedMilestone===ph.id && !state.contractor.milestonesLocked ? 'bg-terra-soft/30' : ''"
+                          :disabled="state.contractor.milestonesLocked || state.contractor.pullLocked"
+                          @click="state.contractor.selectedMilestone=ph.id; setMilestoneWeek(ph.id, w)"
+                          :title="ph.name+' · M'+w">
+                          <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rotate-45 border border-white shadow-sm"
+                            x-show="Number(ph.week)===w" :style="'background:'+ph.color"></span>
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2" x-show="!state.contractor.pullLocked">
+              <button type="button" class="btn-primary text-sm" x-show="!state.contractor.milestonesLocked" @click="lockMilestones()">Kunci milestone</button>
+              <button type="button" class="btn-danger text-sm" x-show="state.contractor.milestonesLocked" @click="unlockMilestones()">Unlock milestone</button>
             </div>
           </div>
         </div>
@@ -1994,7 +2009,7 @@ function emptyContractor() {
     pullLocked:false, selectedWork:null, constraints:[], reviewed:{},
     draftType:'material', draftNote:'',
     zonesLocked:false, zonesPreview:false, selectedZone:null, commitments:{},
-    milestonesLocked:false, phaseWindows:{},
+    milestonesLocked:false, phaseWindows:{}, selectedMilestone:'pondasi',
     lookOffset:0, selectedLookRel:null, selectedLookWorkId:null,
     makeReady:[],
     wwp:[],
@@ -2419,24 +2434,36 @@ Alpine.data('app', () => ({
     const byId = Object.fromEntries(plan.map(w => [w.id, w]));
     const cons = (this.state.contractor && this.state.contractor.constraints) || [];
     const wins = (this.state.contractor && this.state.contractor.phaseWindows) || {};
-    return PHASES.map(ph => {
+    const colors = { pondasi:'#A0522D', struktur:'#1E40AF', selubung:'#15803D', finishing:'#CA8A04' };
+    const rows = PHASES.map(ph => {
       const works = ph.works.map(id => byId[id]).filter(Boolean);
       const derivedStart = works.length ? Math.min(...works.map(w => w.startWeek)) : 1;
       const derivedFinish = works.length ? Math.max(...works.map(w => w.finishWeek)) : 1;
       const ov = wins[ph.id] || {};
-      const startWeek = Number(ov.startWeek) || derivedStart;
-      const finishWeek = Number(ov.finishWeek) || derivedFinish;
+      const week = Number(ov.week) || Number(ov.finishWeek) || derivedFinish;
       return {
         ...ph,
         works,
-        startWeek,
-        finishWeek,
+        week,
         derivedStart,
         derivedFinish,
+        derivedWeek: derivedFinish,
+        color: colors[ph.id] || '#C45C26',
         costJt: Math.round(works.reduce((s, w) => s + (Number(w.costJt) || 0), 0) * 10) / 10,
         cCount: cons.filter(c => ph.works.includes(c.workId)).length,
       };
     });
+    for (let i = 0; i < rows.length; i++) {
+      rows[i].startWeek = i === 0 ? 1 : Number(rows[i - 1].week) || 1;
+      rows[i].finishWeek = Number(rows[i].week) || rows[i].startWeek;
+    }
+    return rows;
+  },
+  get milestoneTimelineWeeks() {
+    const n = Number((this.state.negotiation.contract || {}).duration) || this.negoWeeks || 12;
+    const weeks = [];
+    for (let i = 1; i <= n; i++) weeks.push(i);
+    return weeks;
   },
   get pullPhasesView() {
     // Semua fase: sticky = pekerjaan × minggu × zona. Struktur = latihan; lain = given (read-only).
@@ -3088,26 +3115,29 @@ Alpine.data('app', () => ({
     this.state.contractor.commitments = c;
     this.save();
   },
-  updatePhaseWindow(phId, field, val) {
+  setMilestoneWeek(phId, week) {
     if (this.state.contractor.milestonesLocked || this.state.contractor.pullLocked) return;
+    const rows = this.phasesView;
+    const idx = rows.findIndex(p => p.id === phId);
+    if (idx < 0) return;
+    const dur = (this.milestoneTimelineWeeks || []).length || 12;
+    let n = Math.max(1, Math.min(dur, Number(week) || 1));
+    if (idx > 0) n = Math.max(n, Number(rows[idx - 1].week) || 1);
+    if (idx < rows.length - 1) n = Math.min(n, Number(rows[idx + 1].week) || dur);
     const wins = { ...(this.state.contractor.phaseWindows || {}) };
-    const cur = { ...(wins[phId] || {}) };
-    const n = Math.max(1, Number(val) || 1);
-    cur[field] = n;
-    if (field === 'startWeek' && cur.finishWeek != null && n > cur.finishWeek) cur.finishWeek = n;
-    if (field === 'finishWeek' && cur.startWeek != null && n < cur.startWeek) cur.startWeek = n;
-    wins[phId] = cur;
+    const prevWeek = idx === 0 ? 1 : Number(rows[idx - 1].week) || 1;
+    wins[phId] = { week: n, startWeek: prevWeek, finishWeek: n };
     this.state.contractor.phaseWindows = wins;
+    this.state.contractor.selectedMilestone = phId;
     this.save();
+  },
+  updatePhaseWindow(phId, field, val) {
+    if (field === 'finishWeek' || field === 'week') this.setMilestoneWeek(phId, val);
   },
   lockMilestones() {
     const wins = { ...(this.state.contractor.phaseWindows || {}) };
     for (const ph of this.phasesView) {
-      if (!wins[ph.id]) wins[ph.id] = { startWeek: ph.derivedStart, finishWeek: ph.derivedFinish };
-      else {
-        if (!wins[ph.id].startWeek) wins[ph.id].startWeek = ph.derivedStart;
-        if (!wins[ph.id].finishWeek) wins[ph.id].finishWeek = ph.derivedFinish;
-      }
+      wins[ph.id] = { week: ph.week, startWeek: ph.startWeek, finishWeek: ph.finishWeek };
     }
     this.state.contractor.phaseWindows = wins;
     this.state.contractor.milestonesLocked = true;
