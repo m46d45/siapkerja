@@ -1791,7 +1791,7 @@
                 <div class="gantt-label text-[10px] text-ink-mute">Pekerjaan</div>
                 <div class="flex-1 flex">
                   <template x-for="w in ganttWeekNums" :key="'pgw'+w">
-                    <div class="flex-1 text-center text-[9px] tabular-nums" :class="w===playWeek ? 'text-terra font-bold' : 'text-ink-mute'" x-text="w"></div>
+                    <div class="flex-1 text-center text-[9px] tabular-nums" :class="ganttHeadClass(w)" x-text="w"></div>
                   </template>
                 </div>
               </div>
@@ -1799,19 +1799,26 @@
                 <div class="flex items-center h-9 border-t border-paper-line/70">
                   <div class="gantt-label">
                     <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
-                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+'–'+row.actEnd+' ('+row.calWeeks+' mgg)') : ' · belum aktual')"></p>
+                    <p class="text-[9px]" :class="row.delayed ? 'text-amber-800' : 'text-ink-mute'"
+                      x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+'–'+row.actEnd+(row.delayed ? (' · molor +'+row.slip) : '')) : ' · belum aktual')"></p>
                   </div>
                   <div class="flex-1 relative h-9">
                     <div class="absolute inset-0 flex">
                       <template x-for="w in ganttWeekNums" :key="'pgc'+row.id+w">
-                        <div class="flex-1 border-l border-paper-line/60" :class="w===playWeek ? 'bg-terra-soft/30' : ''"></div>
+                        <div class="flex-1 border-l border-paper-line/60" :class="ganttColClass(w)"></div>
                       </template>
                     </div>
-                    <div class="gantt-bar-plan" :style="'left:'+row.left+'%;width:'+row.width+'%;background:'+row.color"></div>
-                    <div class="gantt-bar-act" x-show="row.hasActual" :style="'left:'+row.actLeft+'%;width:'+row.actWidth+'%;background:'+row.color"></div>
+                    <div class="gantt-bar-plan" :style="'left:'+row.planLeft+'%;width:'+row.planWidth+'%;background:'+row.color"></div>
+                    <div class="gantt-bar-act" x-show="row.hasActual" :class="row.delayed ? 'ring-1 ring-amber-700/50' : ''" :style="'left:'+row.actLeft+'%;width:'+row.actWidth+'%;background:'+row.color"></div>
                   </div>
                 </div>
               </template>
+            </div>
+            <div class="flex flex-wrap gap-3 text-[10px] text-ink-mute mt-2">
+              <span>Atas = rencana · bawah = aktual</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-100 border border-amber-400"></span> M3 material</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-100 border border-blue-400"></span> M6 hujan</span>
+              <span class="text-amber-800">Cincin = mulai lebih lambat dari rencana</span>
             </div>
           </div>
         </div>
@@ -2615,6 +2622,21 @@ Alpine.data('app', () => ({
   get ganttWeekNums() {
     return Array.from({ length: Math.max(1, this.negoWeeks) }, (_, i) => i + 1);
   },
+  ganttColClass(w) {
+    const cls = [];
+    if (w === this.playWeek) cls.push('bg-terra-soft/30');
+    const sc = (SCENARIOS || []).find(s => Number(s.week) === Number(w));
+    if (sc && sc.kind === 'weather') cls.push('bg-blue-50');
+    else if (sc) cls.push('bg-amber-50');
+    return cls.join(' ');
+  },
+  ganttHeadClass(w) {
+    if (w === this.playWeek) return 'text-terra font-bold';
+    const sc = (SCENARIOS || []).find(s => Number(s.week) === Number(w));
+    if (sc && sc.kind === 'weather') return 'text-blue-700 font-bold';
+    if (sc) return 'text-amber-800 font-bold';
+    return 'text-ink-mute';
+  },
   get ganttRows() {
     const weeks = Math.max(1, this.negoWeeks);
     return this.negoWorkPlan.map(w => {
@@ -2646,18 +2668,31 @@ Alpine.data('app', () => ({
       if (wwp.some(it => (this._workType(it) || it.parentId) === pid)) weekSet.add(play);
       const list = [...weekSet].filter(w => w > 0).sort((a, b) => a - b);
       if (!list.length) {
-        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, actEnd: null, calWeeks: 0, earnedWeeks: 0, actPct: 0 };
+        const planDur0 = Math.max(1, (Number(row.finishWeek) || 1) - (Number(row.startWeek) || 1) + 1);
+        return {
+          ...row,
+          hasActual: false, actLeft: 0, actWidth: 0, actStart: null, actEnd: null, calWeeks: 0,
+          delayed: false, slip: 0,
+          planLeft: Math.max(0, (row.startWeek - 1) / weeks * 100),
+          planWidth: Math.max(0.45, planDur0 / weeks * 100),
+          earnedWeeks: 0, actPct: 0,
+        };
       }
       const actStart = list[0];
       const actEnd = list[list.length - 1];
       const calWeeks = Math.max(1, actEnd - actStart + 1);
       const planDur = Math.max(1, (Number(row.finishWeek) || 1) - (Number(row.startWeek) || 1) + 1);
+      const delayed = actStart > row.startWeek;
       return {
         ...row,
         hasActual: true,
         actStart,
         actEnd,
         calWeeks,
+        delayed,
+        slip: delayed ? (actStart - row.startWeek) : 0,
+        planLeft: Math.max(0, (row.startWeek - 1) / weeks * 100),
+        planWidth: Math.max(0.45, planDur / weeks * 100),
         earnedWeeks: calWeeks,
         actPct: Math.round(100 * calWeeks / planDur),
         actLeft: Math.max(0, (actStart - 1) / weeks * 100),
