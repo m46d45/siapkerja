@@ -73,9 +73,7 @@
       </div>
     </div>
     <div class="flex items-center gap-1.5 shrink-0">
-      <button type="button" @click="openManual()" class="px-2.5 py-1.5 text-xs font-medium text-ink-soft rounded-lg">Manual</button>
-      <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="px-2.5 py-1.5 text-xs font-semibold text-terra rounded-lg">Unduh PDF</a>
-      <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg hidden sm:inline">Unduh sesi</button>
+      <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
         Muat sesi
         <input type="file" accept=".json" class="hidden" @change="importJSON($event)">
@@ -139,43 +137,6 @@
 </div>
 
 <main class="max-w-3xl mx-auto px-4 py-5 pb-24">
-
-  <div class="rounded-xl border border-terra/20 bg-terra-soft/25 px-4 py-3 text-xs flex flex-wrap items-start justify-between gap-2" x-show="currentStage!=='manual' && tabGuide">
-    <div class="min-w-0">
-      <p class="font-semibold text-terra" x-text="'Di tab ini · '+tabGuide.title"></p>
-      <p class="text-ink-soft mt-0.5 leading-relaxed" x-text="tabGuide.blurb"></p>
-    </div>
-    <button type="button" class="text-[11px] font-semibold text-terra shrink-0" @click="openManual(currentStage)">Manual lengkap →</button>
-  </div>
-
-  <section x-show="currentStage==='manual'" class="space-y-4">
-    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
-      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Manual mahasiswa</p>
-          <h2 class="text-xl font-bold text-ink">SiapKerja! · Last Planner System</h2>
-          <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata.</p>
-        </div>
-        <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="btn-primary !text-xs !py-2 shrink-0">Unduh PDF</a>
-      </div>
-      <div class="p-5 space-y-5 text-sm">
-        <template x-for="ch in MANUAL" :key="'man'+ch.id">
-          <div class="rounded-xl border border-paper-line p-4" :id="'man-'+ch.id" :class="manualFocus===ch.id ? 'ring-2 ring-terra/40' : ''">
-            <h3 class="font-bold text-ink" x-text="ch.title"></h3>
-            <p class="text-ink-soft mt-1 leading-relaxed whitespace-pre-line" x-text="ch.body"></p>
-            <ul class="mt-2 space-y-1 text-ink-soft" x-show="ch.bullets && ch.bullets.length">
-              <template x-for="b in (ch.bullets||[])" :key="b">
-                <li class="flex gap-2"><span class="text-terra">•</span><span x-text="b"></span></li>
-              </template>
-            </ul>
-          </div>
-        </template>
-      </div>
-      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line">
-        <button type="button" class="btn-ghost" @click="closeManual()">← Kembali ke simulasi</button>
-      </div>
-    </div>
-  </section>
 
   <!-- OWNER -->
   <section x-show="currentStage==='owner'" class="space-y-4">
@@ -1201,7 +1162,10 @@
                 <p class="text-[10px] font-semibold uppercase text-amber-900 mb-1.5">Tahan — belum SiapKerja!</p>
                 <ul class="space-y-1">
                   <template x-for="w in backlogHeld" :key="'h'+w.id">
-                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5" x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></li>
+                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5">
+                      <p x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></p>
+                      <p class="text-[10px] text-amber-900/80 mt-0.5" x-show="_predBlockReason(w)" x-text="_predBlockReason(w)"></p>
+                    </li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogHeld.length">Kosong</li>
                 </ul>
@@ -1866,32 +1830,6 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm
 
 const SK = 'siapkerja_project_state';
 const VER = '1.18.0';
-const MANUAL = [
-  { id:'alur', title:'Alur lengkap', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir minggu berikutnya.', bullets:[
-    'Pemilik → Desainer → Pemilihan (kontrak)',
-    'Master Plan → Phase Plan (milestone, zonasi, pull)',
-    'Look-ahead Plan 4 minggu (L1 harus SiapKerja!)',
-    'Weekly Work Plan → Daily Huddle → Learning → Laporan → gulir',
-  ]},
-  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value: kualitas tidak boleh turun. Pilih fokus waktu/biaya dan budget.', body:'Owner menetapkan nilai yang ingin dicapai. Kualitas tidak boleh dikompensasi. Budget mencakup desain + konstruksi (350 jt di simulasi ini).', bullets:['Pilih durasi, kualitas, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
-  { id:'designer', title:'2 · Desainer', blurb:'Terjemahkan value ke denah, 3D, OE, dan LOD. LOD menentukan banyaknya constraint.', body:'Desainer menerjemahkan keinginan pemilik ke tanah, struktur, arsitektur, MEP, denah dan 3D. Kualitas hasil desain (LOD) menentukan biaya dan berapa constraint yang muncul di lapangan.', bullets:['LOD kurang detail → constraint banyak','Tombol: Tetapkan desain & undang kontraktor'] },
-  { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Kualitas harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar kualitas. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Nego vs OE, bukan vs budget','Tanda tangan kontrak → Eksekusi konstruksi'] },
-  { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt dokumen kontrak. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone.', bullets:[] },
-  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Tim, garis milestone, zonasi, pull planning. Latihan di milestone Struktur.', body:'Enam tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi, tetapkan, lalu pull per milestone. Constraint given muncul dari LOD, mulai minggu ke-2 (L1/M1 bersih).', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
-  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka.', body:'Tiga pilihan constraint: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Sisa/gagal minggu lalu tampil di papan zona dan Dibawa ke L1.', bullets:['L1 = minggu eksekusi berikutnya','Baru susun WWP setelah L1 SiapKerja!'] },
-  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Sisa setelah Sabtu = rencana minggu depan, bukan gagal.', body:'Z1 pecah 3 hari → Z1-a-1…Z1-a-3. Z2-a pecah 2 hari → Z2-a-1, Z2-a-2. Kartu sisa/gagal tidak dipecah lagi. Kunci rencana lalu Daily Huddle.', bullets:[] },
-  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku: Site gagal di Z1-a memblok Galian zona itu. Promosi hanya sisa hari dalam minggu yang sama.', bullets:[] },
-  { id:'contractor-learning', title:'9 · Learning', blurb:'Centang selesai/tidak per pecahan. Sisa pecah ke M berikutnya bukan variansi.', body:'PPC hanya janji minggu itu. Yang tidak selesai dibawa ke L1. Yang tidak muat pecah (mis. Z2-a-3) dijadwalkan minggu depan, tidak masuk PPC. Kunci evaluasi sebelum gulir.', bullets:[] },
-  { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Bakukan progres fisik (default sudah dihitung).', body:'Angka progres default dari pekerjaan selesai. Arsip eksekusi = WWP minggu yang sudah digulir (baca saja).', bullets:[] },
-  { id:'aturan', title:'Aturan yang sering keliru', body:'', bullets:[
-    'L1 harus bebas constraint sebelum kunci WWP.',
-    'Commit hilangkan ≠ sudah hilang — dicek di look-ahead berikutnya.',
-    'PPC tidak menghitung sisa pecah yang belum jadi janji minggu ini.',
-    'Unit minggu Z2-a; pecah hari Z2-a-1. Jangan pecah kartu yang sudah pecah.',
-    'M0 = sesi perencanaan; L1 pada M0 = M1 eksekusi.',
-    'Quality tidak boleh dikompensasi di nego.',
-  ]},
-];
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 const OWNER_BUDGET_JT = 350;
 const OE_BASE_JT = 250;
@@ -3416,7 +3354,15 @@ Alpine.data('app', () => ({
   get backlogHeld() {
     const week = this.targetExecWeek;
     const inWwp = new Set((this.state.contractor.wwp || []).map(x => x.workId));
-    return this._allStickies().filter(s => Number(s.startWeek) === week && !inWwp.has(s.id) && !this._isWorkReady(s.id));
+    return this._allStickies().filter(s => {
+      if (inWwp.has(s.id)) return false;
+      const w = Number(s.startWeek);
+      if (w < week || w > week + 3) return false;
+      const pred = this._predBlockReason(s);
+      if (w === week && !this._isWorkReady(s.id)) return true;
+      if (this._isWorkReady(s.id) && pred) return true;
+      return false;
+    });
   },
   get backlogWorkable() {
     const week = this.targetExecWeek;
@@ -3424,6 +3370,7 @@ Alpine.data('app', () => ({
     return this._allStickies().filter(s => {
       if (blocked.has(s.id)) return false;
       if (!this._isWorkReady(s.id)) return false;
+      if (this._predBlockReason(s)) return false;
       const w = Number(s.startWeek);
       return w >= week && w <= week + 3;
     });
@@ -3598,27 +3545,6 @@ Alpine.data('app', () => ({
   canAccessDesigner() { return this.state.owner.locked === true; },
   canAccessNego() { return this.state.owner.locked && this.state.designer.locked; },
   canAccessContractor() { return this.canAccessNego() && this.state.negotiation.deal === true; },
-  openManual(focusId) {
-    this.manualFrom = this.currentStage === 'manual' ? (this.manualFrom || 'owner') : this.currentStage;
-    this.manualFocus = focusId || null;
-    this.currentStage = 'manual';
-    this.$nextTick(() => {
-      window.scrollTo(0, 0);
-      if (focusId) {
-        const el = document.getElementById('man-' + focusId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  },
-  closeManual() {
-    const back = this.manualFrom || 'owner';
-    this.manualFocus = null;
-    this.setStage(back === 'manual' ? 'owner' : back);
-  },
-  get tabGuide() {
-    const id = this.currentStage;
-    return (this.MANUAL || []).find(ch => ch.id === id && ch.blurb) || null;
-  },
 
   setStage(s) {
     if (s === 'designer' && !this.canAccessDesigner()) return;
@@ -4443,8 +4369,32 @@ Alpine.data('app', () => ({
     const byName = WORKS.find(w => w.name === item.name);
     return byName ? byName.id : '';
   },
+  _predBlockReason(item) {
+    if (!item) return '';
+    const pid0 = this._workType(item);
+    const wdef = WORKS.find(x => x.id === pid0);
+    const preds = (wdef && wdef.pred) || item.pred || [];
+    if (!preds.length) return '';
+    const cells = this._zoneCells();
+    for (const predId of preds) {
+      const predW = WORKS.find(x => x.id === predId);
+      const name = (predW && predW.name) || predId;
+      const pc = cells.filter(c => c.parentId === predId);
+      const ov = pc.filter(c => this._zonesOverlap(item.zoneLabel, c.zoneLabel));
+      const relevant = ov.length ? ov : pc;
+      if (!relevant.length) return 'Menunggu ' + name + ' selesai (urutan phase plan)';
+      const undone = relevant.filter(c => c.status !== 'done');
+      if (undone.length) {
+        const z = this.prettyZone(undone[0].zoneLabel);
+        return 'Menunggu ' + name + (z ? (' · ' + z) : '') + ' selesai (urutan phase plan)';
+      }
+    }
+    return '';
+  },
   huddleBlockReason(item, forPromo) {
     if (!item) return '';
+    const hist = this._predBlockReason(item);
+    if (hist) return hist;
     const pid0 = this._workType(item);
     const w = WORKS.find(x => x.id === pid0);
     const preds = (w && w.pred) || item.pred || [];
