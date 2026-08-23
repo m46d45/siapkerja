@@ -82,7 +82,7 @@
           <span x-show="!state.designer.locked||currentStage==='designer'">2</span>
           <span x-show="state.designer.locked&&currentStage!=='designer'">✓</span>
         </span>
-        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='designer'?'text-terra':(state.designer.locked?'text-forest':'text-ink-mute')">Designer</span>
+        <span class="text-[11px] font-semibold truncate hidden sm:inline" :class="currentStage==='designer'?'text-terra':(state.designer.locked?'text-forest':'text-ink-mute')">Desainer</span>
       </button>
       <div class="h-px flex-1 max-w-[24px] sm:max-w-[32px]" :class="state.designer.locked?'bg-forest/40':'bg-paper-line'"></div>
       <button @click="canAccessNego()&&setStage('negotiation')" :disabled="!canAccessNego()" class="flex items-center gap-1.5 min-w-0 flex-1 disabled:opacity-40">
@@ -192,9 +192,9 @@
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 2 · Design</p>
-          <h2 class="text-xl font-bold text-ink">Design Freeze & Owner's Estimate</h2>
-          <p class="text-sm text-ink-soft mt-1">Freeze denah Type 36 + OE. Zonasi konstruksi belum — itu kerjaan Phase Plan.</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 2 · Desainer</p>
+          <h2 class="text-xl font-bold text-ink">Menerjemahkan value pemilik ke desain</h2>
+          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Desainer menerjemahkan keinginan pemilik (value) ke gambar: denah, tanah, struktur, arsitektur, MEP. Hasil desain menentukan <strong class="text-ink">OE konstruksi</strong> dan <strong class="text-ink">berapa constraint</strong> yang muncul di lapangan.</p>
         </div>
         <span x-show="state.designer.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
@@ -209,40 +209,49 @@
             <span class="px-2.5 py-1 rounded-full bg-paper-card border border-paper-line">Fokus <strong x-text="state.owner.priority==='cost'?'Biaya':'Waktu'"></strong></span>
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1.5">Design Freeze (minggu ke-)</label>
-            <input type="number" class="field" x-model.number="state.designer.designFreezeWeek" :min="1" :max="state.owner.designDuration" :disabled="state.designer.locked">
-            <p class="text-[11px] text-ink-mute mt-1.5">Maks. <span x-text="state.owner.designDuration"></span> · freeze sebelum konstruksi</p>
+
+        <div>
+          <label class="block text-sm font-medium mb-1.5">Level of Detail</label>
+          <select class="field" x-model="state.designer.levelOfDetail" :disabled="state.designer.locked" @change="save()">
+            <option value="cepat">Cepat — basic, constraint lapangan banyak</option>
+            <option value="standar">Standar — cukup untuk bangun, sisa constraint wajar</option>
+            <option value="sempurna">Sempurna — tanah, struktur, arsitektur, MEP lengkap</option>
+          </select>
+          <p class="text-[11px] text-ink-mute mt-1.5">Fee desainer maks 10% dari budget. Semakin cepat gambar, semakin banyak constraint di site.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div class="rounded-xl border border-paper-line bg-paper/50 p-3">
+            <p class="text-[10px] uppercase tracking-wide text-ink-mute">Fee desainer</p>
+            <p class="text-lg font-bold text-ink mt-0.5" x-text="'Rp '+designFeeJt+' jt'"></p>
+            <p class="text-[10px] text-ink-mute" x-text="Math.round(designFeePct*100)+'% × 350 jt'"></p>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1.5">Level of Detail</label>
-            <select class="field" x-model="state.designer.levelOfDetail" :disabled="state.designer.locked">
-              <option value="basic">Basic — cepat, constraint lebih banyak di site</option>
-              <option value="detailed">Detailed — akurat, kurangi variability</option>
-            </select>
+          <div class="rounded-xl border border-paper-line bg-paper/50 p-3">
+            <p class="text-[10px] uppercase tracking-wide text-ink-mute">OE konstruksi</p>
+            <p class="text-lg font-bold text-ink mt-0.5" x-text="'Rp '+oeJt+' jt'"></p>
+            <p class="text-[10px] text-ink-mute">Given dari mutu + durasi bangun</p>
+          </div>
+          <div class="rounded-xl border p-3" :class="budgetFit.box">
+            <p class="text-[10px] uppercase tracking-wide" :class="budgetFit.tone" x-text="budgetFit.title"></p>
+            <p class="text-lg font-bold mt-0.5" :class="budgetFit.tone" x-text="'Rp '+budgetUsedJt+' jt'"></p>
+            <p class="text-[10px]" :class="budgetFit.tone" x-text="'dari 350 jt · '+budgetFit.note"></p>
           </div>
         </div>
+        <p class="text-[11px] text-ink-soft leading-relaxed" x-text="lodConstraintHint"></p>
 
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
-          <div class="flex items-start justify-between gap-3 mb-2">
-            <div>
-              <h3 class="text-sm font-bold">Denah Type 36 — Design Freeze</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5">Gambar ruang (bukan zona kerja). Acuan pull planning nanti.</p>
-            </div>
-            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-paper-card border border-paper-line text-ink-soft">Tanpa zonasi</span>
-          </div>
-          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="designDrawingSvg"></div>
+          <h3 class="text-sm font-bold mb-2">Tampak depan Type 36</h3>
+          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="elevationSvg"></div>
         </div>
-
-        <div class="rounded-xl border border-dashed border-paper-line bg-paper/40 p-3.5 text-xs text-ink-soft leading-relaxed">
-          Kurva S dan Gantt belum. Setelah OE dirilis dan nego deal, itu jadi <strong>Master Plan</strong> (kontrak frozen). Zonasi baru di <strong>Phase Plan</strong>.
+        <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
+          <h3 class="text-sm font-bold mb-2">Denah Type 36</h3>
+          <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="designDrawingSvg"></div>
         </div>
 
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between gap-2">
-            <h3 class="text-sm font-bold">Owner's Estimate per pekerjaan</h3>
-            <span class="text-[11px] text-ink-mute">Illustratif Type 36</span>
+            <h3 class="text-sm font-bold">OE konstruksi per pekerjaan</h3>
+            <span class="text-[11px] text-ink-mute">Given · acuan nego</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs min-w-[520px]">
@@ -273,7 +282,7 @@
               </tbody>
               <tfoot>
                 <tr class="border-t border-paper-line bg-paper/80">
-                  <td class="px-3 py-2 font-semibold" colspan="3">Total OE (plafon Owner)</td>
+                  <td class="px-3 py-2 font-semibold" colspan="3">Total OE konstruksi</td>
                   <td class="px-2 py-2 text-right font-semibold">100%</td>
                   <td class="px-3 py-2 text-right font-semibold" x-text="budgetMidLabel"></td>
                 </tr>
@@ -283,7 +292,7 @@
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
-        <button @click="setStage('owner')" class="btn-ghost">← Kembali</button>
+        <button @click="setStage('owner')" class="btn-ghost">← Pemilik</button>
         <button x-show="!state.designer.locked" @click="handoffToNego()" class="btn-primary flex-1 sm:flex-none">Rilis OE & buka Negosiasi →</button>
         <button x-show="state.designer.locked" @click="setStage('negotiation')" class="btn-primary flex-1 sm:flex-none">Lanjut ke Negosiasi →</button>
       </div>
@@ -1602,6 +1611,27 @@ const SK = 'siapkerja_project_state';
 const VER = '1.17.0';
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
 const OWNER_BUDGET_JT = 350;
+const OE_BASE_JT = 250;
+const LOD_FEE = { cepat: 0.06, standar: 0.08, sempurna: 0.10 };
+const LOD_GIVEN = {
+  cepat: [
+    { workId:'site', type:'info', note:'Gambar site belum lengkap (LOD cepat)' },
+    { workId:'found', type:'info', note:'Data tanah/sondir belum detail' },
+    { workId:'found', type:'material', note:'Spek beton pondasi belum freeze' },
+    { workId:'roofC', type:'material', note:'Penutup atap masih alternatif' },
+    { workId:'mep', type:'info', note:'Shop drawing MEP belum ada' },
+    { workId:'doors', type:'material', note:'Schedule pintu/jendela belum final' },
+    { workId:'plaster', type:'info', note:'Detail finishing belum lengkap' },
+  ],
+  standar: [
+    { workId:'found', type:'info', note:'Data tanah cukup; sisa detail pondasi dalam' },
+    { workId:'mep', type:'info', note:'MEP skematik ada, shop drawing menyusul' },
+    { workId:'plaster', type:'material', note:'Sample finishing menunggu persetujuan' },
+  ],
+  sempurna: [
+    { workId:'mep', type:'prereq', note:'Koordinasi MEP–struktur tersisa 1 item' },
+  ],
+};
 
 const WORKS = [
   { id:'site',    name:'Site clearing & layout',      pred:[],                    dur:1.0, weight:0.03, team:'Pondasi',   color:'#A0522D' },
@@ -1883,6 +1913,29 @@ function houseSvg(showZones, selectedId) {
   </svg>`;
 }
 
+function houseElevationSvg() {
+  const ff = 'ui-sans-serif,system-ui,sans-serif';
+  return `<svg viewBox="0 0 400 240" role="img" aria-label="Tampak depan rumah Type 36">
+    <rect x="0" y="0" width="400" height="240" fill="#EFE8DC"/>
+    <rect x="0" y="188" width="400" height="52" fill="#D9CDB8"/>
+    <rect x="18" y="188" width="364" height="8" fill="#C4B8A8"/>
+    <polygon points="48,108 200,32 352,108" fill="#8B5E3C"/>
+    <polygon points="70,108 200,48 330,108" fill="#A0522D"/>
+    <rect x="78" y="108" width="244" height="80" fill="#F3E6D4" stroke="#1C1917" stroke-width="2.2"/>
+    <rect x="78" y="108" width="244" height="10" fill="#E8D5BC"/>
+    <rect x="168" y="128" width="36" height="60" fill="#6B3F24" stroke="#1C1917" stroke-width="1.6"/>
+    <circle cx="198" cy="160" r="1.6" fill="#E8D5BC"/>
+    <rect x="100" y="128" width="44" height="32" fill="#FFFcf8" stroke="#6B8AAB" stroke-width="1.8"/>
+    <line x1="122" y1="128" x2="122" y2="160" stroke="#6B8AAB" stroke-width="1.2"/>
+    <rect x="256" y="128" width="44" height="32" fill="#FFFcf8" stroke="#6B8AAB" stroke-width="1.8"/>
+    <line x1="278" y1="128" x2="278" y2="160" stroke="#6B8AAB" stroke-width="1.2"/>
+    <rect x="78" y="184" width="244" height="6" fill="#1C1917"/>
+    <rect x="52" y="186" width="28" height="8" fill="#C45C26"/>
+    <rect x="320" y="186" width="28" height="8" fill="#C45C26"/>
+    <text x="200" y="222" text-anchor="middle" font-size="10" fill="#78716C" font-family="${ff}">Tampak depan · Type 36</text>
+  </svg>`;
+}
+
 function emptyNego() {
   return { bidPriceJt: null, bidDuration: null, bidQuality: 'standard', round: 0, maxRounds: 3, deal: false, lastResult: null, history: [], contract: null };
 }
@@ -1975,7 +2028,7 @@ function initState() {
     version: VER,
     currentStage: 'owner',
     owner: { designDuration:6, constructionDuration:16, qualityLevel:'standard', budgetLevel:'standard', priority:'time', plannedSCurve:[], workPlan:[], locked:false },
-    designer: { designFreezeWeek:null, levelOfDetail:'detailed', locked:false },
+    designer: { designFreezeWeek:null, levelOfDetail:'standar', locked:false },
     negotiation: emptyNego(),
     contractor: emptyContractor(),
   };
@@ -2009,6 +2062,13 @@ Alpine.data('app', () => ({
     if (!this.state.owner.budgetLevel) this.state.owner.budgetLevel = 'standard';
     this.state.owner.budgetJt = OWNER_BUDGET_JT;
     if (this.state.owner.priority === 'quality') this.state.owner.priority = 'time';
+    const lodMap = { basic: 'cepat', detailed: 'standar', perfect: 'sempurna' };
+    if (this.state.designer && lodMap[this.state.designer.levelOfDetail]) {
+      this.state.designer.levelOfDetail = lodMap[this.state.designer.levelOfDetail];
+    }
+    if (this.state.designer && !LOD_FEE[this.state.designer.levelOfDetail]) {
+      this.state.designer.levelOfDetail = 'standar';
+    }
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
@@ -2023,8 +2083,39 @@ Alpine.data('app', () => ({
     }
   },
 
-  get oeJt() { return budgetMid('standard', this.state.owner.qualityLevel); },
+  get oeJt() {
+    const q = this.state.owner.qualityLevel === 'premium' ? 1.18 : 1;
+    const w = Number(this.state.owner.constructionDuration) || 16;
+    const t = w <= 12 ? 1.12 : (w >= 20 ? 0.95 : 1);
+    return Math.round(OE_BASE_JT * q * t);
+  },
   get ownerBudgetJt() { return OWNER_BUDGET_JT; },
+  get lodKey() {
+    const v = (this.state.designer && this.state.designer.levelOfDetail) || 'standar';
+    if (v === 'basic') return 'cepat';
+    if (v === 'detailed') return 'standar';
+    if (v === 'perfect') return 'sempurna';
+    return LOD_FEE[v] ? v : 'standar';
+  },
+  get designFeePct() { return LOD_FEE[this.lodKey] || 0.08; },
+  get designFeeJt() { return Math.round(OWNER_BUDGET_JT * this.designFeePct); },
+  get budgetUsedJt() { return this.designFeeJt + this.oeJt; },
+  get budgetFit() {
+    const used = this.budgetUsedJt;
+    if (used > OWNER_BUDGET_JT) {
+      return { title: 'Tembus budget', note: 'Fee + OE > 350', box: 'border-red-200 bg-red-50', tone: 'text-red-700' };
+    }
+    if (used >= OWNER_BUDGET_JT - 15) {
+      return { title: 'Mepet budget', note: 'hampir 350', box: 'border-amber-300 bg-amber-50', tone: 'text-amber-800' };
+    }
+    return { title: 'Muat di budget', note: 'sisa ' + (OWNER_BUDGET_JT - used) + ' jt', box: 'border-forest/20 bg-forest-soft/40', tone: 'text-forest' };
+  },
+  get lodConstraintHint() {
+    const n = (LOD_GIVEN[this.lodKey] || []).length;
+    if (this.lodKey === 'cepat') return 'LOD cepat: ' + n + ' constraint given terbuka (gambar, tanah, MEP, spek). Mahasiswa akan banyak make-ready.';
+    if (this.lodKey === 'sempurna') return 'LOD sempurna: ' + n + ' constraint given tersisa. Hampir semua dokumen lengkap.';
+    return 'LOD standar: ' + n + ' constraint given — cukup untuk latihan make-ready.';
+  },
   get budgetLevelLabel() { return ({ hemat:'Hemat', standard:'Standar', premium:'Premium' })[this.state.owner.budgetLevel] || this.state.owner.budgetLevel; },
   get budgetEstimateLabel() {
     const b = BB[this.state.owner.budgetLevel] || BB.standard;
@@ -2688,6 +2779,7 @@ Alpine.data('app', () => ({
     return succs.map(p => p.name).join(', ');
   },
   get designDrawingSvg() { return houseSvg(false, null); },
+  get elevationSvg() { return houseElevationSvg(); },
   get phaseDrawingSvg() {
     const c = this.state.contractor;
     return houseSvg(!!(c.zonesLocked || c.zonesPreview), c.selectedZone);
@@ -2764,20 +2856,18 @@ Alpine.data('app', () => ({
   unlockOwner() {
     if (confirm('Unlock Owner mereset Designer dan Negosiasi. Lanjutkan?')) {
       this.state.owner.locked = false;
-      this.state.designer = { designFreezeWeek: this.state.owner.designDuration, levelOfDetail: 'detailed', locked: false };
+      this.state.designer = { designFreezeWeek: this.state.owner.designDuration, levelOfDetail: 'standar', locked: false };
       this.state.negotiation = emptyNego();
       this.state.contractor = emptyContractor();
       this.save();
     }
   },
   handoffToNego() {
-    const max = this.state.owner.designDuration;
-    if (!this.state.designer.designFreezeWeek || this.state.designer.designFreezeWeek > max) {
-      alert(`Design Freeze harus antara 1 dan ${max}.`);
-      return;
-    }
+    this._syncDesignFreeze();
     this.recalcPlan();
     this.state.designer.locked = true;
+    this.state.designer.oeJt = this.oeJt;
+    this.state.designer.feeJt = this.designFeeJt;
     this.initNegotiation();
     this.save();
     this.setStage('negotiation');
@@ -2864,6 +2954,25 @@ Alpine.data('app', () => ({
     this.state.contractor.reviewed[id] = true;
     this.save();
   },
+  _seedGivenConstraints() {
+    const specs = LOD_GIVEN[this.lodKey] || [];
+    const stickies = this._allStickies();
+    const extra = [];
+    for (const spec of specs) {
+      const matches = stickies.filter(s => s.parentId === spec.workId);
+      for (const t of matches) {
+        extra.push({
+          id: 'g' + spec.workId + '_' + t.id,
+          workId: t.id,
+          type: spec.type,
+          note: spec.note,
+          given: true,
+        });
+      }
+    }
+    const keep = (this.state.contractor.constraints || []).filter(c => !c.given);
+    this.state.contractor.constraints = keep.concat(extra);
+  },
   addConstraint() {
     const c = this.state.contractor;
     if (c.pullLocked || !c.selectedWork) return;
@@ -2901,6 +3010,7 @@ Alpine.data('app', () => ({
       ? 'Fase Struktur (latihan) belum ada constraint. Ketuk sticky Struktur & catat constraint dulu, atau kunci tetap lanjut?'
       : 'Kunci Phase Plan? Struktur + given jadi acuan Look-ahead.';
     if (!confirm(msg)) return;
+    this._seedGivenConstraints();
     this.state.contractor.pullLocked = true;
     this.state.contractor.selectedWork = null;
     this.save();
