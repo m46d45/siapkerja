@@ -1029,7 +1029,7 @@
       <div class="p-5 space-y-4">
         <div x-show="!(state.contractor.wwp||[]).length" class="rounded-xl border border-dashed border-paper-line p-6 text-center space-y-2">
           <p class="text-sm text-ink-soft">WWP belum disusun. Dari Look-ahead, klik Susun WWP.</p>
-          <button type="button" class="btn-primary text-sm" @click="setStage('contractor-production')">← Look-ahead</button>
+          <button type="button" class="btn-primary text-sm" @click="setStage('contractor-production')">← Look-ahead Plan</button>
         </div>
 
         <div x-show="(state.contractor.wwp||[]).length" class="space-y-4">
@@ -1145,7 +1145,7 @@
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
-        <button @click="setStage('contractor-production')" class="btn-ghost">← Look-ahead</button>
+        <button @click="setStage('contractor-production')" class="btn-ghost">← Look-ahead Plan</button>
       </div>
     </div>
   </section>
@@ -1407,7 +1407,7 @@
           </div>
         </div>
       </div>
-      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line"><button @click="setStage('contractor-huddle')" class="btn-ghost">Balik ke Daily Huddle</button></div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line"><button @click="setStage('contractor-huddle')" class="btn-ghost">← Daily Huddle</button></div>
     </div>
   </section>
 
