@@ -915,7 +915,7 @@
                       <template x-for="c in row.cells" :key="'zblc'+c.id">
                         <span class="text-[10px] px-1.5 py-0.5 rounded border font-semibold"
                           :class="c.status==='done' ? 'bg-forest-soft text-forest border-forest/20' : (c.status==='carry' ? 'bg-red-50 text-red-700 border-red-200 border-dashed' : (c.status==='planned' ? 'bg-terra-soft text-terra border-terra/25' : 'bg-paper text-ink-mute border-paper-line'))"
-                          x-text="c.zoneLabel+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
+                          x-text="prettyZone(c.zoneLabel)+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
                       </template>
                     </div>
                   </div>
@@ -957,7 +957,7 @@
                         :class="state.contractor.selectedLookWorkId===w.id ? 'is-on' : ''"
                         @click="selectLookWork(w.id)">
                         <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
-                        <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
+                        <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (prettyZone(w.zoneLabel)+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
                         <p class="text-[10px] text-amber-800 mt-0.5" x-show="w.carry" x-text="w.carryNote"></p>
                         <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'" x-text="workConstraintCount(w.id)?(workConstraintCount(w.id)+' constraint'):'SiapKerja!'"></p>
                       </button>
@@ -1092,7 +1092,7 @@
                     <template x-for="c in row.cells" :key="'zbwc'+c.id">
                       <span class="text-[10px] px-1.5 py-0.5 rounded border font-semibold"
                         :class="c.status==='done' ? 'bg-forest-soft text-forest border-forest/20' : (c.status==='carry' ? 'bg-red-50 text-red-700 border-red-200 border-dashed' : (c.status==='planned' ? 'bg-terra-soft text-terra border-terra/25' : 'bg-paper text-ink-mute border-paper-line'))"
-                        x-text="c.zoneLabel+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
+                        x-text="prettyZone(c.zoneLabel)+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
                     </template>
                   </div>
                 </div>
@@ -1117,7 +1117,7 @@
                       <div class="rounded border px-1.5 py-1 text-[10px] leading-snug"
                         :style="'border-left:4px solid '+(item.color||'#C45C26')+';background:color-mix(in srgb, '+(item.color||'#C45C26')+' 18%, #FFFcf8)'">
                         <p class="font-semibold text-ink" x-text="item.name"></p>
-                        <p class="text-ink-soft" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
+                        <p class="text-ink-soft" x-text="prettyZone(item.zoneLabel||'')+' · '+(item.team||'')"></p>
                         <p class="text-ink-mute" x-text="item.carryNote || (item.promoted ? 'dipromosikan' : 'rencana')"></p>
                         <select class="mt-1 w-full text-[10px] border border-paper-line rounded" :disabled="state.contractor.weekClosed" @change="moveWwpItem(item.id, $event.target.value)">
                           <template x-for="dd in WWP_DAYS" :key="dd.id+'m'+item.id">
@@ -1272,7 +1272,7 @@
                       <template x-for="c in row.cells" :key="'zbhc'+c.id">
                         <span class="text-[10px] px-1.5 py-0.5 rounded border font-semibold"
                           :class="c.status==='done' ? 'bg-forest-soft text-forest border-forest/20' : (c.status==='carry' ? 'bg-red-50 text-red-700 border-red-200 border-dashed' : (c.status==='planned' ? 'bg-terra-soft text-terra border-terra/25' : 'bg-paper text-ink-mute border-paper-line'))"
-                          x-text="c.zoneLabel+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
+                          x-text="prettyZone(c.zoneLabel)+(c.status==='carry'?' ↻':'')+(c.week?(' · M'+c.week):'')"></span>
                       </template>
                     </div>
                   </div>
@@ -1300,7 +1300,7 @@
                     <div>
                       <p class="font-semibold text-sm text-ink" x-text="item.name"></p>
                                             <p class="text-[10px] text-amber-800 mt-0.5" x-show="wasCarriedOver(item.id) && !huddleStatus(item.id)">↻ Dari perpanjangan — konfirmasi hari ini: jalan atau perpanjang lagi</p>
-                      <p class="text-ink-soft mt-0.5" x-text="(item.zoneLabel||'')+' · '+(item.team||'')"></p>
+                      <p class="text-ink-soft mt-0.5" x-text="prettyZone(item.zoneLabel||'')+' · '+(item.team||'')"></p>
                       <p class="text-[10px] font-semibold text-forest mt-1" x-show="huddleStatus(item.id)==='done'">✓ Selesai hari ini</p>
                       <p class="text-[10px] font-semibold text-amber-800 mt-1" x-show="huddleStatus(item.id)==='extended'">→ Diperpanjang + masalah dicatat</p>
                       <p class="text-[10px] text-red-700 mt-1" x-show="!huddleStatus(item.id) && huddleBlockReason(item)" x-text="'Terkunci: '+huddleBlockReason(item)"></p>
@@ -2665,7 +2665,7 @@ Alpine.data('app', () => ({
       weeks.forEach((wk, wi) => {
         const zid = zones[wi % zones.length];
         const sameZoneIdx = weeks.slice(0, wi + 1).filter((_, i) => zones[i % zones.length] === zid).length;
-        const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + sameZoneIdx) : zid.toUpperCase();
+        const zoneLabel = weeks.length > 1 ? (zid.toUpperCase() + '-' + String.fromCharCode(96 + sameZoneIdx)) : zid.toUpperCase();
         const id = w.id + '_' + zid + '_' + sameZoneIdx;
         let week = Number(ov[id]) || wk;
         week = Math.max(p0, Math.min(p1, week));
@@ -2746,13 +2746,28 @@ Alpine.data('app', () => ({
   get carryInItems() {
     return this._carryStickies();
   },
+  prettyZone(label) {
+    if (!label) return '';
+    const m = String(label).match(/^(Z\d+)(?:-([0-9]+|[a-zA-Z]))?(?:-(\d+))?$/i);
+    if (!m) return String(label);
+    const z = m[1].toUpperCase();
+    if (!m[2]) return z;
+    let mid = m[2];
+    if (/^[0-9]+$/.test(mid)) {
+      const n = Math.max(1, Math.min(26, Number(mid)));
+      mid = String.fromCharCode(96 + n);
+    } else {
+      mid = mid.toLowerCase();
+    }
+    return m[3] ? (z + '-' + mid + '-' + m[3]) : (z + '-' + mid);
+  },
   _zoneRoot(label) {
     const m = String(label || '').match(/Z(\d+)/i);
     return m ? ('z' + m[1]) : '';
   },
   _zoneMatches(parentZone, childZone) {
-    const p = String(parentZone || '').toUpperCase();
-    const c = String(childZone || '').toUpperCase();
+    const p = this.prettyZone(parentZone);
+    const c = this.prettyZone(childZone);
     if (!p || !c) return false;
     return c === p || c.startsWith(p + '-');
   },
@@ -3918,7 +3933,7 @@ Alpine.data('app', () => ({
        _makeWwpItem(s, day, zoneLabel, promoted) {
     const parent = s.parentId || (s.id || '').split('_')[0];
     const base = WORKS.find(w => w.id === parent) || s;
-    const zLabel = zoneLabel || s.zoneLabel || (s.zoneId || 'Z1').toUpperCase();
+    const zLabel = this.prettyZone(zoneLabel || s.zoneLabel || (s.zoneId || 'Z1').toUpperCase());
     const zBase = String(zLabel).split('-')[0].toUpperCase();
     return {
       id: 'wwp' + Date.now() + Math.random().toString(36).slice(2, 6),
@@ -3956,9 +3971,13 @@ Alpine.data('app', () => ({
       if (c.id) placedSticky.add(c.id);
     }
     const ready = this._allStickies()
-      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !placedSticky.has(s.id))
+      .filter(s => Number(s.startWeek) === week && !used.has(s.id) && !placedSticky.has(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
+    if (!remItems.length && !items.length) {
+      const fallback = this._allStickies().filter(s => Number(s.startWeek) === week);
+      fallback.forEach((s, i) => items.push(this._makeWwpItem(s, days[Math.min(i, days.length - 1)], s.zoneLabel, false)));
+    }
     this.state.contractor.wwp = remItems.concat(items);
     this.state.contractor.ppc = [];
     this.state.contractor.wwpLocked = false;
@@ -4030,14 +4049,15 @@ Alpine.data('app', () => ({
     const startDayIdx = Math.max(0, days.indexOf(base.day));
     const fit = Math.max(1, Math.min(n, days.length - startDayIdx));
     const remain = n - fit;
-    const prefix = base.zoneLabel || base.zoneBase || 'Z';
+    const prefix = this.prettyZone(base.zoneLabel || base.zoneBase || 'Z1');
+    const unit = /^Z\d+$/i.test(prefix) ? (prefix + '-a') : prefix;
     const created = [];
     for (let i = 0; i < fit; i++) {
       created.push({
         ...base,
         id: 'wwp' + Date.now() + i + Math.random().toString(36).slice(2, 5),
         day: days[startDayIdx + i],
-        zoneLabel: prefix + '-' + (i + 1),
+        zoneLabel: unit + '-' + (i + 1),
         canSplit: false,
         isLead: i === 0,
         origZoneLabel: prefix,
@@ -4053,7 +4073,7 @@ Alpine.data('app', () => ({
         name: base.name,
         team: base.team,
         color: base.color,
-        zoneBase: prefix,
+        zoneBase: unit,
         nextIndex: fit + 1,
         days: remain,
         fromWeek: this.playWeek,
