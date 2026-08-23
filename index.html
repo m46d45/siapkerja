@@ -2743,6 +2743,19 @@ Alpine.data('app', () => ({
       return { rel: 'L' + i, abs, absLabel, isPrep: false, stickies, workCount: stickies.length, openConstraints };
     });
   },
+  get carryInItems() {
+    return this._carryStickies();
+  },
+  _zoneRoot(label) {
+    const m = String(label || '').match(/Z(\d+)/i);
+    return m ? ('z' + m[1]) : '';
+  },
+  _zoneMatches(parentZone, childZone) {
+    const p = String(parentZone || '').toUpperCase();
+    const c = String(childZone || '').toUpperCase();
+    if (!p || !c) return false;
+    return c === p || c.startsWith(p + '-');
+  },
   _carryStickies() {
     const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
     const week = off + 1;
@@ -2750,74 +2763,67 @@ Alpine.data('app', () => ({
     if (prev < 1) return [];
     const out = [];
     const seen = new Set();
-    const push = (id, extra) => {
-      if (!id || seen.has(id)) return;
-      seen.add(id);
-      const s = this._allStickies().find(x => x.id === id) || {};
+    const push = (row) => {
+      const zone = String(row.zoneLabel || '').toUpperCase();
+      const k = zone || String(row.id || '');
+      if (!k || seen.has(k)) return;
+      seen.add(k);
+      const s = this._allStickies().find(x => x.id === row.id) || {};
       out.push({
         ...s,
-        id,
-        parentId: extra.parentId || s.parentId,
-        name: extra.name || s.name,
-        team: extra.team || s.team,
-        color: extra.color || s.color,
-        zoneLabel: extra.zoneLabel || s.zoneLabel,
+        id: row.id,
+        cellId: row.cellId || (row.id + '|' + zone),
+        parentId: row.parentId || s.parentId,
+        name: row.name || s.name,
+        team: row.team || s.team,
+        color: row.color || s.color,
+        zoneLabel: row.zoneLabel || s.zoneLabel,
         startWeek: week,
         carry: true,
         carryFrom: prev,
-        carryNote: extra.carryNote || ('Tidak selesai M' + prev),
-        days: extra.days || 1,
+        carryNote: row.carryNote || ('Tidak selesai M' + prev),
+        days: 1,
       });
     };
-    for (const r of (this.state.contractor.carryOver || []).filter(x => Number(x.toWeek) === week)) {
-      push(r.stickyId, {
-        parentId: r.parentId, name: r.name, team: r.team, color: r.color,
-        zoneLabel: r.zoneLabel || (r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : ''),
-        carryNote: r.note || ('Tidak selesai M' + prev),
-        days: r.days || 1,
-      });
-    }
+    const findSticky = (stickyId, name, zoneLabel) => {
+      if (stickyId && this._allStickies().some(x => x.id === stickyId)) return stickyId;
+      const hits = this._allStickies().filter(s => s.name === name && this._zoneMatches(s.zoneLabel, zoneLabel));
+      if (hits.length === 1) return hits[0].id;
+      const exact = hits.find(s => String(s.zoneLabel).toUpperCase() === String(zoneLabel||'').toUpperCase());
+      return exact ? exact.id : (hits[0] && hits[0].id);
+    };
     for (const r of (this.state.contractor.weekRemainder || []).filter(x => Number(x.toWeek) === week)) {
-      push(r.stickyId, {
-        parentId: r.parentId, name: r.name, team: r.team, color: r.color,
-        zoneLabel: r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : '',
-        carryNote: 'Sisa ' + (r.days || 1) + ' hari dari M' + prev,
-        days: r.days || 1,
-      });
+      const n = Math.max(1, Number(r.days) || 1);
+      for (let i = 0; i < n; i++) {
+        const zone = r.zoneBase ? (r.zoneBase + '-' + (Number(r.nextIndex || 1) + i)) : (r.zoneLabel || '');
+        push({
+          id: r.stickyId,
+          cellId: (r.id || r.stickyId) + '-' + i,
+          parentId: r.parentId, name: r.name, team: r.team, color: r.color,
+          zoneLabel: zone,
+          carryNote: 'Sisa dari M' + prev,
+        });
+      }
     }
     for (const a of (this.state.contractor.actualLog || []).filter(x => Number(x.week) === prev && !x.done)) {
-      push(a.stickyId, {
+      push({
+        id: findSticky(a.stickyId, a.name, a.zoneLabel) || a.stickyId,
+        cellId: a.id,
         parentId: a.parentId, name: a.name,
         zoneLabel: a.zoneLabel,
         carryNote: 'Tidak selesai M' + prev,
       });
     }
-    for (const e of (this.state.contractor.problemRegistry || []).filter(x => Number(x.week) === prev)) {
-      let sid = e.stickyId;
-      if (!sid) {
-        const hit = this._allStickies().find(s => s.name === e.name && (
-          !e.zoneLabel || s.zoneLabel === e.zoneLabel || String(e.zoneLabel).startsWith(String(s.zoneLabel || '')) || String(s.zoneLabel || '').startsWith(String(e.zoneLabel).split('-')[0] || '')
-        ));
-        sid = hit && hit.id;
-      }
-      if (!sid) {
-        const parent = WORKS.find(w => w.name === e.name);
-        const hit = parent && this._allStickies().find(s => s.parentId === parent.id && Number(s.startWeek) === prev);
-        sid = hit && hit.id;
-      }
-      push(sid, {
-        name: e.name, team: e.team, zoneLabel: e.zoneLabel,
-        carryNote: 'Tidak selesai M' + prev,
+    for (const r of (this.state.contractor.carryOver || []).filter(x => Number(x.toWeek) === week)) {
+      push({
+        id: findSticky(r.stickyId, r.name, r.zoneLabel || r.zoneBase) || r.stickyId,
+        cellId: r.stickyId + '|' + (r.zoneLabel || r.zoneBase),
+        parentId: r.parentId, name: r.name, team: r.team, color: r.color,
+        zoneLabel: r.zoneLabel || (r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : ''),
+        carryNote: r.note || ('Tidak selesai M' + prev),
       });
     }
     return out;
-  },
-  get carryInItems() {
-    return this._carryStickies();
-  },
-  _zoneRoot(label) {
-    const m = String(label || '').match(/Z(\d+)/i);
-    return m ? ('z' + m[1]) : '';
   },
   _huddleEver(id, status) {
     const hr = this.state.contractor.huddleResults || {};
@@ -2831,10 +2837,19 @@ Alpine.data('app', () => ({
     const play = this.targetExecWeek;
     const wwp = this.state.contractor.wwp || [];
     const log = this.state.contractor.actualLog || [];
+    const rank = { done: 3, carry: 2, planned: 1, future: 0 };
     const cells = [];
-    const covered = new Set();
+    const idx = {};
     const add = (c) => {
       if (!c.zoneLabel && !c.workId) return;
+      const k = String(c.parentId || '') + '|' + String(c.zoneLabel || '').toUpperCase() + '|' + c.week;
+      const prev = idx[k];
+      if (prev != null) {
+        if ((rank[c.status] || 0) <= (rank[cells[prev].status] || 0)) return;
+        cells[prev] = c;
+        return;
+      }
+      idx[k] = cells.length;
       cells.push(c);
     };
     for (const item of wwp) {
@@ -2853,7 +2868,6 @@ Alpine.data('app', () => ({
         status,
         color: item.color,
       });
-      covered.add(String(item.workId) + '|' + play);
     }
     for (const a of log) {
       const w = Number(a.week);
@@ -2869,12 +2883,11 @@ Alpine.data('app', () => ({
         status: a.done ? 'done' : 'carry',
         color: ((WORKS.find(x => x.id === a.parentId) || {}).color),
       });
-      covered.add(String(a.stickyId) + '|' + w);
     }
     for (const s of this._allStickies()) {
       const w = Number(s.startWeek);
-      if (covered.has(s.id + '|' + w)) continue;
-      if (wwp.some(x => x.workId === s.id)) continue;
+      const childed = cells.some(c => c.parentId === s.parentId && Number(c.week) === w && this._zoneMatches(s.zoneLabel, c.zoneLabel));
+      if (childed) continue;
       let status = 'future';
       if (w < play) status = 'carry';
       else if (w === play) status = 'planned';
@@ -2889,12 +2902,10 @@ Alpine.data('app', () => ({
         status,
         color: s.color,
       });
-      covered.add(s.id + '|' + w);
     }
     for (const c of this._carryStickies()) {
-      if (cells.some(x => x.workId === c.id && (x.status === 'carry' || x.week === play))) continue;
       add({
-        id: 'c' + c.id,
+        id: c.cellId || ('c' + c.id),
         workId: c.id,
         parentId: c.parentId,
         name: c.name,
@@ -2905,6 +2916,31 @@ Alpine.data('app', () => ({
         color: c.color,
       });
     }
+    const rows = WORKS.map(w => {
+      const list = cells.filter(c => c.parentId === w.id)
+        .sort((a, b) => (Number(a.week) - Number(b.week)) || String(a.zoneLabel).localeCompare(String(b.zoneLabel)));
+      if (!list.length) return null;
+      return {
+        id: w.id, name: w.name, team: w.team, color: w.color, cells: list,
+        done: list.filter(c => c.status === 'done').length,
+        total: list.length,
+        carryN: list.filter(c => c.status === 'carry').length,
+      };
+    }).filter(Boolean);
+    const fill = {};
+    for (const z of ZONES) {
+      const zc = cells.filter(c => c.zoneRoot === z.id);
+      if (!zc.length) { fill[z.id] = { pct: 0, status: 'empty' }; continue; }
+      const done = zc.filter(c => c.status === 'done').length;
+      const pct = done / zc.length;
+      let status = 'future';
+      if (zc.some(c => c.status === 'carry')) status = 'carry';
+      else if (pct >= 1) status = 'done';
+      else if (zc.some(c => c.status === 'planned') || pct > 0) status = 'planned';
+      fill[z.id] = { pct, status };
+    }
+    return { rows, fill, denah: houseSvg(true, null, fill) };
+  },
     const rows = WORKS.map(w => {
       const list = cells.filter(c => c.parentId === w.id)
         .sort((a, b) => (Number(a.week) - Number(b.week)) || String(a.zoneLabel).localeCompare(String(b.zoneLabel)));
@@ -3906,24 +3942,21 @@ Alpine.data('app', () => ({
     const days = WWP_DAYS.map(d => d.id);
     const used = this._promoUsedIdSet();
     const remItems = [];
-    const remIds = new Set();
-    const addCarry = (c) => {
-      if (!c.id || remIds.has(c.id) || used.has(c.id)) return;
-      const n = Math.max(1, Number(c.days) || 1);
-      for (let i = 0; i < n; i++) {
-        const zone = c.zoneLabel || c.zoneBase || '';
-        const z = n > 1 && zone && !String(zone).endsWith('-' + (i + 1)) ? (zone + '-' + (i + 1)) : zone;
-        const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], z, true);
-        it.canSplit = n === 1;
-        it.isLead = i === 0;
-        it.carryNote = c.carryNote;
-        remItems.push(it);
-      }
-      remIds.add(c.id);
-    };
-    for (const c of this._carryStickies()) addCarry(c);
+    const placedZones = new Set();
+    const placedSticky = new Set();
+    for (const c of this._carryStickies()) {
+      const z = String(c.zoneLabel || '').toUpperCase();
+      if (z && placedZones.has(z)) continue;
+      if (z) placedZones.add(z);
+      const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], c.zoneLabel, true);
+      it.canSplit = false;
+      it.isLead = false;
+      it.carryNote = c.carryNote || ('Tidak selesai M' + (week - 1));
+      remItems.push(it);
+      if (c.id) placedSticky.add(c.id);
+    }
     const ready = this._allStickies()
-      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !remIds.has(s.id))
+      .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !placedSticky.has(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
     this.state.contractor.wwp = remItems.concat(items);
