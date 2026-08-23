@@ -155,6 +155,7 @@
           <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata. Versi 1.19 — konstruksi default 10 minggu, latihan pull Pondasi + Struktur.</p>
         </div>
         <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="btn-primary !text-xs !py-2 shrink-0">Unduh PDF</a>
+        <a href="modul-praktikum.html" class="btn-ghost !text-xs !py-2 shrink-0">Modul praktikum</a>
       </div>
       <div class="p-5 space-y-5 text-sm">
         <template x-for="ch in MANUAL" :key="'man'+ch.id">
@@ -1941,6 +1942,10 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm
 const SK = 'siapkerja_project_state';
 const VER = '1.19.1';
 const MANUAL = [
+  { id:'praktikum', title:'Modul praktikum (1 pertemuan)', blurb:'', body:'Untuk dosen dan mahasiswa. 150 menit, 20 orang, 4 kelompok × 5, satu laptop per kelompok. Setting: desain 2 minggu, konstruksi 8 minggu, LOD standar, huddle M1 penuh, M3 material dan M6 hujan wajib dimainkan. Laporan 5 menit di depan kelas lewat tab Laporan — bukan PPT.', bullets:[
+    'Buka halaman Modul praktikum (tombol di atas) untuk rundown, skrip briefing, peran, rubrik, dan lembar kerja.',
+    'Yang dinilai: PPC, make-ready, alasan variansi — bukan siapa paling cepat 100%.',
+  ]},
   { id:'alur', title:'Alur lengkap', blurb:'', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir — atau tutup proyek jika semua pekerjaan selesai.', bullets:[
     'Pemilik (value, durasi desain 2/4, konstruksi 8/10/12 default 10) → Desainer (LOD, OE, denah/3D)',
     'Pemilihan: nego harga & waktu, tanda tangan kontrak',
