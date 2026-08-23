@@ -1935,9 +1935,11 @@
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
         <div class="tab-foot-left">
-          <button @click="setStage('contractor-learning')" class="btn-ghost" x-show="!projectComplete">← Learning</button>
+          <button @click="setStage('contractor-learning')" class="btn-ghost">← Learning</button>
         </div>
-        <div class="tab-foot-right"></div>
+        <div class="tab-foot-right">
+          <button type="button" class="btn-primary" x-show="state.contractor.weekClosed && !projectComplete" @click="rollLookahead()">Look-ahead Plan 4 minggu ke depan</button>
+        </div>
       </div>
     </div>
   </section>
