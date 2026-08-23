@@ -241,7 +241,7 @@
 
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
           <h3 class="text-sm font-bold mb-2">Axonometri Type 36</h3>
-          <p class="text-[11px] text-ink-mute mb-2">Sama dengan denah: pintu utara di Tamu, KM–dapur di timur, kamar di selatan.</p>
+          <p class="text-[11px] text-ink-mute mb-2">Dari timur laut: depan (pintu Tamu) di kanan · sisi timur (KM + dapur) di kiri.</p>
           <div class="house-wrap rounded-lg border border-paper-line bg-[#F7F3EE] overflow-hidden" x-html="elevationSvg"></div>
         </div>
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
@@ -1916,10 +1916,13 @@ function houseSvg(showZones, selectedId) {
 
 function houseElevationSvg() {
   const ff = 'ui-sans-serif,system-ui,sans-serif';
-  const W = 160, D = 138, H = 50, RH = 36;
-  const raw = (x, y, z) => [(x - z) * 0.86, (x + z) * 0.5 - y];
+  const W = 160, D = 138, H = 58, RH = 26;
+  const raw = (x, y, z) => {
+    const u = W - x;
+    return [u * 0.86 - z * 0.86, -u * 0.5 - z * 0.5 - y];
+  };
   const keys = [
-    [-28, 0, -32], [W + 32, 0, -32], [W + 32, 0, D + 24], [-28, 0, D + 24],
+    [-16, 0, -24], [W + 16, 0, -24], [W + 16, 0, D + 16], [-16, 0, D + 16],
     [0, 0, 0], [W, 0, 0], [0, 0, D], [W, 0, D],
     [0, H, 0], [W, H, 0], [0, H, D], [W, H, D],
     [W / 2, H + RH, D / 2],
@@ -1930,46 +1933,47 @@ function houseElevationSvg() {
     minX = Math.min(minX, X); maxX = Math.max(maxX, X);
     minY = Math.min(minY, Y); maxY = Math.max(maxY, Y);
   }
-  const VB_W = 400, VB_H = 268, pad = 22;
-  const s = Math.min((VB_W - pad * 2) / (maxX - minX), (VB_H - pad * 2 - 18) / (maxY - minY));
-  const ox = (VB_W - (maxX - minX) * s) / 2 - minX * s;
-  const oy = pad - minY * s;
+  const VB_W = 400, VB_H = 300, pad = 20;
+  const sc = Math.min((VB_W - pad * 2) / (maxX - minX), (VB_H - pad * 2 - 16) / (maxY - minY));
+  const ox = (VB_W - (maxX - minX) * sc) / 2 - minX * sc;
+  const oy = pad + 6 - minY * sc;
   const iso = (x, y, z) => {
     const [X, Y] = raw(x, y, z);
-    return [ox + X * s, oy + Y * s];
+    return [ox + X * sc, oy + Y * sc];
   };
   const pts = (arr) => arr.map(p => iso(p[0], p[1], p[2]).map(n => n.toFixed(1)).join(',')).join(' ');
-  const poly = (arr, fill, sw = 1.45) =>
+  const poly = (arr, fill, sw = 1.5) =>
     `<polygon points="${pts(arr)}" fill="${fill}" stroke="#1C1917" stroke-width="${sw}" stroke-linejoin="round"/>`;
   const line = (a, b, sw = 1.15) => {
     const p = iso(...a), q = iso(...b);
     return `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" stroke="#1C1917" stroke-width="${sw}"/>`;
   };
-  const Lx = 80, dx0 = 20, dx1 = 42, dH = 36;
+  const Lx = 80;
   const cx = W / 2, cz = D / 2;
-  let out = `<svg viewBox="0 0 ${VB_W} ${VB_H}" role="img" aria-label="Axonometri Type 36 sesuai denah">
+  let out = `<svg viewBox="0 0 ${VB_W} ${VB_H}" role="img" aria-label="Axonometri Type 36 dari timur laut">
     <rect width="${VB_W}" height="${VB_H}" fill="#EFE8DC"/>`;
-  out += poly([[-28, 0, -32], [W + 32, 0, -32], [W + 32, 0, D + 24], [-28, 0, D + 24]], '#D9CDB8', 0);
-  out += poly([[-6, 0, -18], [Lx + 6, 0, -18], [Lx + 6, 0, 0], [-6, 0, 0]], '#CABBAA', 1.1);
-  out += poly([[W, 0, 0], [W, H, 0], [W, H, D], [W, 0, D]], '#E4D3B8');
-  out += poly([[W, 20, 8], [W, 38, 8], [W, 38, 26], [W, 20, 26]], '#FFFcf8');
-  out += line([W, 29, 8], [W, 29, 26], 1);
-  out += poly([[W, 16, 42], [W, 38, 42], [W, 38, 62], [W, 16, 62]], '#FFFcf8');
-  out += line([W, 27, 42], [W, 27, 62], 1);
-  out += poly([[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]], '#F3E6D4');
+  out += poly([[-16, 0, -24], [W + 16, 0, -24], [W + 16, 0, D + 16], [-16, 0, D + 16]], '#D9CDB8', 0);
+  out += poly([[0, 0, -16], [Lx, 0, -16], [Lx, 0, 0], [0, 0, 0]], '#CABBAA', 1.1);
+  out += poly([[W, 0, 0], [W, H, 0], [W, H, D], [W, 0, D]], '#E8D4B8');
+  out += poly([[W, 28, 8], [W, 44, 8], [W, 44, 22], [W, 28, 22]], '#FFFcf8');
+  out += line([W, 36, 8], [W, 36, 22], 1);
+  out += poly([[W, 18, 40], [W, 42, 40], [W, 42, 62], [W, 18, 62]], '#FFFcf8');
+  out += line([W, 30, 40], [W, 30, 62], 1);
+  out += poly([[0, 0, 0], [W, 0, 0], [W, H, 0], [0, H, 0]], '#F6E7D2');
   out += line([Lx, 0, 0], [Lx, H, 0], 1.1);
-  out += poly([[dx0, 0, 0], [dx1, 0, 0], [dx1, dH, 0], [dx0, dH, 0]], '#6B3F24');
-  const knob = iso(dx1 - 3, 18, 0);
-  out += `<circle cx="${knob[0].toFixed(1)}" cy="${knob[1].toFixed(1)}" r="1.4" fill="#E8D5BC"/>`;
+  out += poly([[18, 0, 0], [44, 0, 0], [44, 42, 0], [18, 42, 0]], '#6B3F24');
+  const knob = iso(40, 20, 0);
+  out += `<circle cx="${knob[0].toFixed(1)}" cy="${knob[1].toFixed(1)}" r="1.5" fill="#E8D5BC"/>`;
   out += poly([[0, H, D], [W, H, D], [cx, H + RH, cz]], '#7A4A2A');
-  out += poly([[0, H, 0], [0, H, D], [cx, H + RH, cz]], '#8B5E3C');
   out += poly([[W, H, 0], [W, H, D], [cx, H + RH, cz]], '#8B5E3C');
   out += poly([[0, H, 0], [W, H, 0], [cx, H + RH, cz]], '#A0522D');
-  const t1 = iso(32, 22, -1);
-  const t2 = iso(118, 22, -1);
-  out += `<text x="${t1[0].toFixed(1)}" y="${t1[1].toFixed(1)}" text-anchor="middle" font-size="10" fill="#44403C" font-family="${ff}">Tamu</text>`;
-  out += `<text x="${t2[0].toFixed(1)}" y="${t2[1].toFixed(1)}" text-anchor="middle" font-size="10" fill="#44403C" font-family="${ff}">KM</text>`;
-  out += `<text x="200" y="${VB_H - 8}" text-anchor="middle" font-size="10" fill="#78716C" font-family="${ff}">Pintu utara di Tamu · KM & dapur di timur · kamar di selatan</text>`;
+  const tDoor = iso(31, 48, -2);
+  const tKm = iso(W + 2, 34, 15);
+  const tDap = iso(W + 2, 30, 51);
+  out += `<text x="${tDoor[0].toFixed(1)}" y="${tDoor[1].toFixed(1)}" text-anchor="middle" font-size="10" fill="#44403C" font-family="${ff}">Pintu depan</text>`;
+  out += `<text x="${tKm[0].toFixed(1)}" y="${tKm[1].toFixed(1)}" text-anchor="start" font-size="9" fill="#44403C" font-family="${ff}">KM</text>`;
+  out += `<text x="${tDap[0].toFixed(1)}" y="${tDap[1].toFixed(1)}" text-anchor="start" font-size="9" fill="#44403C" font-family="${ff}">Dapur</text>`;
+  out += `<text x="200" y="${VB_H - 8}" text-anchor="middle" font-size="10" fill="#78716C" font-family="${ff}">View timur laut · depan di kanan · sisi timur di kiri</text>`;
   return out + `</svg>`;
 }
 
