@@ -1201,10 +1201,7 @@
                 <p class="text-[10px] font-semibold uppercase text-amber-900 mb-1.5">Tahan — belum SiapKerja!</p>
                 <ul class="space-y-1">
                   <template x-for="w in backlogHeld" :key="'h'+w.id">
-                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5">
-                      <p x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></p>
-                      <p class="text-[10px] text-amber-900/80 mt-0.5" x-show="_predBlockReason(w)" x-text="_predBlockReason(w)"></p>
-                    </li>
+                    <li class="rounded border border-amber-100 bg-amber-50 px-2 py-1.5" x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogHeld.length">Kosong</li>
                 </ul>
@@ -1666,7 +1663,7 @@
                 <div class="flex items-center h-9 border-t border-paper-line/70">
                   <div class="gantt-label">
                     <p class="text-[10px] font-medium text-ink truncate leading-tight" x-text="row.name"></p>
-                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual '+row.earnedWeeks+' mgg ('+row.actPct+'%)') : ' · belum aktual')"></p>
+                    <p class="text-[9px] text-ink-mute" x-text="'Rencana M'+row.startWeek+'–'+row.finishWeek+(row.hasActual ? (' · aktual M'+row.actStart+'–'+row.actEnd+' ('+row.calWeeks+' mgg)') : ' · belum aktual')"></p>
                   </div>
                   <div class="flex-1 relative h-9">
                     <div class="absolute inset-0 flex">
@@ -1882,14 +1879,13 @@ const MANUAL = [
   { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt dokumen kontrak. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone.', bullets:[] },
   { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Tim, garis milestone, zonasi, pull planning. Latihan di milestone Struktur.', body:'Enam tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi, tetapkan, lalu pull per milestone. Constraint given muncul dari LOD, mulai minggu ke-2 (L1/M1 bersih).', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
   { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka.', body:'Tiga pilihan constraint: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Sisa/gagal minggu lalu tampil di papan zona dan Dibawa ke L1.', bullets:['L1 = minggu eksekusi berikutnya','Baru susun WWP setelah L1 SiapKerja!'] },
-  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Promo hanya jika predecessor fase di zona itu sudah selesai.', body:'Z1 pecah 3 hari → Z1-a-1…Z1-a-3. Z2-a pecah 2 hari → Z2-a-1, Z2-a-2. Dinding menunggu kolom & balok, bukan galian. Kartu sisa/gagal tidak dipecah lagi. Kunci rencana lalu Daily Huddle.', bullets:[] },
-  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku: Site gagal di Z1-a memblok Galian zona itu. Promosi hanya sisa hari dalam minggu yang sama, dan predecessor harus selesai.', bullets:[] },
+  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Sisa setelah Sabtu = rencana minggu depan, bukan gagal.', body:'Z1 pecah 3 hari → Z1-a-1…Z1-a-3. Z2-a pecah 2 hari → Z2-a-1, Z2-a-2. Kartu sisa/gagal tidak dipecah lagi. Kunci rencana lalu Daily Huddle.', bullets:[] },
+  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku: Site gagal di Z1-a memblok Galian zona itu. Promosi hanya sisa hari dalam minggu yang sama.', bullets:[] },
   { id:'contractor-learning', title:'9 · Learning', blurb:'Centang selesai/tidak per pecahan. Sisa pecah ke M berikutnya bukan variansi.', body:'PPC hanya janji minggu itu. Yang tidak selesai dibawa ke L1. Yang tidak muat pecah (mis. Z2-a-3) dijadwalkan minggu depan, tidak masuk PPC. Kunci evaluasi sebelum gulir.', bullets:[] },
   { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Bakukan progres fisik (default sudah dihitung).', body:'Angka progres default dari pekerjaan selesai. Arsip eksekusi = WWP minggu yang sudah digulir (baca saja).', bullets:[] },
   { id:'aturan', title:'Aturan yang sering keliru', body:'', bullets:[
     'L1 harus bebas constraint sebelum kunci WWP.',
     'Commit hilangkan ≠ sudah hilang — dicek di look-ahead berikutnya.',
-    'Promo L1–L4 hanya jika predecessor phase plan di zona itu selesai.',
     'PPC tidak menghitung sisa pecah yang belum jadi janji minggu ini.',
     'Unit minggu Z2-a; pecah hari Z2-a-1. Jangan pecah kartu yang sudah pecah.',
     'M0 = sesi perencanaan; L1 pada M0 = M1 eksekusi.',
@@ -2412,9 +2408,6 @@ Alpine.data('app', () => ({
   promoDraft: null,
   _huddleTimerHandle: null,
   progressDraft: null,
-  MANUAL,
-  manualFocus: null,
-  manualFrom: 'owner',
 
   init() {
     this.state = loadState();
@@ -2544,38 +2537,36 @@ Alpine.data('app', () => ({
   },
   get progressGanttRows() {
     const weeks = Math.max(1, this.negoWeeks);
-    const log = this._mergedActualLog();
+    const play = this.targetExecWeek;
+    const cells = this._zoneCells();
+    const log = this._allExecCells();
     return this.ganttRows.map(row => {
-      const entries = log.filter(x => x.parentId === row.id);
-      const bySticky = {};
-      for (const e of entries) {
-        const sid = e.stickyId || (row.id + '_w' + e.week);
-        if (!bySticky[sid]) bySticky[sid] = { done: 0, n: 0, week: Number(e.week) || 0 };
-        bySticky[sid].n += 1;
-        if (e.done) bySticky[sid].done += 1;
-        bySticky[sid].week = Math.max(bySticky[sid].week, Number(e.week) || 0);
+      const pid = row.id;
+      const fromLog = log.filter(x => (this._workType(x) || x.parentId) === pid && Number(x.week) > 0);
+      const fromCells = cells.filter(c => c.parentId === pid && (c.status === 'done' || c.status === 'carry'));
+      const weekSet = new Set();
+      for (const e of fromLog) weekSet.add(Number(e.week));
+      for (const c of fromCells) weekSet.add(Number(c.week));
+      const wwp = (this.state.contractor && this.state.contractor.wwp) || [];
+      if (wwp.some(it => (this._workType(it) || it.parentId) === pid)) weekSet.add(play);
+      const list = [...weekSet].filter(w => w > 0).sort((a, b) => a - b);
+      if (!list.length) {
+        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, actEnd: null, calWeeks: 0, earnedWeeks: 0, actPct: 0 };
       }
-      let earnedWeeks = 0;
-      let actStart = Infinity;
-      for (const sid of Object.keys(bySticky)) {
-        const g = bySticky[sid];
-        const frac = g.n ? (g.done / g.n) : 0;
-        if (frac <= 0) continue;
-        earnedWeeks += frac;
-        actStart = Math.min(actStart, g.week);
-      }
-      if (!earnedWeeks) {
-        return { ...row, hasActual: false, actLeft: 0, actWidth: 0, actStart: null, earnedWeeks: 0, actPct: 0 };
-      }
+      const actStart = list[0];
+      const actEnd = list[list.length - 1];
+      const calWeeks = Math.max(1, actEnd - actStart + 1);
       const planDur = Math.max(1, (Number(row.finishWeek) || 1) - (Number(row.startWeek) || 1) + 1);
       return {
         ...row,
         hasActual: true,
         actStart,
-        earnedWeeks: Math.round(earnedWeeks * 10) / 10,
-        actPct: Math.round(100 * earnedWeeks / planDur),
+        actEnd,
+        calWeeks,
+        earnedWeeks: calWeeks,
+        actPct: Math.round(100 * calWeeks / planDur),
         actLeft: Math.max(0, (actStart - 1) / weeks * 100),
-        actWidth: Math.max(0.45, (earnedWeeks / weeks) * 100),
+        actWidth: Math.max(0.45, (calWeeks / weeks) * 100),
       };
     });
   },
@@ -3423,15 +3414,7 @@ Alpine.data('app', () => ({
   get backlogHeld() {
     const week = this.targetExecWeek;
     const inWwp = new Set((this.state.contractor.wwp || []).map(x => x.workId));
-    return this._allStickies().filter(s => {
-      if (inWwp.has(s.id)) return false;
-      const w = Number(s.startWeek);
-      if (w < week || w > week + 3) return false;
-      const pred = this._predBlockReason(s);
-      if (w === week && !this._isWorkReady(s.id)) return true;
-      if (this._isWorkReady(s.id) && pred) return true;
-      return false;
-    });
+    return this._allStickies().filter(s => Number(s.startWeek) === week && !inWwp.has(s.id) && !this._isWorkReady(s.id));
   },
   get backlogWorkable() {
     const week = this.targetExecWeek;
@@ -3439,7 +3422,6 @@ Alpine.data('app', () => ({
     return this._allStickies().filter(s => {
       if (blocked.has(s.id)) return false;
       if (!this._isWorkReady(s.id)) return false;
-      if (this._predBlockReason(s)) return false;
       const w = Number(s.startWeek);
       return w >= week && w <= week + 3;
     });
@@ -4459,32 +4441,8 @@ Alpine.data('app', () => ({
     const byName = WORKS.find(w => w.name === item.name);
     return byName ? byName.id : '';
   },
-  _predBlockReason(item) {
-    if (!item) return '';
-    const pid0 = this._workType(item);
-    const wdef = WORKS.find(x => x.id === pid0);
-    const preds = (wdef && wdef.pred) || item.pred || [];
-    if (!preds.length) return '';
-    const cells = this._zoneCells();
-    for (const predId of preds) {
-      const predW = WORKS.find(x => x.id === predId);
-      const name = (predW && predW.name) || predId;
-      const pc = cells.filter(c => c.parentId === predId);
-      const ov = pc.filter(c => this._zonesOverlap(item.zoneLabel, c.zoneLabel));
-      const relevant = ov.length ? ov : pc;
-      if (!relevant.length) return 'Menunggu ' + name + ' selesai (urutan phase plan)';
-      const undone = relevant.filter(c => c.status !== 'done');
-      if (undone.length) {
-        const z = this.prettyZone(undone[0].zoneLabel);
-        return 'Menunggu ' + name + (z ? (' · ' + z) : '') + ' selesai (urutan phase plan)';
-      }
-    }
-    return '';
-  },
   huddleBlockReason(item, forPromo) {
     if (!item) return '';
-    const hist = this._predBlockReason(item);
-    if (hist) return hist;
     const pid0 = this._workType(item);
     const w = WORKS.find(x => x.id === pid0);
     const preds = (w && w.pred) || item.pred || [];
