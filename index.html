@@ -762,7 +762,7 @@
           </div>
         </div>
 
-        <div class="rounded-xl border border-paper-line overflow-hidden">
+        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line flex items-center justify-between">
             <h3 class="text-sm font-bold">Log constraint</h3>
             <span class="text-[11px] text-ink-mute" x-text="(state.contractor.constraints||[]).length+' item · ke Make-Ready'"></span>
@@ -3131,6 +3131,8 @@ Alpine.data('app', () => ({
   lockZones() {
     this.state.contractor.zonesLocked = true;
     this.state.contractor.zonesPreview = true;
+    this.state.contractor.constraints = (this.state.contractor.constraints || []).filter(c => !c.seeded && !c.given);
+    this._seedGivenConstraints();
     this.save();
   },
   toggleCommit(id) {
@@ -3166,7 +3168,6 @@ Alpine.data('app', () => ({
     }
     this.state.contractor.phaseWindows = wins;
     this.state.contractor.milestonesLocked = true;
-    this.seedGivenConstraints();
     this.save();
   },
   seedGivenConstraints() {
