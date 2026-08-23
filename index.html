@@ -794,10 +794,10 @@
                   <template x-for="c in ph.items" :key="c.id">
                     <li class="text-xs flex items-start justify-between gap-2">
                       <div>
-                        <p class="font-medium" x-text="workName(c.workId)"></p>
-                        <p class="text-ink-soft" x-text="constraintLabel(c.type)+(c.note?(' — '+c.note):'')+(c.given?' · given':'')"></p>
+                        <p class="font-medium" x-text="c.workLabel || workName(c.workId)"></p>
+                        <p class="text-ink-soft" x-text="constraintLabel(c.type)+(c.note?(' — '+c.note):'')+(c.given?(c.editable?' · given (bisa diubah)':' · given'):'')"></p>
                       </div>
-                      <button type="button" class="text-red-700 shrink-0" x-show="!state.contractor.pullLocked && !c.given" @click="removeConstraint(c.id)">Hapus</button>
+                      <button type="button" class="text-red-700 shrink-0" x-show="!state.contractor.pullLocked && (!c.given || c.editable)" @click="removeConstraint(c.id)">Hapus</button>
                     </li>
                   </template>
                 </ul>
@@ -1647,21 +1647,25 @@ const OE_BASE_JT = 250;
 const LOD_FEE = { cepat: 0.06, standar: 0.08, sempurna: 0.10 };
 const LOD_GIVEN = {
   cepat: [
-    { workId:'site', type:'info', note:'Gambar site belum lengkap (LOD cepat)' },
-    { workId:'found', type:'info', note:'Data tanah/sondir belum detail' },
-    { workId:'found', type:'material', note:'Spek beton pondasi belum freeze' },
-    { workId:'roofC', type:'material', note:'Penutup atap masih alternatif' },
-    { workId:'mep', type:'info', note:'Shop drawing MEP belum ada' },
-    { workId:'doors', type:'material', note:'Schedule pintu/jendela belum final' },
-    { workId:'plaster', type:'info', note:'Detail finishing belum lengkap' },
+    { workId:'site',    type:'info',    note:'Gambar site belum lengkap (LOD cepat)' },
+    { workId:'found',   type:'info',    note:'Data tanah/sondir belum detail' },
+    { workId:'found',   type:'material',note:'Spek beton pondasi belum freeze' },
+    { workId:'struct',  type:'info',    note:'Shop drawing kolom & balok belum approve' },
+    { workId:'wall',    type:'info',    note:'Detail pasangan & bukaan dinding belum lengkap' },
+    { workId:'roofC',   type:'material',note:'Penutup atap masih alternatif' },
+    { workId:'mep',     type:'info',    note:'Shop drawing MEP belum ada' },
+    { workId:'doors',   type:'material',note:'Schedule pintu/jendela belum final' },
+    { workId:'plaster', type:'info',    note:'Detail finishing belum lengkap' },
   ],
   standar: [
-    { workId:'found', type:'info', note:'Data tanah cukup; sisa detail pondasi dalam' },
-    { workId:'mep', type:'info', note:'MEP skematik ada, shop drawing menyusul' },
-    { workId:'plaster', type:'material', note:'Sample finishing menunggu persetujuan' },
+    { workId:'found',   type:'info',    note:'Data tanah cukup; sisa detail pondasi dalam' },
+    { workId:'struct',  type:'info',    note:'Shop drawing kolom ada; sisa detailing joint' },
+    { workId:'mep',     type:'info',    note:'MEP skematik ada, shop drawing menyusul' },
+    { workId:'plaster', type:'material',note:'Sample finishing menunggu persetujuan' },
   ],
   sempurna: [
-    { workId:'mep', type:'prereq', note:'Koordinasi MEP–struktur tersisa 1 item' },
+    { workId:'struct',  type:'prereq',  note:'Koordinasi tulangan vs sleeve MEP 1 item' },
+    { workId:'mep',     type:'prereq',  note:'Koordinasi MEP–struktur tersisa 1 item' },
   ],
 };
 
@@ -3107,13 +3111,15 @@ Alpine.data('app', () => ({
   workName(id) {
     const w = this.contractPlan.find(x => x.id === id) || WORKS.find(x => x.id === id);
     if (w) return w.name;
-    for (const ph of (this.pullPhasesView || [])) {
+    for (const ph of (this.pullPhasesView || this.forwardPhasesView || [])) {
       const s = (ph.stickies || []).find(x => x.id === id);
       if (s) return s.name + (s.zoneLabel ? (' · ' + s.zoneLabel) : '') + ' · M' + s.startWeek;
     }
     const cons = ((this.state.contractor && this.state.contractor.constraints) || []).find(x => x.workId === id);
     if (cons && cons.workLabel) return cons.workLabel;
-    return id;
+    const parent = String(id || '').split('_')[0];
+    const w2 = WORKS.find(x => x.id === parent);
+    return w2 ? w2.name : id;
   },
   constraintLabel(type) { return CONSTRAINT_LABEL[type] || type; },
   workConstraintCount(id) {
@@ -3128,18 +3134,21 @@ Alpine.data('app', () => ({
   _seedGivenConstraints() {
     const specs = LOD_GIVEN[this.lodKey] || [];
     const stickies = this._allStickies();
+    const strukturWorks = new Set(((PHASES.find(p => p.id === FOCUS_PHASE) || {}).works) || []);
     const extra = [];
     for (const spec of specs) {
-      const matches = stickies.filter(s => s.parentId === spec.workId);
-      for (const t of matches) {
-        extra.push({
-          id: 'g' + spec.workId + '_' + t.id,
-          workId: t.id,
-          type: spec.type,
-          note: spec.note,
-          given: true,
-        });
-      }
+      const t = stickies.find(s => s.parentId === spec.workId);
+      const w = WORKS.find(x => x.id === spec.workId);
+      extra.push({
+        id: 'g' + spec.workId,
+        workId: t ? t.id : spec.workId,
+        parentId: spec.workId,
+        type: spec.type,
+        note: spec.note,
+        given: true,
+        editable: strukturWorks.has(spec.workId),
+        workLabel: w ? w.name : spec.workId,
+      });
     }
     const keep = (this.state.contractor.constraints || []).filter(c => !c.given);
     this.state.contractor.constraints = keep.concat(extra);
@@ -3211,6 +3220,7 @@ Alpine.data('app', () => ({
     const c = { ...(this.state.contractor.commitments || {}) };
     TEAMS.forEach(t => { c[t] = true; });
     this.state.contractor.commitments = c;
+    this._seedGivenConstraints();
     this.save();
   },
   setStickyWeek(id, week) {
