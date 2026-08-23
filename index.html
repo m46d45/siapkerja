@@ -3044,13 +3044,11 @@ Alpine.data('app', () => ({
     }
   },
   unlockOwner() {
-    if (confirm('Unlock Owner mereset Designer dan Negosiasi. Lanjutkan?')) {
-      this.state.owner.locked = false;
-      this.state.designer = { designFreezeWeek: this.state.owner.designDuration, levelOfDetail: 'standar', locked: false };
-      this.state.negotiation = emptyNego();
-      this.state.contractor = emptyContractor();
-      this.save();
-    }
+    this.state.owner.locked = false;
+    this.state.designer = { designFreezeWeek: this.state.owner.designDuration, levelOfDetail: 'standar', locked: false };
+    this.state.negotiation = emptyNego();
+    this.state.contractor = emptyContractor();
+    this.save();
   },
   handoffToNego() {
     this._syncDesignFreeze();
@@ -3183,13 +3181,6 @@ Alpine.data('app', () => ({
       alert('Semua tim harus commit dulu (collaborative pull planning).');
       return;
     }
-    const fokus = (this.pullPhasesView || []).find(p => p.id === FOCUS_PHASE);
-    const fokusIds = new Set(((fokus && fokus.stickies) || []).map(s => s.id));
-    const nFokusCons = ((this.state.contractor.constraints) || []).filter(c => fokusIds.has(c.workId)).length;
-    const msg = nFokusCons === 0
-      ? 'Fase Struktur (latihan) belum ada constraint. Ketuk sticky Struktur & catat constraint dulu, atau kunci tetap lanjut?'
-      : 'Kunci Phase Plan? Struktur + given jadi acuan Look-ahead.';
-    if (!confirm(msg)) return;
     this._seedGivenConstraints();
     this.state.contractor.pullLocked = true;
     this.state.contractor.selectedWork = null;
@@ -3298,17 +3289,13 @@ Alpine.data('app', () => ({
   },
   unlockMilestones() {
     if (this.state.contractor.pullLocked) return;
-    if (confirm('Unlock jendela milestone? Komitmen tim akan di-reset.')) {
-      this.state.contractor.milestonesLocked = false;
-      this.state.contractor.commitments = {};
-      this.save();
-    }
+    this.state.contractor.milestonesLocked = false;
+    this.state.contractor.commitments = {};
+    this.save();
   },
   unlockPullPlan() {
-    if (confirm('Unlock Pull Plan? Produksi belum boleh jalan sampai dikunci lagi.')) {
-      this.state.contractor.pullLocked = false;
-      this.save();
-    }
+    this.state.contractor.pullLocked = false;
+    this.save();
   },
   _stripWeekLogs(week) {
     const w = Number(week);
@@ -3734,7 +3721,6 @@ Alpine.data('app', () => ({
     if (missing.length) {
       if (!confirm(missing.length + ' item belum dinilai PPC. Kunci tetap?')) return;
     }
-    if (!confirm('Kunci Learning M' + this.targetExecWeek + '?')) return;
     const reg = [...(this.state.contractor.problemRegistry || [])];
     const week = this.targetExecWeek;
     for (const p of ppc) {
@@ -3781,7 +3767,6 @@ Alpine.data('app', () => ({
     this.state.contractor.actualLog = log;
     this.state.contractor.weekClosed = true;
     this.save();
-    alert('Learning M' + week + ' terkunci. PPC ' + pct + '%.');
   },
   closeWeek() {
     const items = this.state.contractor.wwp || [];
@@ -3827,7 +3812,6 @@ Alpine.data('app', () => ({
     this.state.contractor.learningNote = '';
     this.save();
     this.setStage('contractor-production');
-    alert('Jendela digulir. Sesi sekarang M' + Number(this.state.contractor.lookOffset) + ' · L1 = M' + (Number(this.state.contractor.lookOffset) + 1));
   },
   save() { saveState(this.state); },
   exportJSON() {
