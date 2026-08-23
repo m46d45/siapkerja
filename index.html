@@ -1455,7 +1455,6 @@
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
             <h3 class="text-sm font-bold">Gantt rencana vs aktual</h3>
-            <p class="text-[11px] text-ink-mute">Pucat = rencana kontrak · tegas = selesai di huddle · kolom oranye = sesi ini</p>
           </div>
           <div class="p-3 overflow-x-auto">
             <div class="min-w-[560px]">
@@ -1568,7 +1567,6 @@
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
             <h3 class="text-sm font-bold">PPC per minggu</h3>
-            <p class="text-[11px] text-ink-mute">Keandalan janji · Y = 0–100% · X = M1 sampai akhir kontrak. Batang kosong = belum ada data.</p>
           </div>
           <div class="p-3 overflow-x-auto">
             <div class="flex items-end gap-0.5 h-28 min-w-[520px]">
@@ -1599,7 +1597,6 @@
         <div class="rounded-xl border border-paper-line overflow-hidden">
           <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
             <h3 class="text-sm font-bold">PPC per tim (ringkasan)</h3>
-            <p class="text-[11px] text-ink-mute">Min · max · rata-rata antar minggu yang sudah ada data. Rincian minggu ada di Learning.</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
@@ -1642,7 +1639,7 @@
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('contractor-learning')" class="btn-ghost">← Learning</button>
-        <button x-show="state.contractor.weekClosed" @click="rollLookahead()" class="btn-primary">Gulir Look-ahead →</button>
+        <button x-show="state.contractor.weekClosed" @click="rollLookahead()" class="btn-primary">Look-ahead Plan 4 minggu ke depan</button>
       </div>
     </div>
   </section>
