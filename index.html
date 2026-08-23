@@ -1019,13 +1019,12 @@
   <!-- WWP TAB -->
   <section x-show="currentStage==='contractor-wwp'" class="space-y-4">
     <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
-      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Weekly Work Plan</p>
-          <h2 class="text-xl font-bold text-ink">Sesi · M<span x-text="playWeek"></span></h2>
-          <p class="text-sm text-ink-soft mt-1">Rencana harian minggu ini. Hanya SiapKerja! · pecah zona · backlog.</p>
+          <h2 class="text-xl font-bold text-ink">Perencanaan mingguan</h2>
+          <p class="text-sm text-ink-soft mt-2 leading-relaxed">Perencanaan mingguan dilakukan sebelum minggu yang direncanakan. Di dalam look-ahead plan adalah minggu L1. Biasanya dilakukan setelah melakukan learning process; untuk awal konstruksi dilakukan pada Sesi M0. Pada perencanaan mingguan ini, diyakinkan semua pekerjaan yang direncanakan sudah bebas constraint. Kemudian mencoba mendetilkan pekerjaan tersebut seperti apa akan dilakukan hari per hari. Jika diperlukan, maka bisa dibagi menjadi beberapa sub zona yang lebih detil. Jika ternyata masih ada waktu kosong, maka bisa dipromosikan pekerjaan di zona yang lain atau pekerjaan yang lain yang sudah bebas dari kendala. Jika sudah direncanakan, maka dikunci untuk dieksekusi pada minggu pertama. Jangan merencanakan pekerjaan di luar minggu tersebut. Dan kita akan memulai eksekusi yang didahului oleh Daily Huddle.</p>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-terra-soft text-terra border border-terra/20" x-text="'Sesi M'+playWeek"></span>
       </div>
       <div class="p-5 space-y-4">
         <div x-show="!(state.contractor.wwp||[]).length" class="rounded-xl border border-dashed border-paper-line p-6 text-center space-y-2">
@@ -1034,6 +1033,7 @@
         </div>
 
         <div x-show="(state.contractor.wwp||[]).length" class="space-y-4">
+          <h3 class="text-sm font-bold">Sesi · M<span x-text="sessionWeek"></span></h3>
           <div class="overflow-x-auto">
             <div class="grid grid-cols-6 gap-2 min-w-[640px]">
               <template x-for="d in WWP_DAYS" :key="'w'+d.id">
@@ -1071,12 +1071,9 @@
               </template>
             </div>
           </div>
-          <p class="text-[11px] text-ink-mute">Pecah = bagi ke beberapa hari + zona (Z1-1, Z1-2…). Default: Site dulu, baru Galian.</p>
-          <p class="text-[11px] text-ink-mute">Pecah Z2-1 jadi 3 hari → Z2-1-1, Z2-1-2, Z2-1-3. Workable minggu lain: Z2-2 (M2), Z2-3 (M3)…</p>
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
               <h3 class="text-sm font-bold">Backlog</h3>
-              <p class="text-[11px] text-ink-mute">Tahan (belum SiapKerja!) · Workable (bisa dipromosikan)</p>
             </div>
             <div class="p-3 grid sm:grid-cols-2 gap-3 text-xs">
               <div>
@@ -1102,35 +1099,10 @@
               </div>
             </div>
           </div>
-          <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="!state.contractor.wwpLocked">
-            <div>
-              <h3 class="text-sm font-bold">Kunci WWP · mulai minggu</h3>
-              <p class="text-[11px] text-ink-mute">Setelah dikunci, pecah/hari dibekukan. Lanjut Daily Huddle dari Senin (max 15 menit/tim).</p>
-            </div>
-            <button type="button" class="btn-primary text-sm" @click="lockWwp()">Kunci WWP → Huddle</button>
-          </div>
-          <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.wwpLocked && !state.contractor.huddleComplete">
-            <div>
-              <h3 class="text-sm font-bold text-forest">WWP terkunci</h3>
-              <p class="text-[11px] text-ink-mute">Daily Huddle berjalan. PPC setelah huddle Sabtu.</p>
-            </div>
-            <button type="button" class="btn-primary text-sm" @click="setStage('contractor-huddle')">Buka Huddle →</button>
-          </div>
-
-                   <div class="rounded-xl border border-paper-line p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.huddleComplete && !state.contractor.weekClosed">
-            <div>
-              <h3 class="text-sm font-bold">Huddle selesai · lanjut Learning</h3>
-              <p class="text-[11px] text-ink-mute">PPC & registry ada di tab Learning.</p>
-            </div>
-            <button type="button" class="btn-primary text-sm" @click="setStage('contractor-learning')">Buka Learning →</button>
-          </div>
-          <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-4 flex flex-wrap items-center justify-between gap-3" x-show="state.contractor.weekClosed">
-            <div>
-              <h3 class="text-sm font-bold text-forest">Minggu terkunci</h3>
-              <p class="text-[11px] text-ink-mute">Gulir dari tab Learning.</p>
-            </div>
-            <button type="button" class="btn-primary text-sm" @click="setStage('contractor-learning')">Ke Learning →</button>
-          </div>
+          <button type="button" class="btn-primary text-sm" x-show="!state.contractor.wwpLocked" @click="lockWwp()">Kunci rencana mingguan dan eksekusi</button>
+          <button type="button" class="btn-primary text-sm" x-show="state.contractor.wwpLocked && !state.contractor.huddleComplete" @click="setStage('contractor-huddle')">Buka Daily Huddle →</button>
+          <button type="button" class="btn-primary text-sm" x-show="state.contractor.huddleComplete && !state.contractor.weekClosed" @click="setStage('contractor-learning')">Buka Learning →</button>
+          <button type="button" class="btn-primary text-sm" x-show="state.contractor.weekClosed" @click="setStage('contractor-learning')">Ke Learning →</button>
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
