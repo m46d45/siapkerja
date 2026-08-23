@@ -179,7 +179,6 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 1 · Pemilik</p>
           <h2 class="text-xl font-bold text-ink">Tetapkan nilai <span class="font-medium text-ink-soft">(value)</span></h2>
-          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Pemilik wajib menetapkan nilai yang ingin dicapai untuk rumah Type 36. <strong class="text-ink">Mutu bukan kompensasi</strong> — spek yang dipilih harus terpenuhi, tidak boleh diturunkan di meja nego. Fokus yang boleh dipilih: waktu atau biaya. Simulasi menampilkan keinginan pemilik yang berbeda-beda.</p>
         </div>
         <span x-show="state.owner.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
@@ -201,12 +200,11 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1.5">Mutu <span class="font-normal text-ink-mute">(spek wajib)</span></label>
+            <label class="block text-sm font-medium mb-1.5">Mutu</label>
             <select class="field" x-model="state.owner.qualityLevel" :disabled="state.owner.locked" @change="onQualityChange()">
               <option value="standard">Standard</option>
               <option value="premium">Premium</option>
             </select>
-            <p class="text-[11px] text-ink-mute mt-1.5">Tidak boleh dikompensasi waktu nego. Ada pemilik yang 350 jt tetap Standard; ada yang ingin Premium.</p>
           </div>
           <div>
             <label class="block text-sm font-medium mb-1.5">Fokus nego</label>
@@ -214,13 +212,11 @@
               <option value="time">Waktu — jangan molor</option>
               <option value="cost">Biaya — tekan harga, sisakan ruang VO</option>
             </select>
-            <p class="text-[11px] text-ink-mute mt-1.5">Mutu bukan pilihan fokus. Nego nanti dibanding OE hasil desain, bukan budget.</p>
           </div>
         </div>
         <div class="rounded-xl border border-paper-line bg-paper/50 px-4 py-3">
           <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-mute">Budget pemilik</p>
           <p class="text-lg font-bold text-ink mt-0.5">Rp 350 jt</p>
-          <p class="text-[11px] text-ink-soft mt-0.5">Desain + konstruksi. Bukan OE — OE baru keluar di tab Desainer.</p>
         </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
@@ -238,7 +234,6 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 2 · Desainer</p>
           <h2 class="text-xl font-bold text-ink">Menerjemahkan value pemilik ke desain</h2>
-          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Desainer menerjemahkan keinginan pemilik (value) ke hitungan terkait tanah, struktur, arsitektur, MEP, serta gambar 3D dan denah. Kualitas hasil desain menentukan biaya konstruksi dan berapa constraint yang akan muncul di lapangan saat konstruksi.</p>
         </div>
         <span x-show="state.designer.locked" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Terkunci</span>
       </div>
@@ -261,7 +256,6 @@
             <option value="standar">Standar — cukup untuk bangun, sisa constraint wajar</option>
             <option value="sempurna">Sempurna — tanah, struktur, arsitektur, MEP lengkap</option>
           </select>
-          <p class="text-[11px] text-ink-mute mt-1.5">Fee desainer maks 10% dari budget. Semakin cepat gambar, semakin banyak constraint di site.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
@@ -273,7 +267,6 @@
           <div class="rounded-xl border border-paper-line bg-paper/50 p-3">
             <p class="text-[10px] uppercase tracking-wide text-ink-mute">OE konstruksi</p>
             <p class="text-lg font-bold text-ink mt-0.5" x-text="'Rp '+oeJt+' jt'"></p>
-            <p class="text-[10px] text-ink-mute">Given dari mutu + durasi bangun</p>
           </div>
           <div class="rounded-xl border p-3" :class="budgetFit.box">
             <p class="text-[10px] uppercase tracking-wide" :class="budgetFit.tone" x-text="budgetFit.title"></p>
@@ -281,7 +274,6 @@
             <p class="text-[10px]" :class="budgetFit.tone" x-text="'dari 350 jt · '+budgetFit.note"></p>
           </div>
         </div>
-        <p class="text-[11px] text-ink-soft leading-relaxed" x-text="lodConstraintHint"></p>
 
         <div class="rounded-xl border border-paper-line bg-paper/40 p-4">
           <h3 class="text-sm font-bold mb-2">Gambar 3D Rumah Tipe 36</h3>
@@ -349,7 +341,6 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Tahap 3 · Pemilihan Kontraktor</p>
           <h2 class="text-xl font-bold text-ink">Penunjukan kontraktor dan kontrak</h2>
-          <p class="text-sm text-ink-soft mt-1 leading-relaxed">Untuk rumah Tipe 36, kontraktor ditunjuk langsung lalu dinegosiasi. Negosiasi berdasarkan harga dan waktu. Kualitas harus sesuai dengan yang diminta pemilik.</p>
         </div>
         <span x-show="state.negotiation.deal" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-forest-soft text-forest border border-forest/20">Kontrak</span>
       </div>
@@ -410,7 +401,6 @@
             <div>
               <label class="block text-sm font-medium mb-1.5">Mutu <span class="font-normal text-ink-mute">(tidak ditawar)</span></label>
               <p class="field bg-paper text-ink capitalize" x-text="state.owner.qualityLevel"></p>
-              <p class="text-[11px] text-ink-mute mt-1.5">Harus sesuai permintaan pemilik.</p>
             </div>
           </div>
         </div>
