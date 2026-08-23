@@ -55,6 +55,8 @@
     .gantt-bar-act{position:absolute;top:13px;height:8px;border-radius:2px;min-width:4px}
     .house-wrap svg{width:100%;height:auto;display:block}
     .house-wrap.compact svg{max-height:220px}
+    details > summary::-webkit-details-marker{display:none}
+    details > summary{list-style:none}
   </style>
 </head>
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
@@ -1708,26 +1710,6 @@
           <p class="text-ink-mute mt-2" x-show="!(state.contractor.weeklyProgress||[]).length">Belum ada minggu dikunci di Learning.</p>
         </div>
 
-        <div class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.execArchive||[]).length">
-          <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
-            <h3 class="text-sm font-bold">Arsip eksekusi</h3>
-            <p class="text-[11px] text-ink-mute mt-0.5">WWP & huddle minggu yang sudah digulir — baca saja.</p>
-          </div>
-          <div class="p-3 space-y-3">
-            <template x-for="a in state.contractor.execArchive.slice().reverse()" :key="'ea'+a.week">
-              <div class="rounded-lg border border-paper-line p-3 text-xs">
-                <p class="font-semibold mb-1.5">M<span x-text="a.week"></span></p>
-                <ul class="space-y-0.5">
-                  <template x-for="it in (a.wwp||[])" :key="'eait'+it.id">
-                    <li class="text-ink-soft" x-text="it.name+' · '+prettyZone(it.zoneLabel)+' · '+(it.day||'')"></li>
-                  </template>
-                </ul>
-                <p class="text-ink-mute mt-1" x-show="a.note" x-text="a.note"></p>
-              </div>
-            </template>
-          </div>
-        </div>
-
         <div class="grid grid-cols-3 gap-2">
           <div class="rounded-xl border border-forest/25 bg-forest-soft/30 p-3 text-center">
             <p class="text-[10px] text-forest">Progres fisik</p>
@@ -1853,6 +1835,30 @@
             </div>
           </template>
         </div>
+
+        <details class="rounded-xl border border-paper-line overflow-hidden" x-show="(state.contractor.execArchive||[]).length">
+          <summary class="px-4 py-3 bg-paper/60 cursor-pointer list-none flex items-center justify-between gap-2">
+            <span>
+              <span class="text-sm font-bold">Arsip eksekusi</span>
+              <span class="text-[11px] text-ink-mute ml-1.5" x-text="(state.contractor.execArchive||[]).length+' minggu · buka jika perlu'"></span>
+            </span>
+            <span class="text-[11px] text-terra font-semibold">Tampilkan</span>
+          </summary>
+          <div class="p-3 space-y-2 border-t border-paper-line">
+            <p class="text-[11px] text-ink-mute">WWP & huddle minggu yang sudah digulir — baca saja.</p>
+            <template x-for="a in state.contractor.execArchive.slice().reverse()" :key="'ea'+a.week">
+              <details class="rounded-lg border border-paper-line">
+                <summary class="px-3 py-2 text-xs font-semibold cursor-pointer" x-text="'M'+a.week+' · '+((a.wwp||[]).length)+' pekerjaan'"></summary>
+                <ul class="px-3 pb-2 space-y-0.5 text-xs">
+                  <template x-for="it in (a.wwp||[])" :key="'eait'+it.id">
+                    <li class="text-ink-soft" x-text="it.name+' · '+prettyZone(it.zoneLabel)+' · '+(it.day||'')"></li>
+                  </template>
+                </ul>
+                <p class="px-3 pb-2 text-[11px] text-ink-mute" x-show="a.note" x-text="a.note"></p>
+              </details>
+            </template>
+          </div>
+        </details>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line flex flex-wrap gap-2">
         <button @click="setStage('contractor-learning')" class="btn-ghost">← Learning</button>
