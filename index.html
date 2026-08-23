@@ -39,9 +39,13 @@
     .btn-danger{border:1.5px solid #FECACA;color:#B91C1C;background:#FEF2F2;border-radius:12px;padding:.65rem 1rem;font-size:.875rem}
     .step-dot{width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
     select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%2378716C' d='M1.4.6L6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.2rem}
-    .board-scroll{display:flex;gap:.75rem;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+    .board-scroll{display:flex;gap:.5rem;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
     .phase-col{flex:0 0 172px;scroll-snap-align:start}
+    .phase-col-end{flex:0 0 84px;scroll-snap-align:start}
+    .phase-col-given{flex:0 0 112px;scroll-snap-align:start}
+    .phase-col-focus{flex:0 0 196px;scroll-snap-align:start}
     .sticky-note{display:block;width:100%;text-align:left;background:color-mix(in srgb, var(--c,#C45C26) 22%, #FFFcf8);border:1px solid color-mix(in srgb, var(--c,#C45C26) 35%, transparent);border-left:5px solid var(--c,#C45C26);border-radius:6px;box-shadow:0 1px 1px rgba(28,25,23,.06),0 4px 10px rgba(28,25,23,.06);padding:.65rem .7rem;min-height:84px;cursor:pointer}
+    .sticky-note.is-given{min-height:52px;padding:.4rem .45rem;border-left-width:3px}
     .sticky-note.is-on{box-shadow:0 0 0 2px var(--c,#C45C26), 0 5px 12px rgba(28,25,23,.08)}
     .sticky-note.is-committed{background:color-mix(in srgb, var(--c,#C45C26) 38%, #FFFcf8);border-color:color-mix(in srgb, var(--c,#C45C26) 55%, transparent)}
     .sticky-note:disabled{cursor:default}
@@ -652,53 +656,51 @@
         </div>
 
         <div x-show="state.contractor.milestonesLocked && state.contractor.zonesLocked">
-          <div class="flex items-end justify-between gap-2 mb-2">
-            <div>
+          <div class="mb-2">
+            <div class="flex items-end justify-between gap-2">
               <h3 class="text-sm font-bold">Pull Planning per Milestone</h3>
-              <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff terhadap tim yang lain. Untuk simulasi ini, perencanaan dilakukan untuk milestone Struktur. Milestone lain sudah ditetapkan beserta constraint-nya, tergantung kualitas hasil desain.</p>
+              <span class="text-[11px] text-ink-mute shrink-0" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
             </div>
-            <span class="text-[11px] text-ink-mute" x-text="reviewedCount+'/'+contractPlan.length+' ditinjau'"></span>
+            <p class="text-[11px] text-ink-mute mt-0.5 leading-relaxed">Pada tahapan ini, the last planner melakukan collaborative pull planning yang lebih detail dengan memperhatikan zonasi dan handoff terhadap tim yang lain. Untuk simulasi ini, perencanaan dilakukan untuk milestone Struktur. Milestone lain sudah ditetapkan beserta constraint-nya, tergantung kualitas hasil desain.</p>
           </div>
           <div class="board-scroll">
-            <div class="phase-col">
-              <p class="text-[10px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Milestone</p>
-              <div class="rounded-xl border-2 border-dashed border-forest/40 bg-forest-soft/50 p-3 min-h-[84px]">
-                <p class="text-sm font-bold text-forest">Serah terima</p>
-                <p class="text-[11px] text-forest mt-1" x-text="'Minggu '+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
-                <p class="text-[10px] text-forest/80 mt-2">← tarik mundur</p>
+            <div class="phase-col-end">
+              <p class="text-[9px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Akhir</p>
+              <div class="rounded-lg border border-dashed border-forest/40 bg-forest-soft/50 p-2">
+                <p class="text-[11px] font-bold text-forest leading-tight">Serah terima</p>
+                <p class="text-[10px] text-forest mt-0.5" x-text="'M'+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
               </div>
             </div>
                         <template x-for="ph in pullPhasesView" :key="'col'+ph.id">
-              <div class="phase-col">
+              <div :class="ph.isFocus ? 'phase-col-focus' : 'phase-col-given'">
                 <div class="mb-2 px-0.5">
-                  <p class="text-[10px] font-semibold uppercase tracking-wide" :class="ph.isFocus ? 'text-terra' : 'text-ink-mute'" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                  <p class="text-[10px] font-semibold uppercase tracking-wide leading-tight" :class="ph.isFocus ? 'text-terra' : 'text-ink-mute'" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
                   <p class="text-[9px] font-medium" :class="ph.isFocus ? 'text-terra' : 'text-ink-mute'" x-text="ph.isFocus ? '★ Latihan pull' : 'Given'"></p>
                 </div>
-                <div class="space-y-2">
+                <div class="space-y-1.5">
                   <template x-for="w in (ph.stickies || ph.works)" :key="w.id">
                     <button type="button" class="sticky-note" :style="'--c:'+w.color"
                       :class="{
                         'is-on': state.contractor.selectedWork===w.id,
                         'is-committed': !!(state.contractor.commitments||{})[w.team],
-                        'opacity-70': !ph.isFocus
+                        'is-given': !ph.isFocus
                       }"
                       :disabled="!ph.isFocus || state.contractor.pullLocked"
                       @click="ph.isFocus && selectWork(w.id)">
-                      <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
-                      <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
-                      <p class="text-[10px] mt-1" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
-                        x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(ph.isFocus ? (state.contractor.reviewed[w.id]?'ditinjau':'ketuk') : 'given')"></p>
+                      <p class="font-semibold leading-snug text-ink" :class="ph.isFocus ? 'text-[12px]' : 'text-[10px]'" x-text="w.name"></p>
+                      <p class="text-ink-soft mt-0.5" :class="ph.isFocus ? 'text-[10px]' : 'text-[9px]'" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + (ph.isFocus ? (w.team + ' · M'+w.startWeek) : ('M'+w.startWeek))"></p>
+                      <p class="text-[10px] mt-1" x-show="ph.isFocus" :class="workConstraintCount(w.id)?'text-amber-800':'text-forest'"
+                        x-text="workConstraintCount(w.id)? (workConstraintCount(w.id)+' constraint'):(state.contractor.reviewed[w.id]?'ditinjau':'ketuk')"></p>
                     </button>
                                    </template>
                 </div>
               </div>
             </template>
-            <div class="phase-col">
-              <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
-              <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[84px]">
-                <p class="text-sm font-bold text-ink-soft">Mulai</p>
-                <p class="text-[11px] text-ink-mute mt-1">Minggu 1</p>
-                <p class="text-[10px] text-ink-mute mt-2">titik awal →</p>
+            <div class="phase-col-end">
+              <p class="text-[9px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
+              <div class="rounded-lg border border-dashed border-paper-line bg-paper/60 p-2">
+                <p class="text-[11px] font-bold text-ink-soft leading-tight">Mulai</p>
+                <p class="text-[10px] text-ink-mute mt-0.5">M1</p>
               </div>
             </div>
           </div>
@@ -792,34 +794,34 @@
           <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-forest-soft text-forest">Terkunci</span>
         </div>
         <div class="board-scroll">
-          <div class="phase-col">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
-            <div class="rounded-xl border-2 border-dashed border-paper-line bg-paper/60 p-3 min-h-[72px]">
-              <p class="text-sm font-bold text-ink-soft">Mulai</p>
-              <p class="text-[11px] text-ink-mute mt-1">Minggu 1</p>
+          <div class="phase-col-end">
+            <p class="text-[9px] font-semibold uppercase tracking-wide text-ink-mute mb-2 px-0.5">Awal</p>
+            <div class="rounded-lg border border-dashed border-paper-line bg-paper/60 p-2">
+              <p class="text-[11px] font-bold text-ink-soft leading-tight">Mulai</p>
+              <p class="text-[10px] text-ink-mute mt-0.5">M1</p>
             </div>
           </div>
           <template x-for="ph in forwardPhasesView" :key="'fwd'+ph.id">
-            <div class="phase-col">
+            <div :class="ph.isFocus ? 'phase-col-focus' : 'phase-col-given'">
               <div class="mb-2 px-0.5">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-mute" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
+                <p class="text-[10px] font-semibold uppercase tracking-wide leading-tight text-ink-mute" x-text="ph.name+' · M'+ph.startWeek+'–'+ph.finishWeek"></p>
                 <p class="text-[9px] text-ink-mute" x-text="ph.isFocus ? '★ dari latihan' : 'Given'"></p>
               </div>
-              <div class="space-y-2">
+              <div class="space-y-1.5">
                 <template x-for="w in ph.stickies" :key="'f'+w.id">
-                  <div class="sticky-note opacity-90" :style="'--c:'+w.color">
-                    <p class="text-[12px] font-semibold leading-snug text-ink" x-text="w.name"></p>
-                    <p class="text-[10px] text-ink-soft mt-1" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + w.team + ' · M'+w.startWeek"></p>
+                  <div class="sticky-note" :class="ph.isFocus ? '' : 'is-given'" :style="'--c:'+w.color">
+                    <p class="font-semibold leading-snug text-ink" :class="ph.isFocus ? 'text-[12px]' : 'text-[10px]'" x-text="w.name"></p>
+                    <p class="text-ink-soft mt-0.5" :class="ph.isFocus ? 'text-[10px]' : 'text-[9px]'" x-text="(w.zoneLabel ? (w.zoneLabel+' · ') : '') + 'M'+w.startWeek"></p>
                   </div>
                 </template>
               </div>
             </div>
           </template>
-          <div class="phase-col">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Milestone</p>
-            <div class="rounded-xl border-2 border-dashed border-forest/40 bg-forest-soft/50 p-3 min-h-[72px]">
-              <p class="text-sm font-bold text-forest">Serah terima</p>
-              <p class="text-[11px] text-forest mt-1" x-text="'Minggu '+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
+          <div class="phase-col-end">
+            <p class="text-[9px] font-semibold uppercase tracking-wide text-forest mb-2 px-0.5">Akhir</p>
+            <div class="rounded-lg border border-dashed border-forest/40 bg-forest-soft/50 p-2">
+              <p class="text-[11px] font-bold text-forest leading-tight">Serah terima</p>
+              <p class="text-[10px] text-forest mt-0.5" x-text="'M'+(state.negotiation.contract&&state.negotiation.contract.duration)"></p>
             </div>
           </div>
         </div>
