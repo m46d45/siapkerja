@@ -2065,6 +2065,7 @@ function emptyContractor() {
     actualLog:[],
     progressLocks:[],
     weekRemainder:[],
+    carryOver:[],
     promoUsed:[],
     wwpSnapshot:null,
     weekFailedTypes:[],
@@ -2181,7 +2182,7 @@ Alpine.data('app', () => ({
     if (!this.state.negotiation) this.state.negotiation = emptyNego();
     if (!this.state.contractor) this.state.contractor = emptyContractor();
     if (!this.state.contractor.stickyWeeks) this.state.contractor.stickyWeeks = {};
-    if (!Array.isArray(this.state.contractor.weekRemainder)) this.state.contractor.weekRemainder = [];
+    if (!Array.isArray(this.state.contractor.carryOver)) this.state.contractor.carryOver = [];
     if (!Array.isArray(this.state.contractor.weekFailedTypes)) this.state.contractor.weekFailedTypes = [];
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
@@ -2643,40 +2644,63 @@ Alpine.data('app', () => ({
     if (prev < 1) return [];
     const out = [];
     const seen = new Set();
-    for (const r of (this.state.contractor.weekRemainder || []).filter(x => Number(x.toWeek) === week)) {
-      if (!r.stickyId || seen.has(r.stickyId)) continue;
-      seen.add(r.stickyId);
-      const s = this._allStickies().find(x => x.id === r.stickyId) || {};
+    const push = (id, extra) => {
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      const s = this._allStickies().find(x => x.id === id) || {};
       out.push({
         ...s,
-        id: r.stickyId,
-        parentId: r.parentId || s.parentId,
-        name: r.name || s.name,
-        team: r.team || s.team,
-        color: r.color || s.color,
-        zoneLabel: r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : (s.zoneLabel || ''),
+        id,
+        parentId: extra.parentId || s.parentId,
+        name: extra.name || s.name,
+        team: extra.team || s.team,
+        color: extra.color || s.color,
+        zoneLabel: extra.zoneLabel || s.zoneLabel,
         startWeek: week,
         carry: true,
         carryFrom: prev,
+        carryNote: extra.carryNote || ('Tidak selesai M' + prev),
+        days: extra.days || 1,
+      });
+    };
+    for (const r of (this.state.contractor.carryOver || []).filter(x => Number(x.toWeek) === week)) {
+      push(r.stickyId, {
+        parentId: r.parentId, name: r.name, team: r.team, color: r.color,
+        zoneLabel: r.zoneLabel || (r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : ''),
+        carryNote: r.note || ('Tidak selesai M' + prev),
+        days: r.days || 1,
+      });
+    }
+    for (const r of (this.state.contractor.weekRemainder || []).filter(x => Number(x.toWeek) === week)) {
+      push(r.stickyId, {
+        parentId: r.parentId, name: r.name, team: r.team, color: r.color,
+        zoneLabel: r.zoneBase ? (r.zoneBase + (r.nextIndex ? ('-' + r.nextIndex) : '')) : '',
         carryNote: 'Sisa ' + (r.days || 1) + ' hari dari M' + prev,
+        days: r.days || 1,
       });
     }
     for (const a of (this.state.contractor.actualLog || []).filter(x => Number(x.week) === prev && !x.done)) {
-      const sid = a.stickyId;
-      if (!sid || seen.has(sid)) continue;
-      seen.add(sid);
-      const s = this._allStickies().find(x => x.id === sid) || {};
-      out.push({
-        ...s,
-        id: sid,
-        parentId: a.parentId || s.parentId,
-        name: a.name || s.name,
-        team: s.team,
-        color: s.color,
-        zoneLabel: a.zoneLabel || s.zoneLabel,
-        startWeek: week,
-        carry: true,
-        carryFrom: prev,
+      push(a.stickyId, {
+        parentId: a.parentId, name: a.name,
+        zoneLabel: a.zoneLabel,
+        carryNote: 'Tidak selesai M' + prev,
+      });
+    }
+    for (const e of (this.state.contractor.problemRegistry || []).filter(x => Number(x.week) === prev)) {
+      let sid = e.stickyId;
+      if (!sid) {
+        const hit = this._allStickies().find(s => s.name === e.name && (
+          !e.zoneLabel || s.zoneLabel === e.zoneLabel || String(e.zoneLabel).startsWith(String(s.zoneLabel || '')) || String(s.zoneLabel || '').startsWith(String(e.zoneLabel).split('-')[0] || '')
+        ));
+        sid = hit && hit.id;
+      }
+      if (!sid) {
+        const parent = WORKS.find(w => w.name === e.name);
+        const hit = parent && this._allStickies().find(s => s.parentId === parent.id && Number(s.startWeek) === prev);
+        sid = hit && hit.id;
+      }
+      push(sid, {
+        name: e.name, team: e.team, zoneLabel: e.zoneLabel,
         carryNote: 'Tidak selesai M' + prev,
       });
     }
@@ -3659,38 +3683,29 @@ Alpine.data('app', () => ({
     if (!this.state.contractor.pullLocked) return;
     const week = this.targetExecWeek;
     const days = WWP_DAYS.map(d => d.id);
-    const remainders = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) === week);
-    const remIds = new Set(remainders.map(r => r.stickyId));
     const used = this._promoUsedIdSet();
     const remItems = [];
-    remainders.forEach((r) => {
-      const sticky = this._allStickies().find(s => s.id === r.stickyId) || {
-        id: r.stickyId, parentId: r.parentId, name: r.name, team: r.team, color: r.color, zoneLabel: r.zoneBase,
-      };
-      for (let i = 0; i < Number(r.days || 1); i++) {
-        const it = this._makeWwpItem(sticky, days[Math.min(remItems.length, days.length - 1)], r.zoneBase + '-' + (Number(r.nextIndex || 1) + i), true);
-        it.canSplit = false;
+    const remIds = new Set();
+    const addCarry = (c) => {
+      if (!c.id || remIds.has(c.id) || used.has(c.id)) return;
+      const n = Math.max(1, Number(c.days) || 1);
+      for (let i = 0; i < n; i++) {
+        const zone = c.zoneLabel || c.zoneBase || '';
+        const z = n > 1 && zone && !String(zone).endsWith('-' + (i + 1)) ? (zone + '-' + (i + 1)) : zone;
+        const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], z, true);
+        it.canSplit = n === 1;
         it.isLead = i === 0;
-        it.origZoneLabel = r.zoneBase;
-        it.carryNote = 'Sisa dari M' + (week - 1);
+        it.carryNote = c.carryNote;
         remItems.push(it);
       }
-    });
-    for (const c of this._carryStickies()) {
-      if (remIds.has(c.id) || used.has(c.id)) continue;
-      if ((this.state.contractor.wwp || []).some(x => x.workId === c.id)) continue;
-      const it = this._makeWwpItem(c, days[Math.min(remItems.length, days.length - 1)], c.zoneLabel, true);
-      it.canSplit = true;
-      it.carryNote = c.carryNote || ('Tidak selesai M' + (week - 1));
-      remItems.push(it);
       remIds.add(c.id);
-    }
+    };
+    for (const c of this._carryStickies()) addCarry(c);
     const ready = this._allStickies()
       .filter(s => Number(s.startWeek) === week && this._isWorkReady(s.id) && !used.has(s.id) && !remIds.has(s.id))
       .sort((a, b) => this._wwpSortKey(a) - this._wwpSortKey(b));
     const items = ready.map((s, i) => this._makeWwpItem(s, days[Math.min(i + remItems.length, days.length - 1)], s.zoneLabel, false));
     this.state.contractor.wwp = remItems.concat(items);
-    this.state.contractor.weekRemainder = (this.state.contractor.weekRemainder || []).filter(r => Number(r.toWeek) !== week);
     this.state.contractor.ppc = [];
     this.state.contractor.wwpLocked = false;
     this.state.contractor.huddleDayIdx = 0;
@@ -4227,6 +4242,30 @@ Alpine.data('app', () => ({
       });
     }
     this.state.contractor.actualLog = log;
+    const bag = [...(this.state.contractor.carryOver || [])].filter(x => Number(x.fromWeek) !== week);
+    const seenBag = new Set(bag.filter(x => Number(x.toWeek) === week + 1).map(x => x.stickyId));
+    for (const item of items) {
+      const p = ppc.find(x => x.workId === item.id);
+      if (p && p.status === 'done') continue;
+      const sid = item.workId;
+      if (!sid || seenBag.has(sid)) continue;
+      seenBag.add(sid);
+      bag.push({
+        stickyId: sid,
+        parentId: item.parentId,
+        name: item.name,
+        team: item.team,
+        color: item.color,
+        zoneLabel: item.zoneLabel,
+        zoneBase: item.origZoneLabel || String(item.zoneLabel || '').split('-')[0],
+        days: 1,
+        fromWeek: week,
+        toWeek: week + 1,
+        source: 'unfinished',
+        note: 'Tidak selesai M' + week,
+      });
+    }
+    this.state.contractor.carryOver = bag;
     this.state.contractor.weekClosed = true;
     this.save();
   },
