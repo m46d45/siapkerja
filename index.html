@@ -57,6 +57,8 @@
     .house-wrap.compact svg{max-height:220px}
     details > summary::-webkit-details-marker{display:none}
     details > summary{list-style:none}
+    details[open] .arch-closed{display:none}
+    details:not([open]) .arch-open{display:none}
   </style>
 </head>
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
@@ -1842,7 +1844,8 @@
               <span class="text-sm font-bold">Arsip eksekusi</span>
               <span class="text-[11px] text-ink-mute ml-1.5" x-text="(state.contractor.execArchive||[]).length+' minggu · buka jika perlu'"></span>
             </span>
-            <span class="text-[11px] text-terra font-semibold">Tampilkan</span>
+            <span class="text-[11px] font-semibold text-terra arch-closed">Tampilkan</span>
+            <span class="text-[11px] font-semibold text-ink-soft arch-open">Tutup</span>
           </summary>
           <div class="p-3 space-y-2 border-t border-paper-line">
             <p class="text-[11px] text-ink-mute">WWP & huddle minggu yang sudah digulir — baca saja.</p>
@@ -1857,6 +1860,7 @@
                 <p class="px-3 pb-2 text-[11px] text-ink-mute" x-show="a.note" x-text="a.note"></p>
               </details>
             </template>
+            <button type="button" class="btn-ghost !text-xs !py-1.5" @click="$el.closest('details').open=false">Tutup arsip</button>
           </div>
         </details>
       </div>
