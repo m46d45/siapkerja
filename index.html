@@ -3683,14 +3683,15 @@ Alpine.data('app', () => ({
     const base = list[idx];
     const days = WWP_DAYS.map(d => d.id);
     const startDayIdx = Math.max(0, days.indexOf(base.day));
+    const fit = Math.max(1, Math.min(n, days.length - startDayIdx));
+    const remain = n - fit;
     const prefix = base.zoneLabel || base.zoneBase || 'Z';
     const created = [];
-    for (let i = 0; i < n; i++) {
-      const day = days[Math.min(startDayIdx + i, days.length - 1)];
+    for (let i = 0; i < fit; i++) {
       created.push({
         ...base,
         id: 'wwp' + Date.now() + i + Math.random().toString(36).slice(2, 5),
-        day,
+        day: days[startDayIdx + i],
         zoneLabel: prefix + '-' + (i + 1),
         canSplit: false,
         isLead: i === 0,
@@ -3699,6 +3700,22 @@ Alpine.data('app', () => ({
     }
     list.splice(idx, 1, ...created);
     this.state.contractor.wwp = list;
+    if (remain > 0) {
+      this.state.contractor.weekRemainder = [...(this.state.contractor.weekRemainder || []), {
+        id: 'rem' + Date.now(),
+        stickyId: base.workId,
+        parentId: base.parentId,
+        name: base.name,
+        team: base.team,
+        color: base.color,
+        zoneBase: prefix,
+        nextIndex: fit + 1,
+        days: remain,
+        fromWeek: this.playWeek,
+        toWeek: this.playWeek + 1,
+        source: 'split',
+      }];
+    }
     this.save();
   },
   unsplitWwpItem(itemId) {
@@ -3720,6 +3737,9 @@ Alpine.data('app', () => ({
     };
     rest.push(parent);
     this.state.contractor.wwp = rest;
+    this.state.contractor.weekRemainder = (this.state.contractor.weekRemainder || []).filter(r =>
+      !(r.source === 'split' && r.stickyId === workId && r.zoneBase === orig && Number(r.fromWeek) === this.playWeek)
+    );
     this.save();
   },
   promoteToWwp(workId) {
