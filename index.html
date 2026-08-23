@@ -2876,6 +2876,18 @@ Alpine.data('app', () => ({
       return { ...ph, isFocus, stickies };
     });
   },
+  _stickyConsumed(s) {
+    if (!s) return false;
+    if (this._promoUsedIdSet().has(s.id)) return true;
+    const z = this.prettyZone(s.zoneLabel);
+    const pid = s.parentId || this._workType(s);
+    if (!z || !pid) return false;
+    const cells = this._zoneCells().filter(c => c.parentId === pid && this._zoneMatches(z, c.zoneLabel));
+    const done = cells.filter(c => c.status === 'done');
+    if (!done.length) return false;
+    const lastDone = Math.max(...done.map(c => Number(c.week) || 0));
+    return Number(s.startWeek) > lastDone;
+  },
     get lookSlots() {
     const off = Number((this.state.contractor && this.state.contractor.lookOffset) || 0);
     const allStickies = [];
@@ -2889,7 +2901,7 @@ Alpine.data('app', () => ({
     return [1,2,3,4].map(i => {
       const abs = off + i;
       const absLabel = 'M' + abs;
-      let stickies = allStickies.filter(s => Number(s.startWeek) === abs);
+      let stickies = allStickies.filter(s => Number(s.startWeek) === abs && !this._stickyConsumed(s));
       if (i === 1 && carry.length) {
         const haveZ = new Set(stickies.map(s => this.prettyZone(s.zoneLabel)));
         for (const c of carry) {
@@ -3431,7 +3443,7 @@ Alpine.data('app', () => ({
     const week = this.targetExecWeek;
     const blocked = this.promoBlockedIds;
     return this._allStickies().filter(s => {
-      if (blocked.has(s.id)) return false;
+      if (blocked.has(s.id) || this._stickyConsumed(s)) return false;
       if (!this._isWorkReady(s.id)) return false;
       if (this._predBlockReason(s)) return false;
       const w = Number(s.startWeek);
