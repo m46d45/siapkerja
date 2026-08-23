@@ -78,7 +78,6 @@
     </div>
     <div class="flex items-center gap-1.5 shrink-0">
       <button type="button" @click="openManual()" class="px-2.5 py-1.5 text-xs font-medium text-ink-soft rounded-lg">Manual</button>
-      <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="px-2.5 py-1.5 text-xs font-semibold text-terra rounded-lg">Unduh PDF</a>
       <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg hidden sm:inline">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
         Muat sesi
@@ -158,7 +157,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Manual mahasiswa</p>
           <h2 class="text-xl font-bold text-ink">SiapKerja! · Last Planner System</h2>
-          <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata.</p>
+          <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata. Versi 1.19 — konstruksi default 10 minggu, latihan pull Pondasi + Struktur.</p>
         </div>
         <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="btn-primary !text-xs !py-2 shrink-0">Unduh PDF</a>
       </div>
@@ -1921,29 +1920,37 @@ import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm
 const SK = 'siapkerja_project_state';
 const VER = '1.19.0';
 const MANUAL = [
-  { id:'alur', title:'Alur lengkap', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir minggu berikutnya.', bullets:[
-    'Pemilik → Desainer → Pemilihan (kontrak)',
-    'Master Plan → Phase Plan (milestone, zonasi, pull)',
-    'Look-ahead Plan 4 minggu (L1 harus SiapKerja!)',
-    'Weekly Work Plan → Daily Huddle → Learning → Laporan → gulir',
+  { id:'alur', title:'Alur lengkap', blurb:'', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir — atau tutup proyek jika semua pekerjaan selesai.', bullets:[
+    'Pemilik (value, durasi desain 2/4, konstruksi 8/10/12 default 10) → Desainer (LOD, OE, denah/3D)',
+    'Pemilihan: nego harga & waktu, tanda tangan kontrak',
+    'Master Plan → Phase Plan (6 tim, zonasi, pull Pondasi + Struktur; atap & finishing given)',
+    'Look-ahead L1–L4 (L1 harus SiapKerja!). Skenario: material M3, hujan M6',
+    'Weekly Work Plan → Daily Huddle (atau Jalankan sisa hari) → Learning → Laporan → gulir',
+    'Jika semua pekerjaan selesai (termasuk serah terima): proyek ditutup, tidak ada look-ahead lagi',
   ]},
-  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value: kualitas tidak boleh turun. Pilih fokus waktu/biaya dan budget.', body:'Owner menetapkan nilai yang ingin dicapai. Kualitas tidak boleh dikompensasi. Budget mencakup desain + konstruksi (350 jt di simulasi ini). Durasi desain 2/4 minggu, konstruksi 8/10/12 (default 10).', bullets:['Pilih durasi, kualitas, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
-  { id:'designer', title:'2 · Desainer', blurb:'Terjemahkan value ke denah, 3D, OE, dan LOD. LOD menentukan banyaknya constraint.', body:'Desainer menerjemahkan keinginan pemilik ke tanah, struktur, arsitektur, MEP, denah dan 3D. Kualitas hasil desain (LOD) menentukan biaya dan berapa constraint yang muncul di lapangan.', bullets:['LOD kurang detail → constraint banyak','Tombol: Tetapkan desain & undang kontraktor'] },
-  { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Kualitas harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar kualitas. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Nego vs OE, bukan vs budget','Tanda tangan kontrak → Eksekusi konstruksi'] },
-  { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt dokumen kontrak. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone.', bullets:[] },
-  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Tim, garis milestone, zonasi, pull. Latihan Pondasi + Struktur.', body:'Enam tim kerja (warna). Milestone = kapan terjadi. Latihan pull: Pondasi dan Struktur. Atap & finishing given dari LOD. Constraint given mulai minggu ke-2 (L1/M1 bersih). Skenario: material M3, hujan M6.', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
-  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka.', body:'Tiga pilihan constraint: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Sisa/gagal minggu lalu tampil di papan zona dan Dibawa ke L1.', bullets:['L1 = minggu eksekusi berikutnya','Baru susun WWP setelah L1 SiapKerja!'] },
-  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Sisa setelah Sabtu = rencana minggu depan, bukan gagal.', body:'Z1 pecah 3 hari → Z1-a-1…Z1-a-3. Z2-a pecah 2 hari → Z2-a-1, Z2-a-2. Kartu sisa/gagal tidak dipecah lagi. Kunci rencana lalu Daily Huddle.', bullets:[] },
-  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit, hari per hari. Selesai / perpanjang / tidak bisa. Masalah dicatat, tidak didiskusikan.', body:'Prasyarat zona berlaku. Promosi hanya sisa hari dalam minggu yang sama. Jika tidak ada kunci, tombol Jalankan sisa hari. M6 hujan Sen–Sel (skenario).', bullets:[] },
-  { id:'contractor-learning', title:'9 · Learning', blurb:'Centang selesai/tidak per pecahan. Sisa pecah ke M berikutnya bukan variansi.', body:'PPC hanya janji minggu itu. Yang tidak selesai dibawa ke L1. Yang tidak muat pecah (mis. Z2-a-3) dijadwalkan minggu depan, tidak masuk PPC. Kunci evaluasi sebelum gulir.', bullets:[] },
-  { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Bakukan progres fisik (default sudah dihitung).', body:'Angka progres default dari pekerjaan selesai. Arsip eksekusi = WWP minggu yang sudah digulir (baca saja).', bullets:[] },
+  { id:'owner', title:'1 · Pemilik', blurb:'Tetapkan value. Mutu tidak boleh turun. Durasi desain 2/4, konstruksi 8/10/12 (default 10).', body:'Pemilik wajib menetapkan nilai yang ingin dicapai. Mutu bukan kompensasi — spek yang dipilih harus terpenuhi di nego. Fokus yang boleh dipilih: waktu atau biaya. Budget simulasi 350 jt (desain + konstruksi). Durasi desain 2 atau 4 minggu; konstruksi 8, 10, atau 12 minggu (default 10) agar satu sesi kuliah tidak bertele-tele.', bullets:['Pilih durasi, mutu, fokus, budget','Tombol: Kunci dan lanjut ke desainer'] },
+  { id:'designer', title:'2 · Desainer', blurb:'Terjemahkan value ke denah, 3D, OE, dan LOD. LOD menentukan banyaknya constraint.', body:'Desainer menerjemahkan keinginan pemilik ke tanah, struktur, arsitektur, MEP, denah dan 3D. Kualitas hasil desain (LOD: cepat / standar / sempurna) menentukan biaya konstruksi (OE) dan berapa constraint yang muncul di lapangan. Fee desainer given, tergantung LOD dan budget.', bullets:['LOD kurang detail → constraint banyak','Tombol: Tetapkan desain & undang kontraktor'] },
+  { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Mutu harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar mutu. Nego dibanding OE, bukan vs budget. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Tanda tangan kontrak → Eksekusi konstruksi'] },
+  { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt adalah dokumen kontrak, media komunikasi dengan pemilik. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone (Phase Plan).', bullets:[] },
+  { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Enam tim, garis milestone, zonasi. Latihan pull: Pondasi + Struktur.', body:'Kenalkan 6 tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi denah, tetapkan. Collaborative pull: latihan pada Pondasi dan Struktur (site, galian, kolom, dinding) agar hands-off Z2 → kolom kelihatan. Atap, MEP, finishing given beserta constraint LOD. L1/M1 bersih dari constraint given. Komitmen semua tim, lalu kunci.', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
+  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka. Material M3 = skenario.', body:'Jendela 4 minggu. L1 = minggu eksekusi berikutnya: harus SiapKerja! L2–L4: hilangkan atau commit hilangkan. Tiga pilihan: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Skenario material di M3 harus make-ready sebelum masuk L1. Pekerjaan yang sudah dipromosikan/selesai tidak muncul lagi di minggu asalnya. Predecessor phase plan berlaku (dinding menunggu struktur, bukan galian).', bullets:['L1 bersih baru susun WWP','Promosi tidak menghapus urutan predecessor'] },
+  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Minggu kosong bisa diisi dari backlog Workable.', body:'Hanya L1 yang SiapKerja! Pecah: Z1 3 hari → Z1-a-1…Z1-a-3. Z2-a 2 hari → Z2-a-1, Z2-a-2. Sisa setelah Sabtu = rencana minggu depan, bukan gagal. Jika L1 kosong karena sudah dipromosikan, jadwal Sen–Sab tetap tampil — isi dari Workable. Tahan = belum predecessor/constraint. Kunci rencana, lalu Daily Huddle.', bullets:[] },
+  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit. Selesai / perpanjang / gagal. M6 hujan Sen–Sel. Ada jalankan sisa hari.', body:'Last planner menyampaikan cepat. Centang hijau jika sesuai; perpanjang (1–2 hari) atau tidak bisa (alasan variansi). Masalah tidak didiskusikan di huddle — masuk registry. Prasyarat zona: site gagal memblok galian di zona itu. Promosi hanya sisa hari minggu yang sama, dan successor hanya setelah predecessor selesai. M6: hujan Sen–Sel (skenario) — tidak bisa hijau, perpanjang/gagal alasan Cuaca. Jika tidak ada kunci, tombol Jalankan sisa hari menuntaskan huddle tanpa klik per hari.', bullets:[] },
+  { id:'contractor-learning', title:'9 · Learning', blurb:'PPC, alasan variansi, konfirmasi pecahan. Gulir — atau tutup jika proyek selesai.', body:'Konfirmasi selesai/tidak per pecahan. Yang tidak selesai = variansi, dibawa ke L1. Yang tidak muat pecah (dijadwalkan minggu depan) bukan gagal, tidak masuk PPC. Isi pembelajaran. Kunci evaluasi. Jika masih ada pekerjaan: Look-ahead 4 minggu ke depan. Jika semua selesai termasuk serah terima: tombol gulir hilang, buka Laporan proyek ditutup.', bullets:[] },
+  { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Progres = bobot OE × zona selesai. Tutup otomatis jika selesai.', body:'Progres fisik dari cost OE, bukan jumlah pecah hari (maksimal 100%). Finishing di OE = plester 8% + lantai 6% + cat 4% + serah terima 1% = 19%. Gantt aktual = rentang kalender minggu pertama–terakhir. Arsip eksekusi di bawah, dilipat. Jika proyek selesai: durasi aktual vs kontrak (minggu kerja, hari kerja Sen–Sab ×6, hari kalender ×7). Tidak ada tombol gulir.', bullets:[] },
+  { id:'skenario', title:'Skenario gangguan', body:'Dua skrip tetap (bukan random) agar kelas bisa diulang.', bullets:[
+    'M3 — material (semen/besi telat). Muncul di Look-ahead jendela yang memuat M3. Harus make-ready sebelum L1.',
+    'M6 — hujan Sen–Sel. Daily Huddle: tidak bisa centang hijau; perpanjang atau gagal, alasan Cuaca. Setelah Rabu, Jalankan sisa hari boleh dipakai.',
+  ]},
   { id:'aturan', title:'Aturan yang sering keliru', body:'', bullets:[
     'L1 harus bebas constraint sebelum kunci WWP.',
     'Commit hilangkan ≠ sudah hilang — dicek di look-ahead berikutnya.',
     'PPC tidak menghitung sisa pecah yang belum jadi janji minggu ini.',
     'Unit minggu Z2-a; pecah hari Z2-a-1. Jangan pecah kartu yang sudah pecah.',
     'M0 = sesi perencanaan; L1 pada M0 = M1 eksekusi.',
-    'Quality tidak boleh dikompensasi di nego.',
+    'Mutu pemilik tidak boleh dikompensasi di nego.',
+    'Predecessor dari phase plan: dinding setelah struktur, bukan setelah galian.',
+    'Progres fisik tidak boleh >100%; finishing yang belum dikerjakan mengurangi %.',
   ]},
 ];
 const BB = { hemat:{min:180,max:230}, standard:{min:250,max:320}, premium:{min:400,max:520} };
@@ -2464,6 +2471,7 @@ Alpine.data('app', () => ({
   TEAM_META,
   WWP_DAYS,
   PPC_REASONS,
+  MANUAL,
   huddleTimerLeft: 15 * 60,
   huddleTimerOn: false,
   promoDraft: null,
