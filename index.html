@@ -1137,7 +1137,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Weekly Work Plan</p>
           <h2 class="text-xl font-bold text-ink">Perencanaan mingguan</h2>
-          <p class="text-sm text-ink-soft mt-2 leading-relaxed">Perencanaan mingguan dilakukan sebelum minggu yang direncanakan. Di dalam look-ahead plan adalah minggu L1. Biasanya dilakukan setelah melakukan learning process; untuk awal konstruksi dilakukan pada Sesi M0. Pada perencanaan mingguan ini, diyakinkan semua pekerjaan yang direncanakan sudah bebas constraint. Kemudian mencoba mendetilkan pekerjaan tersebut seperti apa akan dilakukan hari per hari. Jika diperlukan, maka bisa dibagi menjadi beberapa sub zona yang lebih detil. Jika ternyata masih ada waktu kosong, maka bisa dipromosikan pekerjaan di zona yang lain atau pekerjaan yang lain yang sudah bebas dari kendala. Jika sudah direncanakan, maka dikunci untuk dieksekusi pada minggu pertama. Jangan merencanakan pekerjaan di luar minggu tersebut. Dan kita akan memulai eksekusi yang didahului oleh Daily Huddle.</p>
+          <p class="text-sm text-ink-soft mt-2 leading-relaxed">Perencanaan mingguan dilakukan sebelum minggu yang direncanakan. Di dalam look-ahead plan adalah minggu L1. Biasanya dilakukan setelah melakukan learning process; untuk awal konstruksi dilakukan pada Sesi M0. Pada perencanaan mingguan ini, diyakinkan semua pekerjaan yang direncanakan sudah bebas constraint. Kemudian mencoba mendetilkan pekerjaan tersebut seperti apa akan dilakukan hari per hari. Jika diperlukan, maka bisa dibagi menjadi beberapa sub zona yang lebih detil. Jika ternyata masih ada waktu kosong, maka pekerjaan di zona lain atau pekerjaan lain yang sudah bebas kendala bisa dimasukkan ke jadwal minggu ini. Jika sudah direncanakan, maka dikunci untuk dieksekusi pada minggu pertama. Jangan merencanakan pekerjaan di luar minggu tersebut. Dan kita akan memulai eksekusi yang didahului oleh Daily Huddle.</p>
         </div>
       </div>
       <div class="p-5 space-y-4">
@@ -1174,7 +1174,7 @@
           </div>
         </div>
         <div class="rounded-xl border border-dashed border-terra/30 bg-terra-soft/20 p-3 text-xs text-ink-soft" x-show="!(state.contractor.wwp||[]).length">
-          L1 minggu ini kosong (pekerjaan sudah dipromosikan sebelumnya). Jadwal hari masih bisa diisi dari backlog Workable di bawah.
+          L1 minggu ini kosong (pekerjaan sudah dimasukkan ke jadwal sebelumnya). Jadwal hari masih bisa diisi dari backlog Workable di bawah.
         </div>
 
         <div class="space-y-4">
@@ -1191,7 +1191,7 @@
                         :style="'border-left:4px solid '+(item.color||'#C45C26')+';background:color-mix(in srgb, '+(item.color||'#C45C26')+' 18%, #FFFcf8)'">
                         <p class="font-semibold text-ink" x-text="item.name"></p>
                         <p class="text-ink-soft" x-text="prettyZone(item.zoneLabel||'')+' · '+(item.team||'')"></p>
-                        <p class="text-ink-mute" x-text="item.carryNote || (item.promoted ? 'dipromosikan' : 'rencana')"></p>
+                        <p class="text-ink-mute" x-text="item.carryNote || (item.promoted ? 'dimasukkan ke jadwal' : 'rencana')"></p>
                         <select class="mt-1 w-full text-[10px] border border-paper-line rounded" :disabled="state.contractor.weekClosed" @change="moveWwpItem(item.id, $event.target.value)">
                           <template x-for="dd in WWP_DAYS" :key="dd.id+'m'+item.id">
                             <option :value="dd.id" :selected="dd.id===item.day" x-text="dd.label"></option>
@@ -1235,12 +1235,12 @@
                 </ul>
               </div>
               <div>
-                <p class="text-[10px] font-semibold uppercase text-forest mb-1.5">Workable — bisa dipromosikan</p>
+                <p class="text-[10px] font-semibold uppercase text-forest mb-1.5">Workable — bisa dimasukkan ke jadwal</p>
                 <ul class="space-y-1">
                   <template x-for="w in backlogWorkable" :key="'w'+w.id">
                     <li class="rounded border border-forest/20 bg-forest-soft/20 px-2 py-1.5 flex justify-between gap-2 items-center">
                       <span x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></span>
-                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked" @click="openPromo(w.id)">Promosikan</button>
+                      <button type="button" class="btn-primary !text-[10px] !py-1 shrink-0" x-show="!state.contractor.weekClosed && !state.contractor.wwpLocked" @click="openPromo(w.id)">Masukkan</button>
                     </li>
                   </template>
                   <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
@@ -1250,7 +1250,7 @@
             <div class="px-4 pb-3">
               <template x-if="promoDraft && currentStage==='contractor-wwp' && promoPlan">
               <div class="rounded-lg border border-terra/30 bg-terra-soft/20 p-3 space-y-2" x-show="promoPlan">
-                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+prettyZone(promoPlan.sticky.zoneLabel)):''))"></p>
+                <p class="font-semibold text-xs" x-text="promoPlan && ('Masukkan ke jadwal · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+prettyZone(promoPlan.sticky.zoneLabel)):''))"></p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] text-ink-mute block mb-0.5">Mulai hari</label>
@@ -1310,7 +1310,7 @@
         <div class="min-w-0">
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">LPS · Daily Huddle</p>
           <h2 class="text-xl font-bold text-ink">Perencanaan harian</h2>
-          <p class="text-sm text-ink-soft mt-2 leading-relaxed">Perencanaan setiap hari dilakukan dengan rapat harian singkat 15 menit untuk memeriksa apa yang telah dilakukan, memastikan rencana hari ini dan minggu yang berjalan akan terlaksana sesuai rencana. Ada kemungkinan perubahan dan penyesuaian jika diperlukan. Setiap last planner menyampaikan ini dengan waktu yang cepat, tidak berlama-lama. Jika ada masalah, tidak diselesaikan pada daily huddle ini, tetapi akan diangkat kepada forum pemecahan masalah. Setiap hari dalam satu minggu dilakukan seperti itu. Ketika ditemukan waktu kosong, maka bisa dipromosikan pekerjaan yang sudah siap. Jika sudah dilakukan sesuai rencana hari itu, diberi tanda selesai; atau diperpanjang ke hari selanjutnya dengan catatan penyebab perpanjangan dari rencana awal.</p>
+          <p class="text-sm text-ink-soft mt-2 leading-relaxed">Perencanaan setiap hari dilakukan dengan rapat harian singkat 15 menit untuk memeriksa apa yang telah dilakukan, memastikan rencana hari ini dan minggu yang berjalan akan terlaksana sesuai rencana. Ada kemungkinan perubahan dan penyesuaian jika diperlukan. Setiap last planner menyampaikan ini dengan waktu yang cepat, tidak berlama-lama. Jika ada masalah, tidak diselesaikan pada daily huddle ini, tetapi akan diangkat kepada forum pemecahan masalah. Setiap hari dalam satu minggu dilakukan seperti itu. Ketika ditemukan waktu kosong, maka pekerjaan yang sudah siap bisa dimasukkan ke jadwal hari yang kosong. Jika sudah dilakukan sesuai rencana hari itu, diberi tanda selesai; atau diperpanjang ke hari selanjutnya dengan catatan penyebab perpanjangan dari rencana awal.</p>
         </div>
         <div class="text-right shrink-0">
           <p class="text-[10px] text-ink-mute uppercase tracking-wider">Timer huddle</p>
@@ -1420,7 +1420,7 @@
 
           <div class="rounded-xl border border-paper-line overflow-hidden">
             <div class="px-4 py-3 bg-paper/60 border-b border-paper-line">
-              <h3 class="text-sm font-bold">Workable · promosi cepat</h3>
+              <h3 class="text-sm font-bold">Workable · masukkan ke sisa hari</h3>
               <p class="text-[11px] text-ink-mute">Hanya dari backlog SiapKerja!, jika ada kapasitas.</p>
             </div>
             <ul class="p-3 space-y-1 text-xs">
@@ -1430,7 +1430,7 @@
                     <span x-text="w.name+(w.zoneLabel?(' · '+prettyZone(w.zoneLabel)):'')+' · M'+w.startWeek"></span>
                     <p class="text-[10px] text-red-700 mt-0.5" x-show="promoBlockedReason(w)" x-text="promoBlockedReason(w)"></p>
                   </div>
-                  <button type="button" class="btn-primary !text-[10px] !py-1 disabled:opacity-40" x-show="!state.contractor.huddleComplete" :disabled="!!promoBlockedReason(w)" @click="openPromo(w.id)">Promosikan</button>
+                  <button type="button" class="btn-primary !text-[10px] !py-1 disabled:opacity-40" x-show="!state.contractor.huddleComplete" :disabled="!!promoBlockedReason(w)" @click="openPromo(w.id)">Masukkan</button>
                 </li>
               </template>
               <li class="text-ink-mute" x-show="!backlogWorkable.length">Kosong</li>
@@ -1438,7 +1438,7 @@
             <div class="px-3 pb-3">
               <template x-if="promoDraft && currentStage==='contractor-huddle' && promoPlan">
               <div class="rounded-lg border border-terra/30 bg-terra-soft/20 p-3 space-y-2" x-show="promoPlan">
-                <p class="font-semibold text-xs" x-text="promoPlan && ('Promosi · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+prettyZone(promoPlan.sticky.zoneLabel)):''))"></p>
+                <p class="font-semibold text-xs" x-text="promoPlan && ('Masukkan ke jadwal · '+promoPlan.sticky.name+(promoPlan.sticky.zoneLabel?(' · '+prettyZone(promoPlan.sticky.zoneLabel)):''))"></p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] text-ink-mute block mb-0.5">Mulai hari</label>
@@ -1955,9 +1955,9 @@ const MANUAL = [
   { id:'negotiation', title:'3 · Pemilihan', blurb:'Nego harga dan waktu. Mutu harus sesuai permintaan pemilik.', body:'Penunjukan langsung. Tidak ada tawar mutu. Nego dibanding OE, bukan vs budget. Setelah tanda tangan, status kontrak tetap terlihat, lalu eksekusi konstruksi.', bullets:['Tanda tangan kontrak → Eksekusi konstruksi'] },
   { id:'contractor-master', title:'4 · Master Plan', blurb:'Jadwal induk sesuai kontrak: mulai–selesai dan biaya.', body:'Kurva S dan Gantt adalah dokumen kontrak, media komunikasi dengan pemilik. LPS punya jadwal eksekusi sendiri yang nanti dikorelasikan lagi ke kontrak. Lanjut ke milestone (Phase Plan).', bullets:[] },
   { id:'contractor-phase', title:'5 · Phase Plan', blurb:'Enam tim, garis milestone, zonasi. Latihan pull: Pondasi + Struktur.', body:'Kenalkan 6 tim kerja (warna). Milestone = kapan terjadi, ditarik di linimasa. Usulkan zonasi denah, tetapkan. Collaborative pull: latihan pada Pondasi dan Struktur (site, galian, kolom, dinding) agar hands-off Z2 → kolom kelihatan. Atap, MEP, finishing given beserta constraint LOD. L1/M1 bersih dari constraint given. Komitmen semua tim, lalu kunci.', bullets:['Commit semua tim','Kunci Phase Plan → Look-ahead'] },
-  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka. Material M3 = skenario.', body:'Jendela 4 minggu. L1 = minggu eksekusi berikutnya: harus SiapKerja! L2–L4: hilangkan atau commit hilangkan. Tiga pilihan: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Skenario material di M3 harus make-ready sebelum masuk L1. Pekerjaan yang sudah dipromosikan/selesai tidak muncul lagi di minggu asalnya. Predecessor phase plan berlaku (dinding menunggu struktur, bukan galian).', bullets:['L1 bersih baru susun WWP','Promosi tidak menghapus urutan predecessor'] },
-  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Minggu kosong bisa diisi dari backlog Workable.', body:'Hanya L1 yang SiapKerja! Pecah: Z1 3 hari → Z1-a-1…Z1-a-3. Z2-a 2 hari → Z2-a-1, Z2-a-2. Sisa setelah Sabtu = rencana minggu depan, bukan gagal. Jika L1 kosong karena sudah dipromosikan, jadwal Sen–Sab tetap tampil — isi dari Workable. Tahan = belum predecessor/constraint. Kunci rencana, lalu Daily Huddle.', bullets:[] },
-  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit. Selesai / perpanjang / gagal. M6 hujan Sen–Sel. Ada jalankan sisa hari.', body:'Last planner menyampaikan cepat. Centang hijau jika sesuai; perpanjang (1–2 hari) atau tidak bisa (alasan variansi). Masalah tidak didiskusikan di huddle — masuk registry. Prasyarat zona: site gagal memblok galian di zona itu. Promosi hanya sisa hari minggu yang sama, dan successor hanya setelah predecessor selesai. M6: hujan Sen–Sel (skenario) — tidak bisa hijau, perpanjang/gagal alasan Cuaca. Jika tidak ada kunci, tombol Jalankan sisa hari menuntaskan huddle tanpa klik per hari.', bullets:[] },
+  { id:'contractor-production', title:'6 · Look-ahead Plan', blurb:'L1–L4 bergulir. L1 tidak boleh ada constraint terbuka. Material M3 = skenario.', body:'Jendela 4 minggu. L1 = minggu eksekusi berikutnya: harus SiapKerja! L2–L4: hilangkan atau commit hilangkan. Tiga pilihan: Dihilangkan sekarang, Commit hilangkan (dicek sesi berikutnya), Tidak bisa dihilangkan. Skenario material di M3 harus make-ready sebelum masuk L1. Pekerjaan yang sudah dimasukkan ke jadwal/selesai tidak muncul lagi di minggu asalnya. Predecessor phase plan berlaku (dinding menunggu struktur, bukan galian).', bullets:['L1 bersih baru susun WWP','Memasukkan ke jadwal tidak menghapus urutan predecessor'] },
+  { id:'contractor-wwp', title:'7 · Weekly Work Plan', blurb:'Pecah L1 ke hari. Minggu kosong bisa diisi dari backlog Workable.', body:'Hanya L1 yang SiapKerja! Pecah: Z1 3 hari → Z1-a-1…Z1-a-3. Z2-a 2 hari → Z2-a-1, Z2-a-2. Sisa setelah Sabtu = rencana minggu depan, bukan gagal. Jika L1 kosong karena sudah dimasukkan ke jadwal, jadwal Sen–Sab tetap tampil — isi dari Workable. Tahan = belum predecessor/constraint. Kunci rencana, lalu Daily Huddle.', bullets:[] },
+  { id:'contractor-huddle', title:'8 · Daily Huddle', blurb:'15 menit. Selesai / perpanjang / gagal. M6 hujan Sen–Sel. Ada jalankan sisa hari.', body:'Last planner menyampaikan cepat. Centang hijau jika sesuai; perpanjang (1–2 hari) atau tidak bisa (alasan variansi). Masalah tidak didiskusikan di huddle — masuk registry. Prasyarat zona: site gagal memblok galian di zona itu. Memasukkan ke jadwal hanya sisa hari minggu yang sama, dan successor hanya setelah predecessor selesai. M6: hujan Sen–Sel (skenario) — tidak bisa hijau, perpanjang/gagal alasan Cuaca. Jika tidak ada kunci, tombol Jalankan sisa hari menuntaskan huddle tanpa klik per hari.', bullets:[] },
   { id:'contractor-learning', title:'9 · Learning', blurb:'PPC, alasan variansi, konfirmasi pecahan. Gulir — atau tutup jika proyek selesai.', body:'Konfirmasi selesai/tidak per pecahan. Yang tidak selesai = variansi, dibawa ke L1. Yang tidak muat pecah (dijadwalkan minggu depan) bukan gagal, tidak masuk PPC. Isi pembelajaran. Kunci evaluasi. Jika masih ada pekerjaan: Look-ahead 4 minggu ke depan. Jika semua selesai termasuk serah terima: tombol gulir hilang, buka Laporan proyek ditutup.', bullets:[] },
   { id:'contractor-progress', title:'10 · Laporan', blurb:'Gantt, Kurva S, PPC. Progres = bobot OE × zona selesai. Tutup otomatis jika selesai.', body:'Progres fisik dari cost OE, bukan jumlah pecah hari (maksimal 100%). Finishing di OE = plester 8% + lantai 6% + cat 4% + serah terima 1% = 19%. Gantt aktual = rentang kalender minggu pertama–terakhir. Arsip eksekusi di bawah, dilipat. Jika proyek selesai: durasi aktual vs kontrak (minggu kerja, hari kerja Sen–Sab ×6, hari kalender ×7). Tidak ada tombol gulir.', bullets:[] },
   { id:'skenario', title:'Skenario gangguan', body:'Dua skrip tetap (bukan random) agar kelas bisa diulang.', bullets:[
@@ -4196,7 +4196,7 @@ Alpine.data('app', () => ({
   rewindTo(target) {
     if (!target) return;
     const msgs = {
-      huddle: 'Ulang Daily Huddle minggu ini?\nKembali ke WWP saat dikunci. Hasil huddle, promosi di huddle, PPC minggu ini dihapus.',
+      huddle: 'Ulang Daily Huddle minggu ini?\nKembali ke WWP saat dikunci. Hasil huddle, pekerjaan yang dimasukkan di huddle, PPC minggu ini dihapus.',
       wwp: 'Ulang WWP minggu ini?\nLook-ahead tetap. Pecah hari, huddle, PPC, dan bakukan minggu ini dihapus.',
       lookahead: 'Ulang Look-ahead minggu ini?\nPhase Plan tetap. Make-ready + WWP + huddle minggu ini dihapus. Minggu sebelumnya tetap.',
       phase: 'Kembali ke Phase Plan?\nLook-ahead dan semua produksi direset. Kontrak nego tetap.',
@@ -4530,7 +4530,7 @@ Alpine.data('app', () => ({
   promoteToWwp(workId) {
     if (this.state.contractor.weekClosed) return;
     if (!this._isWorkReady(workId)) {
-      alert('Hanya pekerjaan SiapKerja! yang boleh dipromosikan.');
+      alert('Hanya pekerjaan SiapKerja! yang boleh dimasukkan ke jadwal.');
       return;
     }
     if ((this.state.contractor.wwp || []).some(x => x.workId === workId)) return;
@@ -4564,7 +4564,7 @@ Alpine.data('app', () => ({
   },
     lockWwp() {
     if (!(this.state.contractor.wwp || []).length) {
-      alert('Promosikan pekerjaan ke hari dulu, atau L1 memang tanpa kerja.');
+      alert('Masukkan pekerjaan ke hari dulu, atau L1 memang tanpa kerja.');
       return;
     }
     const week = this.targetExecWeek;
