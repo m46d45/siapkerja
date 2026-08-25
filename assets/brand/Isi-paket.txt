@@ -1,0 +1,26 @@
+SiapKerja! — paket logo untuk poster dan media sosial
+Mark sama dengan aplikasi (rumah + centang).
+
+VECTOR (perbesar tanpa pecah)
+  siapkerja-mark.svg              ikon saja
+  siapkerja-lockup.svg            ikon + SiapKerja! + tagline, mendatar
+  siapkerja-lockup-stacked.svg    ikon + tulisan, bertumpuk
+  fonts/                          font untuk SVG lockup
+
+PNG TRANSPARAN (ditempel ke desain lain)
+  siapkerja-mark.png              3072×3072
+  siapkerja-lockup.png            4800×1440 mendatar
+  siapkerja-lockup-stacked.png    2800×3200 bertumpuk
+
+POSTER
+  siapkerja-poster.png            2480×3508 (A4, 300 dpi), latar kertas
+
+MEDIA SOSIAL
+  siapkerja-sosmed-1080.png       2160×2160 feed, latar kertas
+  siapkerja-sosmed-1080-terra.png 2160×2160 feed, latar terracotta
+  siapkerja-sosmed-story.png      2160×3840 cerita / Reels
+  siapkerja-sosmed-landscape.png  3840×2160 lanskap / X / LinkedIn
+
+Warna: terracotta #C45C26 · hijau #2F6B4F · tinta #1C1917 · kertas #F7F3EE
+Tagline: Pembelajaran LPS dengan simulasi
+Jangan ubah bentuk mark.
