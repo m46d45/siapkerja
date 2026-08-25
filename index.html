@@ -191,7 +191,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Pedoman uji coba</p>
           <h2 class="text-xl font-bold text-ink">Evaluasi SiapKerja sebagai alat ajar LPS</h2>
-          <p class="text-sm text-ink-soft mt-1">Untuk fasilitator dan peserta sesi 90 menit. Jangan tulis nama orang atau nama instansi. Tiga Form Microsoft — jangan digabung.</p>
+          <p class="text-sm text-ink-soft mt-1">Untuk fasilitator dan peserta sesi 90 menit. Jangan tulis nama orang. Nama organisasi diisi — disamarkan di paper. Tiga Form Microsoft — jangan digabung.</p>
         </div>
         <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="btn-primary !text-xs !py-2 shrink-0">Unduh pedoman</a>
       </div>
@@ -204,7 +204,7 @@
 
         <div class="rounded-xl border border-paper-line p-4 space-y-3">
           <h3 class="font-bold text-ink">Tiga kuesioner</h3>
-          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Kode R harus sama di Form 1 dan Form 2. Isi langsung di sini, atau unduh tiga berkas Word di bawah lalu Quick Import ke Microsoft Forms.</p>
+          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Gabung Excel lewat <b class="text-ink">sesi + R</b> (R unik dalam sesi). Isi langsung di sini, atau unduh tiga berkas Word di bawah lalu Quick Import ke Microsoft Forms.</p>
           <template x-for="f in TRIAL_FORMS" :key="f.id">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-paper-line bg-paper/50 p-3">
               <div class="min-w-0 flex-1">
@@ -252,7 +252,18 @@
 
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Kode</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed">Responden <b class="text-ink">R01</b>, kelompok <b class="text-ink">G1</b>, sesi <b class="text-ink">S260825-A</b>. Jangan pakai nama instansi. Unduh JSON: tombol <b class="text-ink">Unduh sesi</b> di atas, nama file {sesi}-G{n}.json.</p>
+          <ul class="mt-2 space-y-1 text-ink-soft">
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Sesi <b class="text-ink">S260901-A</b> — satu undangan / satu perusahaan / satu hari</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Kelompok <b class="text-ink">G1</b> — satu laptop</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Responden <b class="text-ink">R01</b> — unik dalam sesi itu (jangan ulang R01 di G2)</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Nama organisasi diisi apa adanya. Di paper disamarkan.</span></li>
+          </ul>
+          <p class="text-xs text-ink-mute mt-3">Gabung Excel Form 1 dan Form 2: kolom sesi + R. Jangan tulis nama orang.</p>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">JSON sesi — hanya fasilitator</h3>
+          <p class="text-ink-soft mt-1 leading-relaxed">Bukan tugas peserta, bukan jawaban kuesioner. Menit 75–80 fasilitator klik <b class="text-ink">Unduh sesi</b>, ganti nama <b class="text-ink">{sesi}-G{n}.json</b>, kirim ke <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a>. Subjek: SiapKerja JSON {sesi}-G{n}. Satu file per laptop.</p>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
@@ -261,14 +272,15 @@
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak meranking kelompok</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menawar mutu di simulasi</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengisi kuesioner untuk orang lain</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menulis nama orang atau nama instansi</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menulis nama orang (nama organisasi boleh, disamarkan di paper)</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengklaim bahwa uji coba ini menaikkan PPC proyek nyata</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak minta peserta mengunduh JSON</span></li>
           </ul>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4 bg-terra/5">
           <h3 class="font-bold text-ink">Consent (dibacakan menit 0)</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba SiapKerja, alat ajar Last Planner System, untuk paper akademik. Kami mengevaluasi aplikasi ini, bukan menilai Anda atau organisasi Anda. Isian tanpa nama orang dan tanpa nama instansi. Partisipasi sukarela, boleh berhenti kapan saja. File sesi simulator tidak berisi identitas. Data dipakai untuk menyempurnakan SiapKerja sebagai pembelajaran LPS.</p>
+          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba SiapKerja, alat ajar Last Planner System, untuk paper akademik. Kami mengevaluasi aplikasi ini, bukan menilai Anda atau organisasi Anda. Jangan tulis nama orang. Nama organisasi diisi apa adanya dan akan disamarkan di paper. Partisipasi sukarela, boleh berhenti kapan saja. File sesi simulator tidak berisi nama orang. Data dipakai untuk menyempurnakan SiapKerja sebagai pembelajaran LPS.</p>
         </div>
 
         <p class="text-[11px] text-ink-mute pt-1">Pengajar / fasilitator: <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a></p>
@@ -312,7 +324,7 @@
                       <button type="button" class="chip-opt" :class="trialAns(it.id)===opt && 'is-on'" @click="setTrialAns(it.id, opt)" x-text="opt"></button>
                     </template>
                   </div>
-                  <input class="field !py-1.5 mt-1.5 text-xs" x-show="it.other && trialAns(it.id)==='lain'" placeholder="Sebutkan (tanpa nama instansi)" :value="trialAns(it.id+'_other')" @input="setTrialAns(it.id+'_other', $event.target.value)">
+                  <input class="field !py-1.5 mt-1.5 text-xs" x-show="it.other && trialAns(it.id)==='lain'" placeholder="Sebutkan (tanpa nama orang)" :value="trialAns(it.id+'_other')" @input="setTrialAns(it.id+'_other', $event.target.value)">
                 </div>
               </template>
             </div>
@@ -355,7 +367,7 @@
             </div>
           </div>
         </template>
-        <p class="text-[11px] text-ink-mute">Tidak ada nama orang atau nama instansi. Jawaban tersimpan di laptop ini; unduh JSON untuk dikirim ke fasilitator.</p>
+        <p class="text-[11px] text-ink-mute">Tidak ada nama orang. Nama organisasi diisi, disamarkan di paper. Jawaban tersimpan di laptop ini.</p>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
         <div class="tab-foot-left">
@@ -2139,117 +2151,97 @@ const FORM_LINKS = {
   pengamat: '',
 };
 const TRIAL_FORMS = [
-  { id:'pra', title:'Form 1 · Pra', who:'Setiap peserta · menit 0–8, sebelum main' },
-  { id:'pasca', title:'Form 2 · Pasca', who:'Peserta yang sama, kode R sama · menit 80–90' },
-  { id:'pengamat', title:'Form 3 · Pengamat', who:'Fasilitator · satu isian per kelompok, selama main' },
+  { id:'pra', title:'Form 1 · Pra (11 butir)', who:'Setiap peserta · menit 0–8, sebelum main' },
+  { id:'pasca', title:'Form 2 · Pasca (15 butir)', who:'Peserta yang sama, sesi + R sama · menit 80–90' },
+  { id:'pengamat', title:'Form 3 · Pengamat (12 butir)', who:'Fasilitator · satu isian per laptop, selama main' },
 ];
 const TRIAL_BEAT = [
   { t:'0–8', act:'Consent + isi Form 1. Laptop simulasi belum disentuh.', form:'Form 1' },
   { t:'8–15', act:'Brief: LPS di SiapKerja — last planner, pull, PPC = keandalan janji. Alur tab sekali.', form:'' },
   { t:'15–75', act:'Main: Phase Plan → L1 SiapKerja! → WWP → satu huddle → Learning + Laporan.', form:'Form 3' },
-  { t:'75–80', act:'Unduh JSON sesi.', form:'' },
-  { t:'80–90', act:'Isi Form 2 dengan kode R yang sama.', form:'Form 2' },
+  { t:'75–80', act:'Fasilitator unduh JSON, nama {sesi}-G{n}.json, kirim ke abduh@itb.ac.id. Bukan tugas peserta.', form:'' },
+  { t:'80–90', act:'Isi Form 2 dengan kode sesi + R yang sama.', form:'Form 2' },
 ];
 const TRIAL_ANS_KEY = 'siapkerja_trial_answers';
 const FORM_DEFS = {
   pra: {
     id:'pra', kicker:'Form 1 · sebelum main', title:'Kuesioner pra-simulasi',
-    lead:'Setiap peserta. Isi sebelum laptop simulasi disentuh. Kode R dipakai lagi di Form 2. Mengevaluasi SiapKerja, bukan Anda. Tanpa nama orang, tanpa nama instansi.',
+    lead:'Setiap peserta. Isi sebelum laptop simulasi disentuh. Kode sesi + R dipakai lagi di Form 2. R unik dalam sesi. Mengevaluasi SiapKerja, bukan Anda. Nama orang tidak ditulis. Nama organisasi diisi, disamarkan di paper.',
     sections:[
       { id:'meta', type:'meta', title:'Kode', fields:[
-        { id:'r', label:'Kode responden', ph:'R01' },
-        { id:'g', label:'Kelompok', ph:'G1' },
+        { id:'sesi', label:'Kode sesi', ph:'S260901-A' },
+        { id:'r', label:'Kode responden (unik dalam sesi)', ph:'R01' },
+        { id:'g', label:'Kelompok / laptop', ph:'G1' },
+        { id:'org', label:'Nama organisasi / perusahaan (disamarkan di paper)', ph:'Jika individu, tulis Individu' },
       ]},
-      { id:'a1', type:'choice', title:'A1. Latar (kategori, bukan instansi)', items:[
+      { id:'a1', type:'choice', title:'A1. Latar', items:[
         { id:'A1.0', q:'Jenis organisasi', opts:['kontraktor','konsultan','kampus / politeknik','asosiasi','individu','lain'], other:true },
         { id:'A1.1', q:'Peran saat ini', opts:['perencana','last planner / mandor','engineer lapangan','lean specialist','dosen / mahasiswa','lain'], other:true },
-        { id:'A1.2', q:'Pengalaman kerja konstruksi', opts:['belum','<3 th','3–7 th','8–15 th','>15 th'] },
         { id:'A1.3', q:'Pernah menjalankan LPS di proyek nyata?', opts:['tidak','pernah melihat','pernah menjalankan'] },
-        { id:'A1.4', q:'Familiar dengan istilah LPS (last planner, pull, make-ready, PPC)?', opts:['belum dengar','pernah dengar','dipelajari di kelas/kantor','dipakai di lapangan'] },
-        { id:'A1.5', q:'Bagaimana pekerjaan mingguan biasanya direncanakan di tempat Anda?', opts:['jadwal induk / Gantt','rapat informal','sudah memakai LPS','belum di lapangan','lain'], other:true },
       ]},
-      { id:'a2', type:'likert', title:'A2. Pernyataan LPS — sebelum main', hint:'Beberapa butir sengaja terbalik. Isi keyakinan sekarang.', items:[
-        { id:'A2.1', q:'Jadwal induk (Gantt/CPM) sudah cukup untuk mengendalikan produksi mingguan.' },
+      { id:'a2', type:'likert', title:'A2. Empat butir LPS — sebelum main (wajib tetap)', hint:'Beberapa butir sengaja terbalik. Isi keyakinan sekarang. Diulang identik di Form 2.', items:[
         { id:'A2.2', q:'Pekerjaan minggu depan boleh dijanjikan meskipun masih ada kendala yang belum dilepas.' },
-        { id:'A2.3', q:'Last planner adalah orang yang paling dekat dengan pekerjaan, bukan hanya planner di kantor lapangan.' },
-        { id:'A2.4', q:'PPC mengukur seberapa cepat bangunan diselesaikan.' },
         { id:'A2.5', q:'Pull berarti memulai setiap kegiatan seawal mungkin sesuai jadwal induk.' },
+        { id:'A2.4', q:'PPC mengukur seberapa cepat bangunan diselesaikan.' },
         { id:'A2.6', q:'Make-ready (menyiapkan agar pekerjaan SiapKerja!) lebih menentukan keandalan janji daripada menambah tenaga di hari H.' },
       ]},
     ],
   },
   pasca: {
     id:'pasca', kicker:'Form 2 · sesudah main', title:'Kuesioner pasca-simulasi',
-    lead:'Peserta yang sama. Pakai kode R yang sama dengan Form 1. Nilai SiapKerja sebagai alat latihan LPS. Isi menit 80–90.',
+    lead:'Peserta yang sama. Pakai kode sesi dan R yang sama dengan Form 1. Nilai SiapKerja sebagai alat latihan LPS. Isi menit 80–90. Jangan tulis nama orang.',
     sections:[
       { id:'meta', type:'meta', title:'Kode', fields:[
+        { id:'sesi', label:'Kode sesi (sama dengan Form 1)', ph:'S260901-A' },
         { id:'r', label:'Kode responden (sama dengan Form 1)', ph:'R01' },
-        { id:'g', label:'Kelompok', ph:'G1' },
+        { id:'g', label:'Kelompok / laptop (sama dengan Form 1)', ph:'G1' },
       ]},
       { id:'c1', type:'likert', title:'C1. Pekerjaan di SiapKerja', items:[
         { id:'C1.1', q:'Kegiatan di SiapKerja (galian, sloof, kolom, dinding, …) dekat dengan pekerjaan lapangan yang saya kenal.' },
-        { id:'C1.2', q:'Denah dan zonasi rumah Type-36 membantu saya memahami urutan pekerjaan.' },
-        { id:'C1.3', q:'Saya menjalankan urutan lengkap di SiapKerja: value pemilik → desain → pull → make-ready → janji mingguan → huddle → PPC.' },
         { id:'C1.4', q:'Saya merasakan beda merencana dari Gantt (push) dan merencana dari pekerjaan yang sudah siap (pull).' },
       ]},
       { id:'c2', type:'likert', title:'C2. Menjalankan LPS lewat SiapKerja', items:[
-        { id:'C2.1', q:'Setelah main SiapKerja, last planner merencana dari pekerjaan, bukan dari batang Gantt.' },
         { id:'C2.2', q:'Saya lebih jelas mengapa L1 harus bebas kendala sebelum dijanjikan.' },
-        { id:'C2.3', q:'PPC di SiapKerja mengukur keandalan janji mingguan.' },
         { id:'C2.4', q:'Make-ready terasa sebagai kerja menyiapkan constraint, bukan hanya istilah.' },
-        { id:'C2.5', q:'Daily huddle terasa sebagai rapat lapangan singkat.' },
       ]},
-      { id:'c3', type:'likert', title:'C3. Ulangi 6 butir LPS (selisih pra–pasca)', items:[
-        { id:'C3.1', q:'Jadwal induk (Gantt/CPM) sudah cukup untuk mengendalikan produksi mingguan.' },
+      { id:'c3', type:'likert', title:'C3. Ulangi 4 butir LPS (wajib tetap, selisih pra–pasca)', items:[
         { id:'C3.2', q:'Pekerjaan minggu depan boleh dijanjikan meskipun masih ada kendala yang belum dilepas.' },
-        { id:'C3.3', q:'Last planner adalah orang yang paling dekat dengan pekerjaan, bukan hanya planner di kantor lapangan.' },
-        { id:'C3.4', q:'PPC mengukur seberapa cepat bangunan diselesaikan.' },
         { id:'C3.5', q:'Pull berarti memulai setiap kegiatan seawal mungkin sesuai jadwal induk.' },
+        { id:'C3.4', q:'PPC mengukur seberapa cepat bangunan diselesaikan.' },
         { id:'C3.6', q:'Make-ready lebih menentukan keandalan janji daripada menambah tenaga di hari H.' },
       ]},
       { id:'c4', type:'likert', title:'C4. Kegunaan SiapKerja', items:[
-        { id:'C4.1', q:'Saya bisa menjalankan SiapKerja di laptop tanpa server khusus.' },
-        { id:'C4.2', q:'Setelah satu kali terhubung internet, saya bisa lanjut memakai SiapKerja tanpa sinyal.' },
-        { id:'C4.3', q:'SiapKerja cocok untuk pelatihan LPS di organisasi saya.' },
-        { id:'C4.4', q:'SiapKerja bisa dipakai rekan di tempat yang internetnya putus-nyambung.' },
         { id:'C4.5', q:'Antarmuka SiapKerja cukup jelas untuk sesi sekitar 90 menit.' },
         { id:'C4.6', q:'Saya akan merekomendasikan SiapKerja untuk latihan LPS di lingkungan saya.' },
       ]},
       { id:'c5', type:'text', title:'C5. Terbuka', items:[
         { id:'C5.1', q:'Satu hal tentang LPS yang baru Anda rasakan lewat SiapKerja (bukan hanya ketahui):', ph:'' },
         { id:'C5.2', q:'Yang masih membingungkan atau menghambat di SiapKerja:', ph:'' },
-        { id:'C5.3', q:'Saran perbaikan SiapKerja (opsional):', ph:'' },
       ]},
     ],
   },
   pengamat: {
     id:'pengamat', kicker:'Form 3 · fasilitator', title:'Lembar pengamat',
-    lead:'Satu isian per kelompok, selama main. Catat apa yang terjadi di SiapKerja. Jangan meranking kelompok.',
+    lead:'Satu isian per laptop, selama main. Catat apa yang terjadi di SiapKerja. Jangan meranking kelompok. Nama organisasi diisi; disamarkan di paper. Jangan tulis nama orang.',
     sections:[
       { id:'meta', type:'meta', title:'Kode sesi', fields:[
-        { id:'sesi', label:'Kode sesi', ph:'S260825-A' },
-        { id:'g', label:'Kelompok', ph:'G1' },
+        { id:'sesi', label:'Kode sesi', ph:'S260901-A' },
+        { id:'org', label:'Nama organisasi / perusahaan (disamarkan di paper)', ph:'Jika individu, tulis Individu' },
+        { id:'g', label:'Kelompok / laptop', ph:'G1' },
         { id:'n', label:'Jumlah orang', ph:'5' },
-        { id:'jam', label:'Mulai–selesai', ph:'09:00–10:30' },
       ]},
-      { id:'b1', type:'yn', title:'B1. Tab tercapai di SiapKerja', items:[
-        { q:'Pemilik' }, { q:'Desainer' }, { q:'Pemilihan (tanda tangan)' }, { q:'Master Plan' },
-        { q:'Phase Plan (pull Pondasi+Struktur + komitmen)' }, { q:'Look-ahead, L1 = SiapKerja!' },
-        { q:'WWP dikunci' }, { q:'Huddle ≥ 1 hari' }, { q:'Learning (PPC terlihat)' },
-        { q:'Laporan dibuka' }, { q:'Gulir sampai skrip material (~minggu 3)' },
-      ].map((it,i)=>({ id:'B1.'+(i+1), q:it.q, opts:['ya','tidak'] })) },
+      { id:'b1', type:'choice', title:'B1. Tab terakhir tercapai', items:[
+        { id:'B1.last', q:'Tab terakhir yang tercapai di SiapKerja', opts:['Pemilik','Desainer','Pemilihan','Master Plan','Phase Plan','Look-ahead','Weekly Work Plan','Huddle','Learning','Laporan'] },
+      ]},
       { id:'b2', type:'yn', title:'B2. Perilaku metode di SiapKerja', items:[
         { id:'B2.1', q:'L1 pernah dikunci kotor', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.2', q:'L1 diperbaiki sebelum berjanji di WWP', opts:['ya','tidak','tidak sempat'] },
-        { id:'B2.3', q:'Masukkan ke jadwal dipakai untuk mengisi hari kosong dari Workable', opts:['ya','tidak','tidak sempat'] },
-        { id:'B2.4', q:'Sisa pecahan setelah Sabtu tidak diperlakukan sebagai gagal', opts:['ya','tidak','tidak sempat'] },
-        { id:'B2.5', q:'Alasan variansi diisi jika pekerjaan tidak selesai', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.huddle', q:'Huddle dijalankan minimal satu hari', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.6', q:'Kelompok membahas keandalan janji / PPC di Learning atau Laporan', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.7', q:'Mutu tidak ditawar turun', opts:['ya','tidak','tidak sempat'] },
       ]},
-      { id:'b3', type:'text', title:'B3. File sesi', items:[
-        { id:'B3.json', q:'Nama file JSON sesi', ph:'S260825-A-G1.json' },
-        { id:'B3.ppc', q:'PPC minggu 1 (jika ada)', ph:'contoh 67%' },
+      { id:'b3', type:'text', title:'B3. File JSON (fasilitator kirim email)', items:[
+        { id:'B3.json', q:'Nama file JSON yang akan dikirim ke abduh@itb.ac.id', ph:'S260901-A-G1.json' },
         { id:'B3.note', q:'Catatan hambatan di SiapKerja (tanpa nama orang)', ph:'' },
       ]},
     ],
@@ -5551,9 +5543,16 @@ Alpine.data('app', () => ({
   },
   save() { saveState(this.state); },
   exportJSON() {
+    const def = `SiapKerja_${new Date().toISOString().slice(0,10)}`;
+    let name = def;
+    try {
+      const typed = window.prompt('Nama file JSON (contoh S260901-A-G1). Fasilitator kirim ke abduh@itb.ac.id.', def);
+      if (typed) name = typed.trim();
+    } catch (e) {}
+    if (!name.toLowerCase().endsWith('.json')) name += '.json';
     const b = new Blob([JSON.stringify(this.state, null, 2)], { type:'application/json' });
     const u = URL.createObjectURL(b);
-    const a = document.createElement('a'); a.href = u; a.download = `SiapKerja_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(u);
+    const a = document.createElement('a'); a.href = u; a.download = name; a.click(); URL.revokeObjectURL(u);
   },
   async importJSON(e) {
     const f = e.target.files[0]; if (!f) return;
@@ -5576,7 +5575,7 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=trial-d').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=trial-g').catch(function () {});
   });
 }
 </script>
