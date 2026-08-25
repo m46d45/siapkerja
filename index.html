@@ -161,9 +161,25 @@
           <h2 class="text-xl font-bold text-ink">SiapKerja! · Last Planner System</h2>
           <p class="text-sm text-ink-soft mt-1">Simulator LPS rumah tipe 36. Bukan untuk proyek nyata. Versi 1.19 — konstruksi default 10 minggu, latihan pull Pondasi + Struktur.</p>
         </div>
-        <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="btn-primary !text-xs !py-2 shrink-0">Unduh PDF</a>
+        <div class="flex flex-col gap-1.5 shrink-0">
+          <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="btn-primary !text-xs !py-2 text-center">Unduh PDF</a>
+          <a href="SiapKerja-Logo-Poster-Sosmed.zip" download="SiapKerja-Logo-Poster-Sosmed.zip" class="btn-ghost !text-xs !py-2 text-center">Logo poster</a>
+        </div>
       </div>
       <div class="p-5 space-y-5 text-sm">
+        <div class="rounded-xl border border-paper-line p-4 space-y-3">
+          <h3 class="font-bold text-ink">Logo untuk poster dan media sosial</h3>
+          <p class="text-ink-soft leading-relaxed">Mark sama dengan aplikasi. Unduh paket, atau ambil satu ukuran.</p>
+          <img src="assets/brand/siapkerja-lockup.png" alt="SiapKerja! Pembelajaran LPS dengan simulasi" class="w-full bg-paper rounded-xl p-4 border border-paper-line"/>
+          <a href="SiapKerja-Logo-Poster-Sosmed.zip" download="SiapKerja-Logo-Poster-Sosmed.zip" class="block text-sm font-medium text-terra hover:underline">Paket lengkap (.zip) — SVG, PNG transparan, poster, sosmed</a>
+          <a href="assets/brand/siapkerja-mark.svg" download="siapkerja-mark.svg" class="block text-sm font-medium text-terra hover:underline">Ikon SVG (vektor)</a>
+          <a href="assets/brand/siapkerja-lockup.png" download="siapkerja-lockup.png" class="block text-sm font-medium text-terra hover:underline">Lockup mendatar PNG (4800×1440, transparan)</a>
+          <a href="assets/brand/siapkerja-poster.png" download="siapkerja-poster.png" class="block text-sm font-medium text-terra hover:underline">Poster A4 PNG</a>
+          <a href="assets/brand/siapkerja-sosmed-1080.png" download="siapkerja-sosmed-1080.png" class="block text-sm font-medium text-terra hover:underline">Feed 1080 PNG</a>
+          <a href="assets/brand/siapkerja-sosmed-1080-terra.png" download="siapkerja-sosmed-1080-terra.png" class="block text-sm font-medium text-terra hover:underline">Feed terracotta PNG</a>
+          <a href="assets/brand/siapkerja-sosmed-story.png" download="siapkerja-sosmed-story.png" class="block text-sm font-medium text-terra hover:underline">Cerita / Reels PNG</a>
+          <a href="assets/brand/siapkerja-sosmed-landscape.png" download="siapkerja-sosmed-landscape.png" class="block text-sm font-medium text-terra hover:underline">Lanskap PNG</a>
+        </div>
         <template x-for="ch in MANUAL" :key="'man'+ch.id">
           <div class="rounded-xl border border-paper-line p-4" :id="'man-'+ch.id" :class="manualFocus===ch.id ? 'ring-2 ring-terra/40' : ''">
             <h3 class="font-bold text-ink" x-text="ch.title"></h3>
@@ -176,19 +192,6 @@
           </div>
         </template>
         <p class="text-[11px] text-ink-mute pt-1">Pengajar yang membutuhkan modul praktikum: <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a></p>
-
-        <div class="rounded-xl border border-paper-line p-4 space-y-3">
-          <h3 class="font-bold text-ink">Logo untuk poster dan media sosial</h3>
-          <p class="text-ink-soft leading-relaxed">Mark sama dengan aplikasi. Unduh paket, atau ambil satu ukuran.</p>
-          <img src="assets/brand/siapkerja-lockup.png" alt="SiapKerja! Pembelajaran LPS dengan simulasi" class="w-full max-w-lg bg-paper rounded-xl p-4 border border-paper-line"/>
-          <a href="SiapKerja-Logo-Poster-Sosmed.zip" download="SiapKerja-Logo-Poster-Sosmed.zip" class="block text-sm font-medium text-terra hover:underline">Paket lengkap (.zip) — SVG, PNG transparan, poster, sosmed</a>
-          <a href="assets/brand/siapkerja-mark.svg" download="siapkerja-mark.svg" class="block text-sm font-medium text-terra hover:underline">Ikon SVG (vektor)</a>
-          <a href="assets/brand/siapkerja-lockup.png" download="siapkerja-lockup.png" class="block text-sm font-medium text-terra hover:underline">Lockup mendatar PNG (4800×1440, transparan)</a>
-          <a href="assets/brand/siapkerja-poster.png" download="siapkerja-poster.png" class="block text-sm font-medium text-terra hover:underline">Poster A4 PNG</a>
-          <a href="assets/brand/siapkerja-sosmed-1080.png" download="siapkerja-sosmed-1080.png" class="block text-sm font-medium text-terra hover:underline">Feed 1080 PNG</a>
-          <a href="assets/brand/siapkerja-sosmed-story.png" download="siapkerja-sosmed-story.png" class="block text-sm font-medium text-terra hover:underline">Cerita / Reels PNG</a>
-          <a href="assets/brand/siapkerja-sosmed-landscape.png" download="siapkerja-sosmed-landscape.png" class="block text-sm font-medium text-terra hover:underline">Lanskap PNG</a>
-        </div>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
         <div class="tab-foot-left">
@@ -243,6 +246,8 @@
           <h3 class="font-bold text-ink">Unduhan untuk fasilitator</h3>
           <p class="text-ink-soft leading-relaxed">Berkas yang dibawa ke sesi. Form Microsoft tidak dibuat di sini.</p>
           <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="block text-sm font-medium text-terra hover:underline">Pedoman uji coba (.docx)</a>
+          <a href="SiapKerja-Logo-Poster-Sosmed.zip" download="SiapKerja-Logo-Poster-Sosmed.zip" class="block text-sm font-medium text-terra hover:underline mt-1">Logo poster & sosmed (.zip)</a>
+          <img src="assets/brand/siapkerja-lockup.png" alt="SiapKerja!" class="w-full bg-paper rounded-xl p-3 border border-paper-line mt-3"/>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
@@ -5600,7 +5605,7 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=trial-l').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=trial-m').catch(function () {});
   });
 }
 </script>
