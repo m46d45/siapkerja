@@ -5,10 +5,12 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="theme-color" content="#C45C26"/>
+  <link rel="manifest" href="manifest.webmanifest"/>
   <title>SiapKerja! — Pembelajaran LPS dengan simulasi</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='9' fill='%23C45C26'/%3E%3Cpath d='M7.5 20.5 L18 11.2 L28.5 20.5 V28.2 H7.5 Z' fill='%23FFFcf8'/%3E%3Cpath d='M14 23 L17.1 26 L23.2 18.8' fill='none' stroke='%232F6B4F' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='9' fill='%23C45C26'/%3E%3Cpath d='M7.5 20.5 L18 11.2 L28.5 20.5 V28.2 H7.5 Z' fill='%23FFFcf8'/%3E%3Cpath d='M14 23 L17.1 26 L23.2 18.8' fill='none' stroke='%232F6B4F' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fully offline: Tailwind Play CDN + Alpine.js 3.14.3 vendored in libs/. No network after copy. -->
+  <script src="libs/tailwindcss.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -62,6 +64,10 @@
     details > summary{list-style:none}
     details[open] .arch-closed{display:none}
     details:not([open]) .arch-open{display:none}
+    .likert-dot{width:34px;height:34px;border-radius:999px;border:1.5px solid #E8E0D5;background:#FFFcf8;font-size:12px;font-weight:700;color:#57534E}
+    .likert-dot.is-on{background:#C45C26;border-color:#C45C26;color:#fff}
+    .chip-opt{border:1.5px solid #E8E0D5;background:#FFFcf8;border-radius:999px;padding:.35rem .7rem;font-size:12px;font-weight:600;color:#57534E}
+    .chip-opt.is-on{background:#C45C26;border-color:#C45C26;color:#fff}
   </style>
 </head>
 <body class="bg-paper text-ink min-h-screen antialiased" x-data="app" x-cloak>
@@ -74,13 +80,39 @@
         <path d="M7.5 20.5 L18 11.2 L28.5 20.5 V28.2 H7.5 Z" fill="#FFFcf8"/>
         <path d="M14 23 L17.1 26 L23.2 18.8" fill="none" stroke="#2F6B4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <h1 class="text-lg font-bold text-ink leading-none">SiapKerja!</h1>
         <p class="text-[11px] text-ink-mute mt-0.5 leading-snug">Pembelajaran LPS dengan simulasi</p>
       </div>
+      <div class="relative shrink-0" @click.outside="trialMenuOpen=false" @keydown.escape.window="trialMenuOpen=false">
+        <button type="button" @click="trialMenuOpen=!trialMenuOpen"
+          class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1.5 rounded-full border"
+          :class="trialMenuOpen || currentStage==='trial' || currentStage==='trial-form' ? 'bg-terra text-white border-terra' : 'bg-terra-soft text-terra border-terra/30'"
+          :aria-expanded="trialMenuOpen" aria-haspopup="menu">
+          Uji coba
+          <svg class="w-3 h-3" viewBox="0 0 12 8" fill="none" aria-hidden="true" :class="trialMenuOpen && 'rotate-180'">
+            <path d="M1.4.6L6 5.2 10.6.6 12 2 6 8 0 2z" fill="currentColor"/>
+          </svg>
+        </button>
+        <div x-show="trialMenuOpen" x-cloak x-transition.opacity.duration.100ms
+          class="absolute right-0 top-full mt-2 w-[min(18.5rem,calc(100vw-2rem))] rounded-2xl border border-paper-line bg-paper-card shadow-card z-[80] py-1.5 text-left"
+          role="menu">
+          <p class="px-3.5 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Uji coba lapangan</p>
+          <button type="button" class="w-full text-left px-3.5 py-2 text-sm font-medium text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false; openTrial()">Buka pedoman uji coba</button>
+          <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh pedoman uji coba</a>
+          <a href="Modul-Praktikum-SiapKerja-Pengajar.docx" download="Modul-Praktikum-SiapKerja-Pengajar.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh modul praktikum (pengajar)</a>
+          <a href="Modul-Praktikum-SiapKerja-Dosen.docx" download="Modul-Praktikum-SiapKerja-Dosen.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh modul praktikum (dosen)</a>
+          <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh manual SiapKerja</a>
+          <div class="my-1 border-t border-paper-line"></div>
+          <button type="button" class="w-full text-left px-3.5 py-2 text-sm font-medium text-terra hover:bg-terra-soft/50" role="menuitem" @click="openTrialForm('pra')">Isi kuesioner pra-simulasi</button>
+          <button type="button" class="w-full text-left px-3.5 py-2 text-sm font-medium text-terra hover:bg-terra-soft/50" role="menuitem" @click="openTrialForm('pasca')">Isi kuesioner pasca-simulasi</button>
+          <button type="button" class="w-full text-left px-3.5 py-2 text-sm font-medium text-terra hover:bg-terra-soft/50" role="menuitem" @click="openTrialForm('pengamat')">Isi lembar pengamat</button>
+        </div>
+      </div>
     </div>
     <div class="mt-2.5 pt-2 border-t border-paper-line flex items-center gap-1 flex-wrap">
-      <button type="button" @click="openManual()" class="px-2.5 py-1.5 text-xs font-medium text-ink-soft rounded-lg">Manual</button>
+      <button type="button" @click="openManual()" class="px-2.5 py-1.5 text-xs font-medium rounded-lg" :class="currentStage==='manual'?'bg-terra/10 text-terra':'text-ink-soft'">Manual</button>
+      <button type="button" @click="openTrial()" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg" :class="currentStage==='trial'?'bg-terra text-white':'text-terra'">Uji coba</button>
       <button @click="exportJSON()" class="px-2.5 py-1.5 text-xs font-medium text-terra rounded-lg hidden sm:inline">Unduh sesi</button>
       <label class="px-2.5 py-1.5 text-xs font-medium text-forest rounded-lg cursor-pointer">
         Muat sesi
@@ -173,6 +205,177 @@
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
         <div class="tab-foot-left">
           <button type="button" class="btn-ghost" @click="closeManual()">← Kembali ke simulasi</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section x-show="currentStage==='trial'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Pedoman uji coba</p>
+          <h2 class="text-xl font-bold text-ink">Sesi undangan · bukan kompetisi</h2>
+          <p class="text-sm text-ink-soft mt-1">Untuk fasilitator dan peserta sesi 90 menit. Jangan tulis nama orang atau nama instansi. Tiga Form Microsoft — jangan digabung.</p>
+        </div>
+        <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="btn-primary !text-xs !py-2 shrink-0">Unduh pedoman</a>
+      </div>
+      <div class="p-5 space-y-5 text-sm">
+
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">Tujuan</h3>
+          <p class="text-ink-soft mt-1 leading-relaxed">Mengukur apakah peserta menjalankan LPS (pull, make-ready, janji, huddle, PPC) pada pekerjaan rumah Type-36 — bukan merakit LEGO, bukan memperebutkan juara. Hasil untuk paper pembelajaran, eksploratori. Bukan penilaian kinerja organisasi.</p>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4 space-y-3">
+          <h3 class="font-bold text-ink">Tiga kuesioner</h3>
+          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Kode R harus sama di Form 1 dan Form 2. Isi langsung di sini, atau unggah Word ke Microsoft Forms jika fasilitator sudah menyiapkan tautan.</p>
+          <template x-for="f in TRIAL_FORMS" :key="f.id">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-paper-line bg-paper/50 p-3">
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-ink" x-text="f.title"></p>
+                <p class="text-xs text-ink-soft mt-0.5" x-text="f.who"></p>
+              </div>
+              <a x-show="formUrl(f.id)" :href="formUrl(f.id)" target="_blank" rel="noopener" class="btn-primary !text-xs !py-2 shrink-0 text-center">Buka Form →</a>
+              <button type="button" x-show="!formUrl(f.id)" class="btn-primary !text-xs !py-2 shrink-0" @click="openTrialForm(f.id)">Isi di sini</button>
+            </div>
+          </template>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">Setelan wajib (semua kelompok)</h3>
+          <ul class="mt-2 space-y-1 text-ink-soft">
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Desain <b class="text-ink">2</b> minggu · konstruksi <b class="text-ink">8</b> minggu</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Mutu <b class="text-ink">standar</b> (jangan ditawar) · fokus <b class="text-ink">waktu</b> · LOD <b class="text-ink">standar</b></span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Satu laptop per kelompok · 6–12 orang · 2–4 kelompok</span></li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">Alur 90 menit</h3>
+          <ul class="mt-2 space-y-2 text-ink-soft">
+            <template x-for="row in TRIAL_BEAT" :key="row.t">
+              <li class="flex gap-3">
+                <span class="font-semibold text-terra w-14 shrink-0" x-text="row.t"></span>
+                <span><span x-text="row.act"></span> <span class="text-[11px] font-semibold text-ink" x-text="row.form"></span></span>
+              </li>
+            </template>
+          </ul>
+          <p class="text-xs text-ink-mute mt-3">Jika belum huddle: jangan paksa 100% rumah. Catat tab terakhir di Form 3.</p>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">Kode</h3>
+          <p class="text-ink-soft mt-1 leading-relaxed">Responden <b class="text-ink">R01</b>, kelompok <b class="text-ink">G1</b>, sesi <b class="text-ink">S260825-A</b>. Jangan pakai nama instansi. Unduh JSON: tombol <b class="text-ink">Unduh sesi</b> di atas, nama file {sesi}-G{n}.json.</p>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">Yang tidak dilakukan</h3>
+          <ul class="mt-2 space-y-1 text-ink-soft">
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak ada juara, hadiah, atau papan skor</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menilai siapa Kurva S-nya paling tinggi</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menulis nama orang atau nama instansi</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengklaim PPC proyek nyata naik</span></li>
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-paper-line p-4 bg-terra/5">
+          <h3 class="font-bold text-ink">Consent (dibacakan menit 0)</h3>
+          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba alat ajar Last Planner System untuk paper akademik. Isian tanpa nama orang dan tanpa nama instansi. Partisipasi sukarela, boleh berhenti kapan saja. File sesi tidak berisi identitas. Data untuk menyempurnakan pembelajaran LPS, bukan menilai kinerja proyek atau kampus Anda.</p>
+        </div>
+
+        <p class="text-[11px] text-ink-mute pt-1">Pengajar / fasilitator: <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a></p>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
+        <div class="tab-foot-left">
+          <button type="button" class="btn-ghost" @click="closeTrial()">← Kembali ke simulasi</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section x-show="currentStage==='trial-form'" class="space-y-4">
+    <div class="bg-paper-card rounded-2xl shadow-card border border-paper-line overflow-hidden" x-show="currentTrialForm">
+      <div class="px-5 pt-5 pb-4 border-b border-paper-line/80">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1" x-text="currentTrialForm && currentTrialForm.kicker"></p>
+        <h2 class="text-xl font-bold text-ink" x-text="currentTrialForm && currentTrialForm.title"></h2>
+        <p class="text-sm text-ink-soft mt-1 leading-relaxed" x-text="currentTrialForm && currentTrialForm.lead"></p>
+      </div>
+      <div class="p-5 space-y-5 text-sm">
+        <template x-for="sec in (currentTrialForm && currentTrialForm.sections) || []" :key="sec.id">
+          <div class="rounded-xl border border-paper-line p-4 space-y-3">
+            <h3 class="font-bold text-ink" x-text="sec.title"></h3>
+            <p class="text-xs text-ink-mute" x-show="sec.hint" x-text="sec.hint"></p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" x-show="sec.type==='meta'">
+              <template x-for="f in (sec.fields||[])" :key="f.id">
+                <div>
+                  <label class="block text-xs font-medium mb-1" x-text="f.label"></label>
+                  <input class="field !py-2" :placeholder="f.ph" :value="trialAns(f.id)" @input="setTrialAns(f.id, $event.target.value)">
+                </div>
+              </template>
+            </div>
+
+            <div class="space-y-4" x-show="sec.type==='choice'">
+              <template x-for="it in (sec.items||[])" :key="it.id">
+                <div>
+                  <p class="text-xs font-medium text-ink mb-1.5"><span class="text-ink-mute" x-text="it.id"></span> · <span x-text="it.q"></span></p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <template x-for="opt in (it.opts||[])" :key="it.id+opt">
+                      <button type="button" class="chip-opt" :class="trialAns(it.id)===opt && 'is-on'" @click="setTrialAns(it.id, opt)" x-text="opt"></button>
+                    </template>
+                  </div>
+                  <input class="field !py-1.5 mt-1.5 text-xs" x-show="it.other && trialAns(it.id)==='lain'" placeholder="Sebutkan (tanpa nama instansi)" :value="trialAns(it.id+'_other')" @input="setTrialAns(it.id+'_other', $event.target.value)">
+                </div>
+              </template>
+            </div>
+
+            <div class="space-y-4" x-show="sec.type==='likert'">
+              <p class="text-[11px] text-ink-mute">1 = sangat tidak setuju · 5 = sangat setuju</p>
+              <template x-for="it in (sec.items||[])" :key="it.id">
+                <div class="rounded-lg bg-paper/50 border border-paper-line/80 p-3">
+                  <p class="text-xs text-ink leading-relaxed"><span class="font-semibold text-ink-mute" x-text="it.id"></span> · <span x-text="it.q"></span></p>
+                  <div class="flex items-center justify-between gap-1 mt-2 max-w-xs">
+                    <template x-for="n in [1,2,3,4,5]" :key="it.id+n">
+                      <button type="button" class="likert-dot" :class="Number(trialAns(it.id))===n && 'is-on'" @click="setTrialAns(it.id, n)" x-text="n"></button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div class="space-y-3" x-show="sec.type==='yn'">
+              <template x-for="it in (sec.items||[])" :key="it.id">
+                <div class="rounded-lg border border-paper-line p-3 space-y-2">
+                  <p class="text-xs font-medium text-ink" x-text="it.q"></p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <template x-for="opt in (it.opts || ['ya','tidak'])" :key="it.id+opt">
+                      <button type="button" class="chip-opt" :class="trialAns(it.id)===opt && 'is-on'" @click="setTrialAns(it.id, opt)" x-text="opt"></button>
+                    </template>
+                  </div>
+                  <input class="field !py-1.5 text-xs" placeholder="Hambatan (opsional, tanpa nama)" :value="trialAns(it.id+'_note')" @input="setTrialAns(it.id+'_note', $event.target.value)">
+                </div>
+              </template>
+            </div>
+
+            <div class="space-y-3" x-show="sec.type==='text'">
+              <template x-for="it in (sec.items||[])" :key="it.id">
+                <div>
+                  <label class="block text-xs font-medium mb-1" x-text="it.q"></label>
+                  <textarea class="field text-xs" rows="3" :placeholder="it.ph || ''" :value="trialAns(it.id)" @input="setTrialAns(it.id, $event.target.value)"></textarea>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+        <p class="text-[11px] text-ink-mute">Tidak ada nama orang atau nama instansi. Jawaban tersimpan di laptop ini; unduh JSON untuk dikirim ke fasilitator.</p>
+      </div>
+      <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
+        <div class="tab-foot-left">
+          <button type="button" class="btn-ghost" @click="closeTrialForm()">← Tutup</button>
+        </div>
+        <div class="tab-foot-right">
+          <button type="button" class="btn-primary" @click="exportTrialAnswers()">Unduh jawaban JSON</button>
         </div>
       </div>
     </div>
@@ -1936,11 +2139,135 @@
 
 </main>
 
-<script type="module">
-import Alpine from 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/module.esm.js';
+<script defer src="libs/alpine.min.js"></script>
+<script>
+document.addEventListener('alpine:init', () => {
 
 const SK = 'siapkerja_project_state';
 const VER = '1.19.1';
+/* Tempel tautan Microsoft Forms di sini. Kosong = "Tautan belum diisi fasilitator". */
+const FORM_LINKS = {
+  pra: '',
+  pasca: '',
+  pengamat: '',
+};
+const TRIAL_FORMS = [
+  { id:'pra', title:'Form 1 · Pra', who:'Setiap peserta · menit 0–8, sebelum main' },
+  { id:'pasca', title:'Form 2 · Pasca', who:'Peserta yang sama, kode R sama · menit 80–90' },
+  { id:'pengamat', title:'Form 3 · Pengamat', who:'Fasilitator · satu isian per kelompok, selama main' },
+];
+const TRIAL_BEAT = [
+  { t:'0–8', act:'Consent + isi Form 1. Laptop simulasi belum disentuh.', form:'Form 1' },
+  { t:'8–15', act:'Brief: LPS = janji andal, bukan siapa selesai dulu. Bukan kompetisi.', form:'' },
+  { t:'15–75', act:'Main: Phase Plan → L1 SiapKerja! → WWP → satu huddle → Learning + Laporan.', form:'Form 3' },
+  { t:'75–80', act:'Unduh JSON sesi.', form:'' },
+  { t:'80–90', act:'Isi Form 2 dengan kode R yang sama.', form:'Form 2' },
+];
+const TRIAL_ANS_KEY = 'siapkerja_trial_answers';
+const FORM_DEFS = {
+  pra: {
+    id:'pra', kicker:'Form 1 · sebelum main', title:'Kuesioner pra-simulasi',
+    lead:'Setiap peserta. Isi sebelum laptop simulasi disentuh. Kode R dipakai lagi di Form 2. Tanpa nama orang, tanpa nama instansi.',
+    sections:[
+      { id:'meta', type:'meta', title:'Kode', fields:[
+        { id:'r', label:'Kode responden', ph:'R01' },
+        { id:'g', label:'Kelompok', ph:'G1' },
+      ]},
+      { id:'a1', type:'choice', title:'A1. Latar (kategori, bukan instansi)', items:[
+        { id:'A1.0', q:'Jenis organisasi', opts:['kontraktor','konsultan','kampus / politeknik','asosiasi','individu','lain'], other:true },
+        { id:'A1.1', q:'Peran saat ini', opts:['perencana','last planner / mandor','engineer lapangan','lean specialist','dosen / mahasiswa','lain'], other:true },
+        { id:'A1.2', q:'Pengalaman kerja konstruksi', opts:['belum','<3 th','3–7 th','8–15 th','>15 th'] },
+        { id:'A1.3', q:'Pernah menjalankan LPS di proyek nyata?', opts:['tidak','pernah melihat','pernah menjalankan'] },
+        { id:'A1.4', q:'Pernah ikut K2R atau K2R-Neo?', opts:['tidak','pernah'] },
+        { id:'A1.5', q:'Pernah latihan LPS dengan sticky note / LEGO?', opts:['tidak','sticky note','LEGO','keduanya'] },
+      ]},
+      { id:'a2', type:'likert', title:'A2. Pernyataan LPS — sebelum main', hint:'Beberapa butir sengaja terbalik. Isi keyakinan sekarang.', items:[
+        { id:'A2.1', q:'Jadwal induk (Gantt/CPM) sudah cukup untuk mengendalikan produksi mingguan.' },
+        { id:'A2.2', q:'Pekerjaan minggu depan boleh dijanjikan meskipun masih ada kendala yang belum dilepas.' },
+        { id:'A2.3', q:'Last planner adalah orang yang paling dekat dengan pekerjaan, bukan hanya planner di kantor lapangan.' },
+        { id:'A2.4', q:'PPC mengukur seberapa cepat bangunan diselesaikan.' },
+        { id:'A2.5', q:'Pull berarti memulai setiap kegiatan seawal mungkin sesuai jadwal induk.' },
+        { id:'A2.6', q:'Make-ready (menyiapkan agar pekerjaan SiapKerja!) lebih menentukan keandalan janji daripada menambah tenaga di hari H.' },
+      ]},
+    ],
+  },
+  pasca: {
+    id:'pasca', kicker:'Form 2 · sesudah main', title:'Kuesioner pasca-simulasi',
+    lead:'Peserta yang sama. Pakai kode R yang sama dengan Form 1. Isi menit 80–90.',
+    sections:[
+      { id:'meta', type:'meta', title:'Kode', fields:[
+        { id:'r', label:'Kode responden (sama dengan Form 1)', ph:'R01' },
+        { id:'g', label:'Kelompok', ph:'G1' },
+      ]},
+      { id:'c1', type:'likert', title:'C1. Pekerjaan dan tahapan', items:[
+        { id:'C1.1', q:'Kegiatan di simulator (galian, sloof, kolom, dinding, …) dekat dengan pekerjaan lapangan yang saya kenal.' },
+        { id:'C1.2', q:'Latihan ini lebih relate ke kerja lapangan daripada merakit LEGO.' },
+        { id:'C1.3', q:'Saya menjalankan urutan lengkap: value pemilik → desain → pull → make-ready → janji mingguan → huddle → PPC.' },
+        { id:'C1.4', q:'Saya merasakan beda push (Gantt) dan pull, bukan hanya mendengar istilahnya.' },
+      ]},
+      { id:'c2', type:'likert', title:'C2. Cara berpikir', items:[
+        { id:'C2.1', q:'Setelah main, last planner merencana dari pekerjaan, bukan dari bar Gantt.' },
+        { id:'C2.2', q:'Saya lebih jelas mengapa L1 harus bebas kendala sebelum dijanjikan.' },
+        { id:'C2.3', q:'PPC di latihan ini mengukur keandalan janji, bukan siapa lebih cepat selesai.' },
+        { id:'C2.4', q:'Latihan ini terasa sebagai kompetisi antar kelompok.' },
+        { id:'C2.5', q:'Jika ada papan juara, perhatian saya akan pindah dari metode LPS ke menang.' },
+      ]},
+      { id:'c3', type:'likert', title:'C3. Ulangi 6 butir LPS (selisih pra–pasca)', items:[
+        { id:'C3.1', q:'Jadwal induk (Gantt/CPM) sudah cukup untuk mengendalikan produksi mingguan.' },
+        { id:'C3.2', q:'Pekerjaan minggu depan boleh dijanjikan meskipun masih ada kendala yang belum dilepas.' },
+        { id:'C3.3', q:'Last planner adalah orang yang paling dekat dengan pekerjaan, bukan hanya planner di kantor lapangan.' },
+        { id:'C3.4', q:'PPC mengukur seberapa cepat bangunan diselesaikan.' },
+        { id:'C3.5', q:'Pull berarti memulai setiap kegiatan seawal mungkin sesuai jadwal induk.' },
+        { id:'C3.6', q:'Make-ready lebih menentukan keandalan janji daripada menambah tenaga di hari H.' },
+      ]},
+      { id:'c4', type:'likert', title:'C4. Bisa disebar', items:[
+        { id:'C4.1', q:'Saya bisa menjalankan latihan ini di laptop tanpa server khusus.' },
+        { id:'C4.2', q:'Setelah satu kali terhubung internet, saya bisa lanjut berlatih tanpa sinyal.' },
+        { id:'C4.3', q:'Alat ini cocok untuk induksi atau pelatihan di organisasi saya (bukan hanya kontes).' },
+        { id:'C4.4', q:'Alat ini bisa dipakai rekan di tempat yang internetnya putus-nyambung.' },
+        { id:'C4.5', q:'SiapKerja! melengkapi K2R/K2R-Neo, tidak menggantikannya.' },
+        { id:'C4.6', q:'Saya akan merekomendasikan alat ini untuk latihan LPS di lingkungan saya.' },
+      ]},
+      { id:'c5', type:'text', title:'C5. Terbuka', items:[
+        { id:'C5.1', q:'Satu hal tentang LPS yang baru Anda rasakan (bukan hanya ketahui):', ph:'' },
+        { id:'C5.2', q:'Yang masih membingungkan atau menghambat:', ph:'' },
+        { id:'C5.3', q:'(Opsional) Bandingkan dengan LEGO/K2R jika pernah ikut.', ph:'' },
+      ]},
+    ],
+  },
+  pengamat: {
+    id:'pengamat', kicker:'Form 3 · fasilitator', title:'Lembar pengamat',
+    lead:'Satu isian per kelompok, selama main. Jangan menilai siapa Kurva S-nya paling tinggi.',
+    sections:[
+      { id:'meta', type:'meta', title:'Kode sesi', fields:[
+        { id:'sesi', label:'Kode sesi', ph:'S260825-A' },
+        { id:'g', label:'Kelompok', ph:'G1' },
+        { id:'n', label:'Jumlah orang', ph:'5' },
+        { id:'jam', label:'Mulai–selesai', ph:'09:00–10:30' },
+      ]},
+      { id:'b1', type:'yn', title:'B1. Tab tercapai', items:[
+        { q:'Pemilik' }, { q:'Desainer' }, { q:'Pemilihan (tanda tangan)' }, { q:'Master Plan' },
+        { q:'Phase Plan (pull Pondasi+Struktur + komitmen)' }, { q:'Look-ahead, L1 = SiapKerja!' },
+        { q:'WWP dikunci' }, { q:'Huddle ≥ 1 hari' }, { q:'Learning (PPC terlihat)' },
+        { q:'Laporan dibuka' }, { q:'Gulir sampai skrip material (~minggu 3)' },
+      ].map((it,i)=>({ id:'B1.'+(i+1), q:it.q, opts:['ya','tidak'] })) },
+      { id:'b2', type:'yn', title:'B2. Perilaku metode', items:[
+        { id:'B2.1', q:'L1 pernah dikunci kotor', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.2', q:'L1 diperbaiki sebelum berjanji di WWP', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.3', q:'Masukkan ke jadwal dipakai benar (bukan “promosi”, bukan “tarik”)', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.4', q:'Sisa pecahan setelah Sabtu tidak diperlakukan sebagai gagal', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.5', q:'Alasan variansi diisi jika pekerjaan tidak selesai', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.6', q:'Bicara keandalan janji / PPC, bukan “kita kalah cepat”', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.7', q:'Mutu tidak ditawar turun', opts:['ya','tidak','tidak sempat'] },
+      ]},
+      { id:'b3', type:'text', title:'B3. File sesi', items:[
+        { id:'B3.json', q:'Nama file JSON sesi', ph:'S260825-A-G1.json' },
+        { id:'B3.ppc', q:'PPC minggu 1 (jika ada)', ph:'contoh 67%' },
+        { id:'B3.note', q:'Catatan 3 baris (tanpa nama orang)', ph:'' },
+      ]},
+    ],
+  },
+};
 const MANUAL = [
   { id:'alur', title:'Alur lengkap', blurb:'', body:'Satu putaran dari value pemilik sampai laporan, lalu gulir — atau tutup proyek jika semua pekerjaan selesai.', bullets:[
     'Pemilik (value, durasi desain 2/4, konstruksi 8/10/12 default 10) → Desainer (LOD, OE, denah/3D)',
@@ -2515,6 +2842,16 @@ Alpine.data('app', () => ({
   WWP_DAYS,
   PPC_REASONS,
   MANUAL,
+  TRIAL_FORMS,
+  TRIAL_BEAT,
+  FORM_LINKS,
+  FORM_DEFS,
+  manualFrom: null,
+  manualFocus: null,
+  trialFrom: null,
+  trialMenuOpen: false,
+  trialFormId: 'pra',
+  trialAnswers: {},
   huddleTimerLeft: 15 * 60,
   huddleTimerOn: false,
   promoDraft: null,
@@ -2541,6 +2878,9 @@ Alpine.data('app', () => ({
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
     this.currentStage = this.state.currentStage || 'owner';
+    try {
+      this.trialAnswers = JSON.parse(localStorage.getItem(TRIAL_ANS_KEY) || '{}') || {};
+    } catch { this.trialAnswers = {}; }
     if (this.currentStage === 'contractor-pm') this.currentStage = 'contractor-master';
     this.recalcPlan();
     this._ensurePpcFromHuddle();
@@ -3816,7 +4156,65 @@ Alpine.data('app', () => ({
   closeManual() {
     const back = this.manualFrom || 'owner';
     this.manualFocus = null;
-    this.setStage(back === 'manual' ? 'owner' : back);
+    this.setStage(back === 'manual' || back === 'trial' ? 'owner' : back);
+  },
+  openTrial() {
+    this.trialMenuOpen = false;
+    this.trialFrom = (this.currentStage === 'trial' || this.currentStage === 'trial-form') ? (this.trialFrom || 'owner') : this.currentStage;
+    this.currentStage = 'trial';
+    this.$nextTick(() => window.scrollTo(0, 0));
+  },
+  closeTrial() {
+    const back = this.trialFrom || 'owner';
+    this.setStage(back === 'trial' || back === 'manual' || back === 'trial-form' ? 'owner' : back);
+  },
+  get currentTrialForm() {
+    return (FORM_DEFS && FORM_DEFS[this.trialFormId]) || null;
+  },
+  trialAns(id) {
+    const bag = (this.trialAnswers && this.trialAnswers[this.trialFormId]) || {};
+    return bag[id] == null ? '' : bag[id];
+  },
+  setTrialAns(id, val) {
+    const form = this.trialFormId;
+    const all = { ...(this.trialAnswers || {}) };
+    const bag = { ...(all[form] || {}) };
+    bag[id] = val;
+    all[form] = bag;
+    this.trialAnswers = all;
+    try { localStorage.setItem(TRIAL_ANS_KEY, JSON.stringify(all)); } catch (e) {}
+  },
+  openTrialForm(id) {
+    this.trialMenuOpen = false;
+    if (!FORM_DEFS[id]) return;
+    this.trialFrom = (this.currentStage === 'trial' || this.currentStage === 'trial-form') ? (this.trialFrom || 'owner') : this.currentStage;
+    this.trialFormId = id;
+    this.currentStage = 'trial-form';
+    this.$nextTick(() => window.scrollTo(0, 0));
+  },
+  closeTrialForm() {
+    this.closeTrial();
+  },
+  exportTrialAnswers() {
+    const form = this.trialFormId;
+    const payload = {
+      form,
+      title: (FORM_DEFS[form] && FORM_DEFS[form].title) || form,
+      savedAt: new Date().toISOString(),
+      answers: (this.trialAnswers && this.trialAnswers[form]) || {},
+    };
+    const code = payload.answers.r || payload.answers.sesi || payload.answers.g || 'anon';
+    const b = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a');
+    a.href = u;
+    a.download = 'SiapKerja_' + form + '_' + String(code).replace(/[^\w-]/g, '') + '.json';
+    a.click();
+    URL.revokeObjectURL(u);
+  },
+  formUrl(id) {
+    const u = (this.FORM_LINKS && this.FORM_LINKS[id]) || '';
+    return u.trim();
   },
 
   setStage(s) {
@@ -5191,8 +5589,15 @@ Alpine.data('app', () => ({
     e.target.value = '';
   }
 }));
-Alpine.start();
+});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js?v=trial-c').catch(function () {});
+  });
+}
 </script>
 </body>
 </html>
+
+
 
