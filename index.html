@@ -191,7 +191,7 @@
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Pedoman uji coba</p>
           <h2 class="text-xl font-bold text-ink">Evaluasi SiapKerja sebagai alat ajar LPS</h2>
-          <p class="text-sm text-ink-soft mt-1">Untuk fasilitator dan peserta sesi 90 menit. Jangan tulis nama orang. Nama organisasi diisi — disamarkan di paper. Tiga Form Microsoft — jangan digabung.</p>
+          <p class="text-sm text-ink-soft mt-1">Untuk fasilitator di perusahaan (rekan penulis). Tiga Form milik ketua peneliti — responden hanya mengklik tautan. Jangan tulis nama orang. Nama organisasi diisi, disamarkan di paper.</p>
         </div>
         <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="btn-primary !text-xs !py-2 shrink-0">Unduh pedoman</a>
       </div>
@@ -202,9 +202,18 @@
           <p class="text-ink-soft mt-1 leading-relaxed">Mengukur dua hal pada SiapKerja: (1) apakah peserta dapat menjalankan alur LPS di aplikasi (value pemilik, desain, pull, make-ready, janji mingguan, huddle, PPC) pada pekerjaan rumah Type-36; (2) bagaimana mereka menilai kejelasan pekerjaan, kejelasan metode LPS, dan kegunaan SiapKerja sebagai alat latihan. Hasil untuk paper pembelajaran, eksploratori — bukan penilaian kinerja orang atau organisasi.</p>
         </div>
 
+        <div class="rounded-xl border border-paper-line p-4">
+          <h3 class="font-bold text-ink">Siapa</h3>
+          <ul class="mt-2 space-y-1 text-ink-soft">
+            <li class="flex gap-2"><span class="text-terra">•</span><span><b class="text-ink">Ketua peneliti</b> — pemilik tiga Form Microsoft; menerima isian otomatis; memberi kode sesi dan tautan</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span><b class="text-ink">Fasilitator</b> — satu orang per perusahaan, rekan penulis; menjalankan sesi; tidak membuat Form</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span><b class="text-ink">Responden</b> — mengklik Form 1 sebelum main, Form 2 sesudah; boleh sendiri atau beberapa orang di satu laptop</span></li>
+          </ul>
+        </div>
+
         <div class="rounded-xl border border-paper-line p-4 space-y-3">
-          <h3 class="font-bold text-ink">Tiga kuesioner</h3>
-          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Gabung Excel lewat <b class="text-ink">sesi + R</b> (R unik dalam sesi). Isi langsung di sini, atau unduh tiga berkas Word di bawah lalu Quick Import ke Microsoft Forms.</p>
+          <h3 class="font-bold text-ink">Tiga Form Microsoft</h3>
+          <p class="text-ink-soft leading-relaxed">Satu set untuk semua perusahaan. Data masuk langsung ke ketua peneliti. Fasilitator tidak membuat Form, tidak menyalin Form, tidak mengirim Excel. Gabung pra–pasca: <b class="text-ink">sesi + R</b>.</p>
           <template x-for="f in TRIAL_FORMS" :key="f.id">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-paper-line bg-paper/50 p-3">
               <div class="min-w-0 flex-1">
@@ -212,28 +221,23 @@
                 <p class="text-xs text-ink-soft mt-0.5" x-text="f.who"></p>
               </div>
               <a x-show="formUrl(f.id)" :href="formUrl(f.id)" target="_blank" rel="noopener" class="btn-primary !text-xs !py-2 shrink-0 text-center">Buka Form →</a>
-              <button type="button" x-show="!formUrl(f.id)" class="btn-primary !text-xs !py-2 shrink-0" @click="openTrialForm(f.id)">Isi di sini</button>
+              <span x-show="!formUrl(f.id)" class="text-xs text-ink-mute shrink-0">Tautan disiapkan ketua peneliti</span>
             </div>
           </template>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4 space-y-2">
           <h3 class="font-bold text-ink">Unduhan untuk fasilitator</h3>
-          <p class="text-ink-soft leading-relaxed">Berkas untuk sesi 90 menit dan untuk membuat tiga Form Microsoft. Jangan gabung ketiga kuesioner.</p>
+          <p class="text-ink-soft leading-relaxed">Berkas yang dibawa ke sesi. Form Microsoft tidak dibuat di sini.</p>
           <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="block text-sm font-medium text-terra hover:underline">Pedoman uji coba (.docx)</a>
-          <a href="SiapKerja_Draft_Kuesioner.docx" download="SiapKerja_Draft_Kuesioner.docx" class="block text-sm font-medium text-terra hover:underline">Draf kuesioner — tiga form (.docx)</a>
-          <a href="SiapKerja_MSForms_01_Pra.docx" download="SiapKerja_MSForms_01_Pra.docx" class="block text-sm font-medium text-terra hover:underline">Word Form 1 — Pra (Quick Import)</a>
-          <a href="SiapKerja_MSForms_02_Pasca.docx" download="SiapKerja_MSForms_02_Pasca.docx" class="block text-sm font-medium text-terra hover:underline">Word Form 2 — Pasca (Quick Import)</a>
-          <a href="SiapKerja_MSForms_03_Pengamat.docx" download="SiapKerja_MSForms_03_Pengamat.docx" class="block text-sm font-medium text-terra hover:underline">Word Form 3 — Pengamat (Quick Import)</a>
-          <a href="SiapKerja_MSForms_CaraUnggah.md" download="SiapKerja_MSForms_CaraUnggah.md" class="block text-sm font-medium text-terra hover:underline">Cara unggah ke Microsoft Forms</a>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
-          <h3 class="font-bold text-ink">Setelan wajib (semua kelompok)</h3>
+          <h3 class="font-bold text-ink">Setelan wajib (semua laptop)</h3>
           <ul class="mt-2 space-y-1 text-ink-soft">
             <li class="flex gap-2"><span class="text-terra">•</span><span>Desain <b class="text-ink">2</b> minggu · konstruksi <b class="text-ink">8</b> minggu</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Mutu <b class="text-ink">standar</b> (jangan ditawar) · fokus <b class="text-ink">waktu</b> · LOD <b class="text-ink">standar</b></span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Satu laptop per kelompok · 6–12 orang · 2–4 kelompok</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Satu laptop = satu G. Boleh 1 orang atau beberapa, asal satu laptop</span></li>
           </ul>
         </div>
 
@@ -253,37 +257,39 @@
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Kode</h3>
           <ul class="mt-2 space-y-1 text-ink-soft">
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Sesi <b class="text-ink">S260901-A</b> — satu undangan / satu perusahaan / satu hari</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Kelompok <b class="text-ink">G1</b> — satu laptop</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Sesi <b class="text-ink">S260901-A</b> — diberi ketua peneliti ke fasilitator (satu perusahaan / satu hari)</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Kelompok <b class="text-ink">G1</b> — satu laptop, diberi fasilitator</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Responden <b class="text-ink">R01</b> — unik dalam sesi itu (jangan ulang R01 di G2)</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Nama organisasi diisi apa adanya. Di paper disamarkan.</span></li>
           </ul>
-          <p class="text-xs text-ink-mute mt-3">Gabung Excel Form 1 dan Form 2: kolom sesi + R. Jangan tulis nama orang.</p>
+          <p class="text-xs text-ink-mute mt-3">Jangan membuat kode sesi sendiri. Gabung Excel Form 1 dan Form 2 urusan ketua peneliti (sesi + R). Jangan tulis nama orang.</p>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">JSON sesi — hanya fasilitator</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed">Bukan tugas peserta, bukan jawaban kuesioner. Menit 75–80 fasilitator klik <b class="text-ink">Unduh sesi</b>, ganti nama <b class="text-ink">{sesi}-G{n}.json</b>, kirim ke <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a>. Subjek: SiapKerja JSON {sesi}-G{n}. Satu file per laptop.</p>
+          <p class="text-ink-soft mt-1 leading-relaxed">Bukan tugas responden, bukan jawaban kuesioner (kuesioner sudah masuk Form ketua peneliti). Menit 75–80 fasilitator klik <b class="text-ink">Unduh sesi</b>, nama <b class="text-ink">{sesi}-G{n}.json</b>, kirim ke <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a>. Subjek: SiapKerja JSON {sesi}-G{n}. Satu file per laptop.</p>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Yang tidak dilakukan</h3>
           <ul class="mt-2 space-y-1 text-ink-soft">
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak meranking kelompok</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak membuat Form Microsoft sendiri, tidak menyalin Form, tidak menambah soal</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengirim Excel — isian sudah masuk ke ketua peneliti</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak meranking laptop atau responden</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menawar mutu di simulasi</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengisi kuesioner untuk orang lain</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menulis nama orang (nama organisasi boleh, disamarkan di paper)</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengklaim bahwa uji coba ini menaikkan PPC proyek nyata</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak minta peserta mengunduh JSON</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak minta responden mengunduh JSON</span></li>
           </ul>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4 bg-terra/5">
           <h3 class="font-bold text-ink">Consent (dibacakan menit 0)</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba SiapKerja, alat ajar Last Planner System, untuk paper akademik. Kami mengevaluasi aplikasi ini, bukan menilai Anda atau organisasi Anda. Jangan tulis nama orang. Nama organisasi diisi apa adanya dan akan disamarkan di paper. Partisipasi sukarela, boleh berhenti kapan saja. File sesi simulator tidak berisi nama orang. Data dipakai untuk menyempurnakan SiapKerja sebagai pembelajaran LPS.</p>
+          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba SiapKerja, alat ajar Last Planner System, untuk paper akademik. Kami mengevaluasi aplikasi ini, bukan menilai Anda atau organisasi Anda. Jangan tulis nama orang. Nama organisasi diisi apa adanya dan akan disamarkan di paper. Partisipasi sukarela, boleh berhenti kapan saja. Isian Form masuk ke ketua peneliti. File sesi simulator tidak berisi nama orang. Data dipakai untuk menyempurnakan SiapKerja sebagai pembelajaran LPS.</p>
         </div>
 
-        <p class="text-[11px] text-ink-mute pt-1">Pengajar / fasilitator: <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a></p>
+        <p class="text-[11px] text-ink-mute pt-1">Ketua peneliti: <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a></p>
       </div>
       <div class="px-5 py-4 bg-paper/60 border-t border-paper-line tab-foot">
         <div class="tab-foot-left">
@@ -2144,23 +2150,23 @@ document.addEventListener('alpine:init', () => {
 
 const SK = 'siapkerja_project_state';
 const VER = '1.19.1';
-/* Tempel tautan Microsoft Forms di sini. Kosong = "Tautan belum diisi fasilitator". */
+/* Tempel tautan Microsoft Forms milik ketua peneliti. Kosong = "Tautan disiapkan ketua peneliti". */
 const FORM_LINKS = {
   pra: '',
   pasca: '',
   pengamat: '',
 };
 const TRIAL_FORMS = [
-  { id:'pra', title:'Form 1 · Pra (11 butir)', who:'Setiap peserta · menit 0–8, sebelum main' },
-  { id:'pasca', title:'Form 2 · Pasca (15 butir)', who:'Peserta yang sama, sesi + R sama · menit 80–90' },
-  { id:'pengamat', title:'Form 3 · Pengamat (12 butir)', who:'Fasilitator · satu isian per laptop, selama main' },
+  { id:'pra', title:'Form 1 · Pra', who:'Setiap responden · menit 0–8, sebelum main · tautan dari ketua peneliti' },
+  { id:'pasca', title:'Form 2 · Pasca', who:'Responden yang sama, sesi + R sama · menit 80–90' },
+  { id:'pengamat', title:'Form 3 · Pengamat', who:'Fasilitator · satu isian per laptop, selama main' },
 ];
 const TRIAL_BEAT = [
-  { t:'0–8', act:'Consent + isi Form 1. Laptop simulasi belum disentuh.', form:'Form 1' },
+  { t:'0–8', act:'Consent + responden mengklik tautan Form 1. Laptop simulasi belum disentuh.', form:'Form 1' },
   { t:'8–15', act:'Brief: LPS di SiapKerja — last planner, pull, PPC = keandalan janji. Alur tab sekali.', form:'' },
   { t:'15–75', act:'Main: Phase Plan → L1 SiapKerja! → WWP → satu huddle → Learning + Laporan.', form:'Form 3' },
-  { t:'75–80', act:'Fasilitator unduh JSON, nama {sesi}-G{n}.json, kirim ke abduh@itb.ac.id. Bukan tugas peserta.', form:'' },
-  { t:'80–90', act:'Isi Form 2 dengan kode sesi + R yang sama.', form:'Form 2' },
+  { t:'75–80', act:'Fasilitator unduh JSON, nama {sesi}-G{n}.json, kirim ke abduh@itb.ac.id. Bukan tugas responden.', form:'' },
+  { t:'80–90', act:'Responden mengklik tautan Form 2 dengan kode sesi + R yang sama.', form:'Form 2' },
 ];
 const TRIAL_ANS_KEY = 'siapkerja_trial_answers';
 const FORM_DEFS = {
@@ -5575,7 +5581,7 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=trial-g').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=trial-h').catch(function () {});
   });
 }
 </script>
