@@ -2167,7 +2167,7 @@ const VER = '1.19.1';
 const FORM_LINKS = {
   pra: 'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=gxFu22VMXECCznzVP6bp3GNItEHSPX5Os8c_U2BUyEtUOFUwT0VHRklKRFI3RUdEWEg3S1ZZNzgyVS4u',
   pasca: 'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=gxFu22VMXECCznzVP6bp3GNItEHSPX5Os8c_U2BUyEtURVVXQzNZSFNEQUJHWEVPM1VZM0NYUTQ1Ri4u',
-  pengamat: '',
+  pengamat: 'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=gxFu22VMXECCznzVP6bp3GNItEHSPX5Os8c_U2BUyEtUNjEyTkhOSkY0VjIyNks4M1Y1S0ZKQUdNVC4u',
 };
 const TRIAL_FORMS = [
   { id:'pra', title:'Form 1 · Pra', who:'Setiap responden · menit 0–8, sebelum main · tautan dari ketua peneliti' },
@@ -5594,7 +5594,7 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=trial-j').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=trial-k').catch(function () {});
   });
 }
 </script>
