@@ -100,7 +100,7 @@
           <p class="px-3.5 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Uji coba lapangan</p>
           <button type="button" class="w-full text-left px-3.5 py-2 text-sm font-medium text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false; openTrial()">Buka pedoman uji coba</button>
           <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh pedoman uji coba</a>
-          <a href="SiapKerja_Draft_Kuesioner.md" download="SiapKerja_Draft_Kuesioner.md" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh draf kuesioner (tiga form)</a>
+          <a href="SiapKerja_Draft_Kuesioner.docx" download="SiapKerja_Draft_Kuesioner.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh draf kuesioner (tiga form)</a>
           <a href="SiapKerja_MSForms_01_Pra.docx" download="SiapKerja_MSForms_01_Pra.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh Word Form 1 — Pra (import Forms)</a>
           <a href="SiapKerja_MSForms_02_Pasca.docx" download="SiapKerja_MSForms_02_Pasca.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh Word Form 2 — Pasca (import Forms)</a>
           <a href="SiapKerja_MSForms_03_Pengamat.docx" download="SiapKerja_MSForms_03_Pengamat.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh Word Form 3 — Pengamat (import Forms)</a>
@@ -229,12 +229,12 @@
 
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Tujuan</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed">Mengukur dua hal pada SiapKerja, dan hanya itu: (1) apakah peserta dapat menjalankan alur LPS di aplikasi (value pemilik, desain, pull, make-ready, janji mingguan, huddle, PPC) pada pekerjaan rumah Type-36; (2) bagaimana mereka menilai kejelasan, keaslian pekerjaan, dan kegunaan SiapKerja sebagai alat latihan. Hasil untuk paper pembelajaran, eksploratori — bukan penilaian kinerja organisasi, bukan perbandingan dengan alat atau metode latihan lain.</p>
+          <p class="text-ink-soft mt-1 leading-relaxed">Mengukur dua hal pada SiapKerja: (1) apakah peserta dapat menjalankan alur LPS di aplikasi (value pemilik, desain, pull, make-ready, janji mingguan, huddle, PPC) pada pekerjaan rumah Type-36; (2) bagaimana mereka menilai kejelasan pekerjaan, kejelasan metode LPS, dan kegunaan SiapKerja sebagai alat latihan. Hasil untuk paper pembelajaran, eksploratori — bukan penilaian kinerja orang atau organisasi.</p>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4 space-y-3">
           <h3 class="font-bold text-ink">Tiga kuesioner</h3>
-          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Kode R harus sama di Form 1 dan Form 2. Isi langsung di sini, atau unduh tiga berkas Word di menu Uji coba lalu Quick Import ke Microsoft Forms. Jangan tambah soal yang membandingkan SiapKerja dengan alat atau merek lain.</p>
+          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Kode R harus sama di Form 1 dan Form 2. Isi langsung di sini, atau unduh tiga berkas Word di menu Uji coba lalu Quick Import ke Microsoft Forms.</p>
           <template x-for="f in TRIAL_FORMS" :key="f.id">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-paper-line bg-paper/50 p-3">
               <div class="min-w-0 flex-1">
@@ -277,8 +277,9 @@
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Yang tidak dilakukan</h3>
           <ul class="mt-2 space-y-1 text-ink-soft">
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak meranking kelompok atau membandingkan progres antar laptop</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak membandingkan SiapKerja dengan alat, permainan, atau merek latihan lain</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak meranking kelompok</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menawar mutu di simulasi</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengisi kuesioner untuk orang lain</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menulis nama orang atau nama instansi</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengklaim bahwa uji coba ini menaikkan PPC proyek nyata</span></li>
           </ul>

@@ -2,7 +2,7 @@
 
 Quick Import **hanya** membaca: judul, soal bernomor, pilihan A. B. C., dan soal tanpa pilihan (isian). Likert di Word ini sudah diubah jadi pilihan A–E (1–5). Jangan unggah berkas markdown.
 
-Draf butir (untuk disalin manual jika import gagal): `SiapKerja_Draft_Kuesioner.md`.
+Draf butir (baca dulu, lalu import Word): `SiapKerja_Draft_Kuesioner.docx`.
 
 ## Tiga formulir (jangan digabung)
 
@@ -13,7 +13,7 @@ Draf butir (untuk disalin manual jika import gagal): `SiapKerja_Draft_Kuesioner.
 | `SiapKerja_MSForms_03_Pengamat.docx` | Fasilitator | 1× per kelompok, selama main |
 
 Pra dan pasca terpisah agar indeks cara pandang LPS tidak diisi setelah tahu jawabannya.  
-Isian mengevaluasi **SiapKerja**. Jangan tambah soal yang membandingkan dengan alat atau merek lain.
+Isian mengevaluasi **SiapKerja**.
 
 ## Langkah
 
