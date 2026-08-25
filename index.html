@@ -100,6 +100,11 @@
           <p class="px-3.5 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Uji coba lapangan</p>
           <button type="button" class="w-full text-left px-3.5 py-2 text-sm font-medium text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false; openTrial()">Buka pedoman uji coba</button>
           <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh pedoman uji coba</a>
+          <a href="SiapKerja_Draft_Kuesioner.md" download="SiapKerja_Draft_Kuesioner.md" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh draf kuesioner (tiga form)</a>
+          <a href="SiapKerja_MSForms_01_Pra.docx" download="SiapKerja_MSForms_01_Pra.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh Word Form 1 — Pra (import Forms)</a>
+          <a href="SiapKerja_MSForms_02_Pasca.docx" download="SiapKerja_MSForms_02_Pasca.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh Word Form 2 — Pasca (import Forms)</a>
+          <a href="SiapKerja_MSForms_03_Pengamat.docx" download="SiapKerja_MSForms_03_Pengamat.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh Word Form 3 — Pengamat (import Forms)</a>
+          <a href="SiapKerja_MSForms_CaraUnggah.md" download="SiapKerja_MSForms_CaraUnggah.md" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Cara unggah ke Microsoft Forms</a>
           <a href="Modul-Praktikum-SiapKerja-Pengajar.docx" download="Modul-Praktikum-SiapKerja-Pengajar.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh modul praktikum (pengajar)</a>
           <a href="Modul-Praktikum-SiapKerja-Dosen.docx" download="Modul-Praktikum-SiapKerja-Dosen.docx" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh modul praktikum (dosen)</a>
           <a href="manual-siapkerja.pdf" download="Manual-SiapKerja.pdf" class="block px-3.5 py-2 text-sm text-ink hover:bg-paper" role="menuitem" @click="trialMenuOpen=false">Unduh manual SiapKerja</a>
@@ -215,7 +220,7 @@
       <div class="px-5 pt-5 pb-4 border-b border-paper-line/80 flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-wider text-terra mb-1">Pedoman uji coba</p>
-          <h2 class="text-xl font-bold text-ink">Sesi undangan · bukan kompetisi</h2>
+          <h2 class="text-xl font-bold text-ink">Evaluasi SiapKerja sebagai alat ajar LPS</h2>
           <p class="text-sm text-ink-soft mt-1">Untuk fasilitator dan peserta sesi 90 menit. Jangan tulis nama orang atau nama instansi. Tiga Form Microsoft — jangan digabung.</p>
         </div>
         <a href="SiapKerja_Pedoman_UjiCoba.docx" download="SiapKerja_Pedoman_UjiCoba.docx" class="btn-primary !text-xs !py-2 shrink-0">Unduh pedoman</a>
@@ -224,12 +229,12 @@
 
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Tujuan</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed">Mengukur apakah peserta menjalankan LPS (pull, make-ready, janji, huddle, PPC) pada pekerjaan rumah Type-36 — bukan merakit LEGO, bukan memperebutkan juara. Hasil untuk paper pembelajaran, eksploratori. Bukan penilaian kinerja organisasi.</p>
+          <p class="text-ink-soft mt-1 leading-relaxed">Mengukur dua hal pada SiapKerja, dan hanya itu: (1) apakah peserta dapat menjalankan alur LPS di aplikasi (value pemilik, desain, pull, make-ready, janji mingguan, huddle, PPC) pada pekerjaan rumah Type-36; (2) bagaimana mereka menilai kejelasan, keaslian pekerjaan, dan kegunaan SiapKerja sebagai alat latihan. Hasil untuk paper pembelajaran, eksploratori — bukan penilaian kinerja organisasi, bukan perbandingan dengan alat atau metode latihan lain.</p>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4 space-y-3">
           <h3 class="font-bold text-ink">Tiga kuesioner</h3>
-          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Kode R harus sama di Form 1 dan Form 2. Isi langsung di sini, atau unggah Word ke Microsoft Forms jika fasilitator sudah menyiapkan tautan.</p>
+          <p class="text-ink-soft leading-relaxed">Pra dan pasca terpisah agar “sebelum main” tidak diisi setelah tahu jawabannya. Kode R harus sama di Form 1 dan Form 2. Isi langsung di sini, atau unduh tiga berkas Word di menu Uji coba lalu Quick Import ke Microsoft Forms. Jangan tambah soal yang membandingkan SiapKerja dengan alat atau merek lain.</p>
           <template x-for="f in TRIAL_FORMS" :key="f.id">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border border-paper-line bg-paper/50 p-3">
               <div class="min-w-0 flex-1">
@@ -272,16 +277,16 @@
         <div class="rounded-xl border border-paper-line p-4">
           <h3 class="font-bold text-ink">Yang tidak dilakukan</h3>
           <ul class="mt-2 space-y-1 text-ink-soft">
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak ada juara, hadiah, atau papan skor</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menilai siapa Kurva S-nya paling tinggi</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak meranking kelompok atau membandingkan progres antar laptop</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak membandingkan SiapKerja dengan alat, permainan, atau merek latihan lain</span></li>
             <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak menulis nama orang atau nama instansi</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengklaim PPC proyek nyata naik</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Tidak mengklaim bahwa uji coba ini menaikkan PPC proyek nyata</span></li>
           </ul>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4 bg-terra/5">
           <h3 class="font-bold text-ink">Consent (dibacakan menit 0)</h3>
-          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba alat ajar Last Planner System untuk paper akademik. Isian tanpa nama orang dan tanpa nama instansi. Partisipasi sukarela, boleh berhenti kapan saja. File sesi tidak berisi identitas. Data untuk menyempurnakan pembelajaran LPS, bukan menilai kinerja proyek atau kampus Anda.</p>
+          <p class="text-ink-soft mt-1 leading-relaxed italic">Ini uji coba SiapKerja, alat ajar Last Planner System, untuk paper akademik. Kami mengevaluasi aplikasi ini, bukan menilai Anda atau organisasi Anda. Isian tanpa nama orang dan tanpa nama instansi. Partisipasi sukarela, boleh berhenti kapan saja. File sesi simulator tidak berisi identitas. Data dipakai untuk menyempurnakan SiapKerja sebagai pembelajaran LPS.</p>
         </div>
 
         <p class="text-[11px] text-ink-mute pt-1">Pengajar / fasilitator: <a class="text-terra font-medium" href="mailto:abduh@itb.ac.id">abduh@itb.ac.id</a></p>
@@ -2158,7 +2163,7 @@ const TRIAL_FORMS = [
 ];
 const TRIAL_BEAT = [
   { t:'0–8', act:'Consent + isi Form 1. Laptop simulasi belum disentuh.', form:'Form 1' },
-  { t:'8–15', act:'Brief: LPS = janji andal, bukan siapa selesai dulu. Bukan kompetisi.', form:'' },
+  { t:'8–15', act:'Brief: LPS di SiapKerja — last planner, pull, PPC = keandalan janji. Alur tab sekali.', form:'' },
   { t:'15–75', act:'Main: Phase Plan → L1 SiapKerja! → WWP → satu huddle → Learning + Laporan.', form:'Form 3' },
   { t:'75–80', act:'Unduh JSON sesi.', form:'' },
   { t:'80–90', act:'Isi Form 2 dengan kode R yang sama.', form:'Form 2' },
@@ -2167,7 +2172,7 @@ const TRIAL_ANS_KEY = 'siapkerja_trial_answers';
 const FORM_DEFS = {
   pra: {
     id:'pra', kicker:'Form 1 · sebelum main', title:'Kuesioner pra-simulasi',
-    lead:'Setiap peserta. Isi sebelum laptop simulasi disentuh. Kode R dipakai lagi di Form 2. Tanpa nama orang, tanpa nama instansi.',
+    lead:'Setiap peserta. Isi sebelum laptop simulasi disentuh. Kode R dipakai lagi di Form 2. Mengevaluasi SiapKerja, bukan Anda. Tanpa nama orang, tanpa nama instansi.',
     sections:[
       { id:'meta', type:'meta', title:'Kode', fields:[
         { id:'r', label:'Kode responden', ph:'R01' },
@@ -2178,8 +2183,8 @@ const FORM_DEFS = {
         { id:'A1.1', q:'Peran saat ini', opts:['perencana','last planner / mandor','engineer lapangan','lean specialist','dosen / mahasiswa','lain'], other:true },
         { id:'A1.2', q:'Pengalaman kerja konstruksi', opts:['belum','<3 th','3–7 th','8–15 th','>15 th'] },
         { id:'A1.3', q:'Pernah menjalankan LPS di proyek nyata?', opts:['tidak','pernah melihat','pernah menjalankan'] },
-        { id:'A1.4', q:'Pernah ikut K2R atau K2R-Neo?', opts:['tidak','pernah'] },
-        { id:'A1.5', q:'Pernah latihan LPS dengan sticky note / LEGO?', opts:['tidak','sticky note','LEGO','keduanya'] },
+        { id:'A1.4', q:'Familiar dengan istilah LPS (last planner, pull, make-ready, PPC)?', opts:['belum dengar','pernah dengar','dipelajari di kelas/kantor','dipakai di lapangan'] },
+        { id:'A1.5', q:'Bagaimana pekerjaan mingguan biasanya direncanakan di tempat Anda?', opts:['jadwal induk / Gantt','rapat informal','sudah memakai LPS','belum di lapangan','lain'], other:true },
       ]},
       { id:'a2', type:'likert', title:'A2. Pernyataan LPS — sebelum main', hint:'Beberapa butir sengaja terbalik. Isi keyakinan sekarang.', items:[
         { id:'A2.1', q:'Jadwal induk (Gantt/CPM) sudah cukup untuk mengendalikan produksi mingguan.' },
@@ -2193,24 +2198,24 @@ const FORM_DEFS = {
   },
   pasca: {
     id:'pasca', kicker:'Form 2 · sesudah main', title:'Kuesioner pasca-simulasi',
-    lead:'Peserta yang sama. Pakai kode R yang sama dengan Form 1. Isi menit 80–90.',
+    lead:'Peserta yang sama. Pakai kode R yang sama dengan Form 1. Nilai SiapKerja sebagai alat latihan LPS. Isi menit 80–90.',
     sections:[
       { id:'meta', type:'meta', title:'Kode', fields:[
         { id:'r', label:'Kode responden (sama dengan Form 1)', ph:'R01' },
         { id:'g', label:'Kelompok', ph:'G1' },
       ]},
-      { id:'c1', type:'likert', title:'C1. Pekerjaan dan tahapan', items:[
-        { id:'C1.1', q:'Kegiatan di simulator (galian, sloof, kolom, dinding, …) dekat dengan pekerjaan lapangan yang saya kenal.' },
-        { id:'C1.2', q:'Latihan ini lebih relate ke kerja lapangan daripada merakit LEGO.' },
-        { id:'C1.3', q:'Saya menjalankan urutan lengkap: value pemilik → desain → pull → make-ready → janji mingguan → huddle → PPC.' },
-        { id:'C1.4', q:'Saya merasakan beda push (Gantt) dan pull, bukan hanya mendengar istilahnya.' },
+      { id:'c1', type:'likert', title:'C1. Pekerjaan di SiapKerja', items:[
+        { id:'C1.1', q:'Kegiatan di SiapKerja (galian, sloof, kolom, dinding, …) dekat dengan pekerjaan lapangan yang saya kenal.' },
+        { id:'C1.2', q:'Denah dan zonasi rumah Type-36 membantu saya memahami urutan pekerjaan.' },
+        { id:'C1.3', q:'Saya menjalankan urutan lengkap di SiapKerja: value pemilik → desain → pull → make-ready → janji mingguan → huddle → PPC.' },
+        { id:'C1.4', q:'Saya merasakan beda merencana dari Gantt (push) dan merencana dari pekerjaan yang sudah siap (pull).' },
       ]},
-      { id:'c2', type:'likert', title:'C2. Cara berpikir', items:[
-        { id:'C2.1', q:'Setelah main, last planner merencana dari pekerjaan, bukan dari bar Gantt.' },
+      { id:'c2', type:'likert', title:'C2. Menjalankan LPS lewat SiapKerja', items:[
+        { id:'C2.1', q:'Setelah main SiapKerja, last planner merencana dari pekerjaan, bukan dari batang Gantt.' },
         { id:'C2.2', q:'Saya lebih jelas mengapa L1 harus bebas kendala sebelum dijanjikan.' },
-        { id:'C2.3', q:'PPC di latihan ini mengukur keandalan janji, bukan siapa lebih cepat selesai.' },
-        { id:'C2.4', q:'Latihan ini terasa sebagai kompetisi antar kelompok.' },
-        { id:'C2.5', q:'Jika ada papan juara, perhatian saya akan pindah dari metode LPS ke menang.' },
+        { id:'C2.3', q:'PPC di SiapKerja mengukur keandalan janji mingguan.' },
+        { id:'C2.4', q:'Make-ready terasa sebagai kerja menyiapkan constraint, bukan hanya istilah.' },
+        { id:'C2.5', q:'Daily huddle terasa sebagai rapat lapangan singkat.' },
       ]},
       { id:'c3', type:'likert', title:'C3. Ulangi 6 butir LPS (selisih pra–pasca)', items:[
         { id:'C3.1', q:'Jadwal induk (Gantt/CPM) sudah cukup untuk mengendalikan produksi mingguan.' },
@@ -2220,24 +2225,24 @@ const FORM_DEFS = {
         { id:'C3.5', q:'Pull berarti memulai setiap kegiatan seawal mungkin sesuai jadwal induk.' },
         { id:'C3.6', q:'Make-ready lebih menentukan keandalan janji daripada menambah tenaga di hari H.' },
       ]},
-      { id:'c4', type:'likert', title:'C4. Bisa disebar', items:[
-        { id:'C4.1', q:'Saya bisa menjalankan latihan ini di laptop tanpa server khusus.' },
-        { id:'C4.2', q:'Setelah satu kali terhubung internet, saya bisa lanjut berlatih tanpa sinyal.' },
-        { id:'C4.3', q:'Alat ini cocok untuk induksi atau pelatihan di organisasi saya (bukan hanya kontes).' },
-        { id:'C4.4', q:'Alat ini bisa dipakai rekan di tempat yang internetnya putus-nyambung.' },
-        { id:'C4.5', q:'SiapKerja! melengkapi K2R/K2R-Neo, tidak menggantikannya.' },
-        { id:'C4.6', q:'Saya akan merekomendasikan alat ini untuk latihan LPS di lingkungan saya.' },
+      { id:'c4', type:'likert', title:'C4. Kegunaan SiapKerja', items:[
+        { id:'C4.1', q:'Saya bisa menjalankan SiapKerja di laptop tanpa server khusus.' },
+        { id:'C4.2', q:'Setelah satu kali terhubung internet, saya bisa lanjut memakai SiapKerja tanpa sinyal.' },
+        { id:'C4.3', q:'SiapKerja cocok untuk pelatihan LPS di organisasi saya.' },
+        { id:'C4.4', q:'SiapKerja bisa dipakai rekan di tempat yang internetnya putus-nyambung.' },
+        { id:'C4.5', q:'Antarmuka SiapKerja cukup jelas untuk sesi sekitar 90 menit.' },
+        { id:'C4.6', q:'Saya akan merekomendasikan SiapKerja untuk latihan LPS di lingkungan saya.' },
       ]},
       { id:'c5', type:'text', title:'C5. Terbuka', items:[
-        { id:'C5.1', q:'Satu hal tentang LPS yang baru Anda rasakan (bukan hanya ketahui):', ph:'' },
-        { id:'C5.2', q:'Yang masih membingungkan atau menghambat:', ph:'' },
-        { id:'C5.3', q:'(Opsional) Bandingkan dengan LEGO/K2R jika pernah ikut.', ph:'' },
+        { id:'C5.1', q:'Satu hal tentang LPS yang baru Anda rasakan lewat SiapKerja (bukan hanya ketahui):', ph:'' },
+        { id:'C5.2', q:'Yang masih membingungkan atau menghambat di SiapKerja:', ph:'' },
+        { id:'C5.3', q:'Saran perbaikan SiapKerja (opsional):', ph:'' },
       ]},
     ],
   },
   pengamat: {
     id:'pengamat', kicker:'Form 3 · fasilitator', title:'Lembar pengamat',
-    lead:'Satu isian per kelompok, selama main. Jangan menilai siapa Kurva S-nya paling tinggi.',
+    lead:'Satu isian per kelompok, selama main. Catat apa yang terjadi di SiapKerja. Jangan meranking kelompok.',
     sections:[
       { id:'meta', type:'meta', title:'Kode sesi', fields:[
         { id:'sesi', label:'Kode sesi', ph:'S260825-A' },
@@ -2245,25 +2250,25 @@ const FORM_DEFS = {
         { id:'n', label:'Jumlah orang', ph:'5' },
         { id:'jam', label:'Mulai–selesai', ph:'09:00–10:30' },
       ]},
-      { id:'b1', type:'yn', title:'B1. Tab tercapai', items:[
+      { id:'b1', type:'yn', title:'B1. Tab tercapai di SiapKerja', items:[
         { q:'Pemilik' }, { q:'Desainer' }, { q:'Pemilihan (tanda tangan)' }, { q:'Master Plan' },
         { q:'Phase Plan (pull Pondasi+Struktur + komitmen)' }, { q:'Look-ahead, L1 = SiapKerja!' },
         { q:'WWP dikunci' }, { q:'Huddle ≥ 1 hari' }, { q:'Learning (PPC terlihat)' },
         { q:'Laporan dibuka' }, { q:'Gulir sampai skrip material (~minggu 3)' },
       ].map((it,i)=>({ id:'B1.'+(i+1), q:it.q, opts:['ya','tidak'] })) },
-      { id:'b2', type:'yn', title:'B2. Perilaku metode', items:[
+      { id:'b2', type:'yn', title:'B2. Perilaku metode di SiapKerja', items:[
         { id:'B2.1', q:'L1 pernah dikunci kotor', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.2', q:'L1 diperbaiki sebelum berjanji di WWP', opts:['ya','tidak','tidak sempat'] },
-        { id:'B2.3', q:'Masukkan ke jadwal dipakai benar (bukan “promosi”, bukan “tarik”)', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.3', q:'Masukkan ke jadwal dipakai untuk mengisi hari kosong dari Workable', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.4', q:'Sisa pecahan setelah Sabtu tidak diperlakukan sebagai gagal', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.5', q:'Alasan variansi diisi jika pekerjaan tidak selesai', opts:['ya','tidak','tidak sempat'] },
-        { id:'B2.6', q:'Bicara keandalan janji / PPC, bukan “kita kalah cepat”', opts:['ya','tidak','tidak sempat'] },
+        { id:'B2.6', q:'Kelompok membahas keandalan janji / PPC di Learning atau Laporan', opts:['ya','tidak','tidak sempat'] },
         { id:'B2.7', q:'Mutu tidak ditawar turun', opts:['ya','tidak','tidak sempat'] },
       ]},
       { id:'b3', type:'text', title:'B3. File sesi', items:[
         { id:'B3.json', q:'Nama file JSON sesi', ph:'S260825-A-G1.json' },
         { id:'B3.ppc', q:'PPC minggu 1 (jika ada)', ph:'contoh 67%' },
-        { id:'B3.note', q:'Catatan 3 baris (tanpa nama orang)', ph:'' },
+        { id:'B3.note', q:'Catatan hambatan di SiapKerja (tanpa nama orang)', ph:'' },
       ]},
     ],
   },
@@ -5592,7 +5597,7 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=trial-c').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=trial-d').catch(function () {});
   });
 }
 </script>
