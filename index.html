@@ -268,14 +268,20 @@
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
-          <h3 class="font-bold text-ink">Kode</h3>
+          <h3 class="font-bold text-ink">Kode — cara menomori</h3>
+          <p class="text-ink-soft mt-1 leading-relaxed">Tiga kode. Sesi dari ketua peneliti. G dan R dari fasilitator di hari-H. Responden tidak mengarang kode.</p>
           <ul class="mt-2 space-y-1 text-ink-soft">
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Sesi <b class="text-ink">S260901-A</b> — diberi ketua peneliti ke fasilitator (satu perusahaan / satu hari)</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Kelompok <b class="text-ink">G1</b> — satu laptop, diberi fasilitator</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Responden <b class="text-ink">R01</b> — unik dalam sesi itu (jangan ulang R01 di G2)</span></li>
-            <li class="flex gap-2"><span class="text-terra">•</span><span>Nama organisasi diisi apa adanya. Di paper disamarkan.</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Sesi <b class="text-ink">S260901-A</b> — S + tgl + huruf. Ketua kirim ke fasilitator sehari sebelumnya. Huruf A, B, C membedakan dua duduk di hari yang sama. Jangan dibuat sendiri.</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Kelompok <b class="text-ink">G1</b> — satu laptop. Fasilitator tulis di papan, urut dari 1.</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Responden <b class="text-ink">R01</b> — satu orang, unik dalam sesi. Jangan ulang R01 di G2; G2 mulai R04 jika G1 memakai R01–R03.</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>Nama organisasi diisi apa adanya. Di paper disamarkan. Nama orang tidak ditulis.</span></li>
           </ul>
-          <p class="text-xs text-ink-mute mt-3">Jangan membuat kode sesi sendiri. Gabung Excel Form 1 dan Form 2 urusan ketua peneliti (sesi + R). Jangan tulis nama orang.</p>
+          <p class="text-sm text-ink mt-3 font-medium">Contoh 5 orang, 2 laptop, sesi S260901-A</p>
+          <ul class="mt-1 space-y-1 text-ink-soft">
+            <li class="flex gap-2"><span class="text-terra">•</span><span>G1: Form 1 & 2 → R01, R02, R03 (semua + G1). Form 3 Anda: G1. JSON: S260901-A-G1.json</span></li>
+            <li class="flex gap-2"><span class="text-terra">•</span><span>G2: Form 1 & 2 → R04, R05 (semua + G2). Form 3 Anda: G2. JSON: S260901-A-G2.json</span></li>
+          </ul>
+          <p class="text-xs text-ink-mute mt-3">Tulis SESI di papan sebelum Form 1. Katakan ke tiap orang tiga kodenya. Form 2 = kode yang sama. Datang telat: R berikutnya, jangan daur ulang. Gabung Excel urusan ketua (sesi + R).</p>
         </div>
 
         <div class="rounded-xl border border-paper-line p-4">
@@ -5594,7 +5600,7 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=trial-k').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=trial-l').catch(function () {});
   });
 }
 </script>
