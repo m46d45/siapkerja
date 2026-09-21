@@ -658,10 +658,10 @@
         <div x-show="state.negotiation.deal && state.negotiation.contract" class="rounded-xl border border-forest/25 bg-forest-soft/40 p-4">
           <p class="text-[11px] font-semibold uppercase tracking-wide text-forest mb-2">Kontrak dikunci</p>
           <div class="grid grid-cols-2 gap-2 text-sm">
-            <div>Nilai kontrak <strong class="block" x-text="'Rp '+state.negotiation.contract.price+' jt'"></strong></div>
-            <div>Cadangan VO <strong class="block" x-text="'Rp '+state.negotiation.contract.contingency+' jt ('+state.negotiation.contract.contingencyPct+'%)'"></strong></div>
-            <div>Durasi <strong class="block" x-text="state.negotiation.contract.duration+' minggu'"></strong></div>
-            <div>Mutu <strong class="block capitalize" x-text="state.negotiation.contract.quality"></strong></div>
+            <div>Nilai kontrak <strong class="block" x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.price)+' jt'"></strong></div>
+            <div>Cadangan VO <strong class="block" x-text="'Rp '+(state.negotiation.contract&&state.negotiation.contract.contingency)+' jt ('+(state.negotiation.contract&&state.negotiation.contract.contingencyPct)+'%)'"></strong></div>
+            <div>Durasi <strong class="block" x-text="(state.negotiation.contract&&state.negotiation.contract.duration)+' minggu'"></strong></div>
+            <div>Mutu <strong class="block capitalize" x-text="state.negotiation.contract&&state.negotiation.contract.quality"></strong></div>
           </div>
         </div>
 
