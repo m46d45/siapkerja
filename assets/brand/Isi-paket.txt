@@ -1,5 +1,6 @@
 SiapKerja! — paket logo untuk poster dan media sosial
 Mark sama dengan aplikasi (rumah + centang).
+Sumber di repo: folder assets/brand/ (zip ini salinan untuk unduhan).
 
 VECTOR (perbesar tanpa pecah)
   siapkerja-mark.svg              ikon saja

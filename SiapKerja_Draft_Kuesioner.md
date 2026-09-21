@@ -109,4 +109,4 @@ File JSON **bukan** tugas peserta. Fasilitator mengunduh lalu mengirim email ke 
 
 ---
 
-*SiapKerja! 1.19.1 — draf kuesioner v1.4. Evaluasi aplikasi. Nama organisasi disamarkan di paper.*
+*SiapKerja! 1.19.2 — draf kuesioner v1.4. Evaluasi aplikasi. Nama organisasi disamarkan di paper.*

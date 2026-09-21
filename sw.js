@@ -1,8 +1,13 @@
-/* SiapKerja! 1.19.1 — libs cache-first; HTML always from network so menu updates. */
-const CACHE = 'siapkerja-1.19.1-trial-n';
+/* SiapKerja! 1.19.2 — libs + brand cache-first; HTML always from network so menu updates. */
+const CACHE = 'siapkerja-1.19.2';
 const PRECACHE = [
   './libs/tailwindcss.js',
   './libs/alpine.min.js',
+  './js/data.js',
+  './js/helpers.js',
+  './js/app.js',
+  './assets/brand/siapkerja-mark.png',
+  './assets/brand/siapkerja-mark.svg',
 ];
 
 self.addEventListener('install', (event) => {
