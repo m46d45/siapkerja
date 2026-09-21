@@ -1328,7 +1328,7 @@ Alpine.data('app', () => ({
   },
 
   applyTrialSettings(opts = {}) {
-    const skipConfirm = !!opts.force;
+    const skipConfirm = opts === true || !!opts.force;
     if (!skipConfirm) {
       const msg = 'Terapkan setelan wajib uji coba (desain 2 minggu, konstruksi 8 minggu, mutu standar, fokus waktu, LOD standar)? Progress proyek saat ini diulang dari awal.';
       if (!confirm(msg)) return false;
