@@ -1917,8 +1917,11 @@ Alpine.data('app', () => ({
     this.state.contractor.actualLog = (this.state.contractor.actualLog || []).filter(r => Number(r.week) !== w);
     this.state.contractor.progressLocks = (this.state.contractor.progressLocks || []).filter(r => Number(r.week) !== w);
     this.state.contractor.problemRegistry = (this.state.contractor.problemRegistry || []).filter(r => Number(r.week) !== w);
-    this.state.contractor.lookArchive = (this.state.contractor.lookArchive || []).filter(r => Number(r.week) !== w);
     this.state.contractor.execArchive = (this.state.contractor.execArchive || []).filter(r => Number(r.week) !== w);
+  },
+  _stripLookArchive(week) {
+    const w = Number(week);
+    this.state.contractor.lookArchive = (this.state.contractor.lookArchive || []).filter(r => Number(r.week) !== w);
   },
   _resetWeekOps() {
     const w = this.playWeek;
@@ -1940,6 +1943,7 @@ Alpine.data('app', () => ({
     this.progressDraft = null;
     this.stopHuddleTimer();
     this._stripWeekLogs(this.playWeek);
+    this._stripLookArchive(this.playWeek);
   },
   rewindTo(target) {
     if (!target) return;
