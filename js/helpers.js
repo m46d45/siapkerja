@@ -1,4 +1,4 @@
-/* SiapKerja! 1.19.2 — fungsi murni & state I/O */
+/* SiapKerja! 1.20.0 — fungsi murni & state I/O */
 
 function budgetMid(level, quality) {
   const b = BB[level] || BB.standard;
@@ -342,6 +342,7 @@ function emptyContractor() {
     wwpSnapshot:null,
     weekFailedTypes:[],
     execArchive:[],
+    lookArchive:[],
   };
 }
 

@@ -1,4 +1,4 @@
-/* SiapKerja! 1.19.2 — Alpine app */
+/* SiapKerja! 1.20.0 — Alpine app · Phase 1 TA/TMR/RNC */
 document.addEventListener('alpine:init', () => {
 
 Alpine.data('app', () => ({
@@ -45,6 +45,7 @@ Alpine.data('app', () => ({
     if (!Array.isArray(this.state.contractor.weekFailedTypes)) this.state.contractor.weekFailedTypes = [];
     if (!Array.isArray(this.state.contractor.actualLog)) this.state.contractor.actualLog = [];
     if (!Array.isArray(this.state.contractor.progressLocks)) this.state.contractor.progressLocks = [];
+    if (!Array.isArray(this.state.contractor.lookArchive)) this.state.contractor.lookArchive = [];
     this.currentStage = this.state.currentStage || 'owner';
     try {
       this.trialAnswers = JSON.parse(localStorage.getItem(TRIAL_ANS_KEY) || '{}') || {};
@@ -383,7 +384,15 @@ Alpine.data('app', () => ({
     const rencana = this.physicalProgress.plannedNow;
     const st = this.projectCloseStats;
     let t = 'Kontrak Rp ' + (c.price || this.oeJt) + ' jt · ' + (c.duration || this.negoWeeks) + ' minggu · quality ' + (c.quality || this.state.owner.qualityLevel)
-      + '. Progres fisik ' + fisik + '% (rencana M' + this.playWeek + ' = ' + rencana + '%). PPC minggu ini ' + ppc + '%. Masalah terbanyak: ' + topLab + '.';
+      + '. Progres fisik ' + fisik + '% (rencana M' + this.playWeek + ' = ' + rencana + '%). PPC minggu ini ' + ppc + '%.';
+    if (ppcRow && (ppcRow.ta1 != null || ppcRow.tmr1 != null)) {
+      t += ' TMR ' + (ppcRow.tmr1 != null ? ppcRow.tmr1 + '%' : 'belum terukur')
+        + '. TA ' + (ppcRow.ta1 != null ? ppcRow.ta1 + '%' : 'belum terukur')
+        + '. RNC minggu ini ' + (Number(ppcRow.rncCount) || 0) + '.';
+    } else {
+      t += ' TMR/TA belum terukur.';
+    }
+    t += ' Masalah terbanyak: ' + topLab + '.';
     if (this.projectComplete) {
       t += ' PROYEK DITUTUP. Tidak ada kegiatan terjadwal tersisa. Durasi aktual ' + st.actualWeeks + ' minggu kerja (' + st.actualWorkDays + ' hari kerja / ' + st.actualCalDays + ' hari kalender) vs kontrak ' + st.contractWeeks + ' minggu (' + st.contractCalDays + ' hari kalender).'
         + (st.ahead ? (' Lebih cepat ' + st.savedWeeks + ' minggu.') : (st.late ? (' Terlambat ' + (-st.savedWeeks) + ' minggu.') : ' Sesuai kontrak.'));
@@ -645,6 +654,80 @@ Alpine.data('app', () => ({
   _zoneRoot(label) {
     const m = String(label || '').match(/Z(\d+)/i);
     return m ? ('z' + m[1]) : '';
+  },
+  /** Kunci sticky untuk himpunan TA/TMR (bukan id pecahan harian WWP). */
+  stickyKey(item) {
+    const id = item && (item.stickyId || item.workId || item.id);
+    if (id) return String(id);
+    const pid = item && (item.parentId || this._workType(item));
+    const z = this.prettyZone(item && item.zoneLabel);
+    return (pid || '') + '|' + (z || '');
+  },
+  wwpStickyKeys(wwp) {
+    const seen = new Set();
+    for (const it of (wwp || [])) {
+      const k = this.stickyKey(it);
+      if (k) seen.add(k);
+    }
+    return seen;
+  },
+  lookKeysForWeek(targetWeek, rel) {
+    const row = (this.state.contractor.lookArchive || [])
+      .find(x => Number(x.week) === Number(targetWeek));
+    const keys = row && row.slots && row.slots[rel] && row.slots[rel].keys;
+    return new Set(keys || []);
+  },
+  snapshotLookahead() {
+    const week = this.targetExecWeek;
+    const slots = {};
+    for (const s of (this.lookSlots || [])) {
+      const keys = [];
+      const seen = new Set();
+      for (const st of (s.stickies || [])) {
+        const k = this.stickyKey(st);
+        if (!k || seen.has(k)) continue;
+        seen.add(k);
+        keys.push(k);
+      }
+      slots[s.rel] = { abs: s.abs, keys };
+    }
+    const list = (this.state.contractor.lookArchive || []).filter(x => Number(x.week) !== week);
+    list.push({
+      week,
+      offset: Number(this.state.contractor.lookOffset) || 0,
+      slots,
+    });
+    list.sort((a, b) => a.week - b.week);
+    this.state.contractor.lookArchive = list;
+  },
+  computeTaTmr(targetWeek, wwp) {
+    const l1 = this.lookKeysForWeek(targetWeek, 'L1');
+    const will = this.wwpStickyKeys(wwp);
+    let overlap = 0;
+    will.forEach(k => { if (l1.has(k)) overlap += 1; });
+    // L1 kosong / tanpa foto → TA dan TMR belum terukur (bukan 0%).
+    if (!l1.size) {
+      return { overlap: 0, taDenom: will.size, tmrDenom: 0, ta1: null, tmr1: null };
+    }
+    return {
+      overlap,
+      taDenom: will.size,
+      tmrDenom: l1.size,
+      ta1: will.size ? Math.round(100 * overlap / will.size) : null,
+      tmr1: Math.round(100 * overlap / l1.size),
+    };
+  },
+  rncWeekStats(week, ppc, wwp) {
+    const failed = (ppc || []).filter(p => p.status === 'failed');
+    const by = {};
+    for (const p of failed) {
+      const t = p.reason || 'lain';
+      by[t] = (by[t] || 0) + 1;
+    }
+    return { rncCount: failed.length, rncByType: by };
+  },
+  fmtPctOrDash(v) {
+    return v == null || v === '' ? '—' : (Number(v) + '%');
   },
   _zoneMatches(parentZone, childZone) {
     const p = this.prettyZone(parentZone);
@@ -930,6 +1013,61 @@ Alpine.data('app', () => ({
     const label = this.constraintLabel(top.type);
     const week = this.targetExecWeek;
     return 'Dari registry: masalah terbanyak = ' + label + ' (' + top.count + 'x). Prioritaskan make-ready terkait ' + label + ' untuk L1/M' + week + ' sebelum susun WWP.';
+  },
+  get learningLookMetrics() {
+    const week = this.playWeek;
+    const row = (this.state.contractor.weeklyProgress || [])
+      .find(r => Number(r.week) === week);
+    if (row && (row.ta1 != null || row.tmr1 != null)) {
+      return {
+        ta1: row.ta1, tmr1: row.tmr1, overlap: row.overlap,
+        taDenom: row.taDenom, tmrDenom: row.tmrDenom,
+        rncCount: Number(row.rncCount) || 0,
+      };
+    }
+    const m = this.computeTaTmr(week, this.state.contractor.wwp || []);
+    const rnc = this.rncWeekStats(week, this.state.contractor.ppc || [], this.state.contractor.wwp || []);
+    return { ...m, rncCount: rnc.rncCount };
+  },
+  get lookMetricBars() {
+    const n = Math.max(1, this.negoWeeks);
+    const by = {};
+    for (const r of (this.state.contractor.weeklyProgress || [])) by[Number(r.week)] = r;
+    return Array.from({ length: n }, (_, i) => {
+      const w = i + 1;
+      const row = by[w];
+      return {
+        week: w,
+        ppc: row ? Number(row.ppc) || 0 : 0,
+        ta1: row && row.ta1 != null ? Number(row.ta1) : null,
+        tmr1: row && row.tmr1 != null ? Number(row.tmr1) : null,
+        rncCount: row ? Number(row.rncCount) || 0 : 0,
+        hasData: !!row,
+      };
+    });
+  },
+  get rncThisWeek() {
+    const week = this.playWeek;
+    const row = (this.state.contractor.weeklyProgress || []).find(r => Number(r.week) === week);
+    if (row && row.rncByType) {
+      return Object.keys(row.rncByType)
+        .map(type => ({ type, count: row.rncByType[type] }))
+        .sort((a, b) => b.count - a.count);
+    }
+    return (this.state.contractor.problemRegistry || [])
+      .filter(e => Number(e.week) === week)
+      .reduce((acc, e) => {
+        const t = e.type || 'lain';
+        const hit = acc.find(x => x.type === t);
+        if (hit) hit.count += 1;
+        else acc.push({ type: t, count: 1 });
+        return acc;
+      }, [])
+      .sort((a, b) => b.count - a.count);
+  },
+  get lastLookMetricsRow() {
+    const rows = this.state.contractor.weeklyProgress || [];
+    return rows.length ? rows[rows.length - 1] : null;
   },
   get ppcBars() {
     const n = Math.max(1, this.negoWeeks);
@@ -1779,6 +1917,8 @@ Alpine.data('app', () => ({
     this.state.contractor.actualLog = (this.state.contractor.actualLog || []).filter(r => Number(r.week) !== w);
     this.state.contractor.progressLocks = (this.state.contractor.progressLocks || []).filter(r => Number(r.week) !== w);
     this.state.contractor.problemRegistry = (this.state.contractor.problemRegistry || []).filter(r => Number(r.week) !== w);
+    this.state.contractor.lookArchive = (this.state.contractor.lookArchive || []).filter(r => Number(r.week) !== w);
+    this.state.contractor.execArchive = (this.state.contractor.execArchive || []).filter(r => Number(r.week) !== w);
   },
   _resetWeekOps() {
     const w = this.playWeek;
@@ -2186,6 +2326,7 @@ Alpine.data('app', () => ({
       weekRemainder: JSON.parse(JSON.stringify(this.state.contractor.weekRemainder || [])),
       scheduleUsed: [...(this.state.contractor.scheduleUsed || [])],
     };
+    this.snapshotLookahead();
     this.state.contractor.wwpLocked = true;
     this.state.contractor.huddleDayIdx = 0;
     this.state.contractor.huddleResults = {};
@@ -2662,11 +2803,22 @@ Alpine.data('app', () => ({
     const done = ppc.filter(p => p.status === 'done').length;
     const planned = items.length;
     const pct = planned ? Math.round(100 * done / planned) : 0;
+    const haveLook = (this.state.contractor.lookArchive || []).some(x => Number(x.week) === week);
+    if (!haveLook) this.snapshotLookahead();
+    const metrics = this.computeTaTmr(week, items);
+    const rnc = this.rncWeekStats(week, ppc, items);
     const wp = [...(this.state.contractor.weeklyProgress || [])].filter(r => r.week !== week);
     wp.push({
       week, planned, done, ppc: pct,
       note: this.ppcWeekNote({ week, note: (this.state.contractor.learningNote || '').trim() }),
       teamPpc: this._teamPpcRows(items, ppc),
+      ta1: metrics.ta1,
+      tmr1: metrics.tmr1,
+      taDenom: metrics.taDenom,
+      tmrDenom: metrics.tmrDenom,
+      overlap: metrics.overlap,
+      rncCount: rnc.rncCount,
+      rncByType: rnc.rncByType,
     });
     wp.sort((a, b) => a.week - b.week);
     this.state.contractor.weeklyProgress = wp;
@@ -2708,6 +2860,7 @@ Alpine.data('app', () => ({
       });
     }
     this.state.contractor.carryOver = bag;
+    const lookRow = (this.state.contractor.lookArchive || []).find(x => Number(x.week) === week);
     const arch = [...(this.state.contractor.execArchive || [])].filter(x => Number(x.week) !== week);
     arch.push({
       week,
@@ -2716,6 +2869,11 @@ Alpine.data('app', () => ({
       ppc: JSON.parse(JSON.stringify(ppc)),
       remainder: JSON.parse(JSON.stringify((this.state.contractor.weekRemainder || []).filter(x => Number(x.fromWeek) === week))),
       note: (this.state.contractor.learningNote || '').trim(),
+      lookSlots: lookRow ? JSON.parse(JSON.stringify(lookRow.slots || {})) : null,
+      ta1: metrics.ta1,
+      tmr1: metrics.tmr1,
+      rncCount: rnc.rncCount,
+      rncByType: rnc.rncByType,
     });
     this.state.contractor.execArchive = arch;
     this.state.contractor.weekClosed = true;
@@ -2731,7 +2889,7 @@ Alpine.data('app', () => ({
     this.state.contractor.weekClosed = true;
     this.save();
   },
-    rollLookahead() {
+  rollLookahead() {
     if (this.projectComplete) {
       this.setStage('contractor-progress');
       return;
@@ -2749,6 +2907,7 @@ Alpine.data('app', () => ({
     if (promised.length) {
       if (!confirm(promised.length + ' komitmen make-ready belum dicek (sudah/gagal). Gulir tetap? Akan dicek di Look-ahead berikutnya.')) return;
     }
+    this.snapshotLookahead();
     this.state.contractor.lookOffset = (Number(this.state.contractor.lookOffset) || 0) + 1;
     this.state.contractor.selectedLookRel = 'L1';
     this.state.contractor.selectedLookWorkId = null;
@@ -2788,6 +2947,7 @@ Alpine.data('app', () => ({
         this.state = p;
         if (!this.state.negotiation) this.state.negotiation = emptyNego();
         if (!this.state.contractor) this.state.contractor = emptyContractor();
+        if (!Array.isArray(this.state.contractor.lookArchive)) this.state.contractor.lookArchive = [];
         this.currentStage = p.currentStage || 'owner';
         this.recalcPlan();
         saveState(this.state);
@@ -2800,6 +2960,6 @@ Alpine.data('app', () => ({
 });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./sw.js?v=1.19.2').catch(function () {});
+    navigator.serviceWorker.register('./sw.js?v=1.20.0').catch(function () {});
   });
 }

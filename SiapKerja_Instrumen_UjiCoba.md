@@ -1,7 +1,7 @@
 # Instrumen uji coba SiapKerja!
 
 **Versi:** 1.5 (25 Agustus 2026) — evaluasi SiapKerja sebagai alat ajar LPS  
-**Aplikasi:** SiapKerja! 1.19.2  
+**Aplikasi:** SiapKerja! 1.20.0  
 **Untuk:** ketua peneliti (pemilik Form) dan fasilitator per perusahaan (rekan penulis).  
 **Tujuan paper:** *Civil Engineering Dimension*, Section 6 — mock-up eksploratori.  
 **Bahasa pengisian:** Indonesia  
@@ -44,7 +44,7 @@ Gabung Excel Form 1 dan Form 2: **sesi + R**. Jangan ulang R01 di G2 dalam sesi 
 | Fokus | **waktu** |
 | LOD desainer | **standar** |
 
-Di aplikasi **SiapKerja! 1.19.2** nilai ini adalah default, dan sama dengan tombol **Uji coba → Terapkan setelan wajib & mulai**. Satu laptop = satu G. Boleh 1 orang atau beberapa. Jangan meranking.
+Di aplikasi **SiapKerja! 1.20.0** nilai ini adalah default, dan sama dengan tombol **Uji coba → Terapkan setelan wajib & mulai**. Satu laptop = satu G. Boleh 1 orang atau beberapa. Jangan meranking. Learning/Laporan menampilkan PPC, TMR₁, TA₁, dan RNC (Phase 1 metrik LPS).
 
 ### 0.4 Alur 90 menit
 
@@ -100,4 +100,4 @@ JSON simulator: arsip fasilitator (PPC, tab, L1). Bukan untuk join kuesioner. Ji
 
 ---
 
-*SiapKerja! 1.19.2 — instrumen uji coba v1.5.*
+*SiapKerja! 1.20.0 — instrumen uji coba v1.5.*

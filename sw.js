@@ -1,5 +1,5 @@
-/* SiapKerja! 1.19.2 — libs + brand cache-first; HTML always from network so menu updates. */
-const CACHE = 'siapkerja-1.19.2';
+/* SiapKerja! 1.20.0 — libs + brand cache-first; HTML always from network so menu updates. */
+const CACHE = 'siapkerja-1.20.0';
 const PRECACHE = [
   './libs/tailwindcss.js',
   './libs/alpine.min.js',

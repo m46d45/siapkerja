@@ -1,7 +1,7 @@
-/* SiapKerja! 1.19.2 — konstanta simulasi & instrumen */
+/* SiapKerja! 1.20.0 — konstanta simulasi & instrumen */
 
 const SK = 'siapkerja_project_state';
-const VER = '1.19.2';
+const VER = '1.20.0';
 /** Setelan wajib uji coba (instrumen v1.5). */
 const TRIAL_SETTINGS = {
   designDuration: 2,

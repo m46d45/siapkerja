@@ -3,7 +3,7 @@
 Bahan ajar interaktif **Last Planner System (LPS)** untuk mahasiswa teknik sipil / manajemen konstruksi dan untuk **uji coba lapangan** (evaluasi aplikasi sebagai alat ajar).
 
 **Live:** https://siapkerja-lps.vercel.app  
-**Versi aplikasi:** 1.19.2  
+**Versi aplikasi:** 1.20.0  
 **Repo:** `m46d45/siapkerja` (branch `main`)
 
 ## Fitur simulasi
@@ -19,8 +19,8 @@ Alur berurutan (kunci tahap demi tahap):
    - Look-ahead 4 minggu + make-ready (L1 harus SiapKerja!)  
    - Weekly Work Plan  
    - Daily Huddle  
-   - Learning (PPC & variansi)  
-   - Laporan (Kurva S, Gantt, PPC)
+   - Learning (PPC, TMR₁, TA₁, RNC)  
+   - Laporan (Kurva S, Gantt, PPC, riwayat TMR/TA/RNC)
 
 Skenario tetap: **M3** material telat, **M6** hujan. State di `localStorage`. Unduh/unggah JSON sesi.
 
